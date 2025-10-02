@@ -1,5 +1,5 @@
 // Módulo de autenticación
-import { auth, db, ADMIN_EMAIL } from './firebase-config.js';
+import { auth, db, ADMIN_EMAIL, ADMIN_EMAIL1, ADMIN_EMAIL2, ADMIN_EMAILS } from './firebase-config.js';
 import { 
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -32,7 +32,7 @@ class AuthManager {
             
             if (user) {
                 // Verificar si es administrador
-                this.isAdmin = user.email === ADMIN_EMAIL;
+                this.isAdmin = ADMIN_EMAILS.includes(user.email);
                 
                 // Crear/actualizar documento de usuario
                 await this.createUserDocument(user);
