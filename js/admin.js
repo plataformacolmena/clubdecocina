@@ -1097,26 +1097,43 @@ class AdminManager {
 
     async uploadRecetaImage(file) {
         try {
-            // Verificar si usar Google Drive
-            if (APP_CONFIG.useGoogleDrive && window.googleDriveManager?.isReady()) {
-                const fileName = `receta_${Date.now()}_${file.name}`;
-                const driveFile = await window.googleDriveManager.uploadFile(file, 'recetas', fileName);
-                return driveFile.url;
-            } else {
-                // Método alternativo: convertir a base64 (solo para imágenes pequeñas)
-                if (file.size > 500 * 1024) { // 500KB
-                    throw new Error('Imagen muy grande. Máximo 500KB sin Google Drive configurado.');
-                }
-                
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        resolve(e.target.result);
-                    };
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);
-                });
+            console.log(`📸 Subiendo imagen de receta: ${file.name}`);
+            
+            // Sistema Base64 para imágenes de recetas - Compatible con Firebase Spark
+            
+            // Validaciones
+            if (file.size > 800 * 1024) { // 800KB límite para recetas
+                throw new Error('Imagen muy grande. Máximo 800KB para imágenes de recetas.');
             }
+
+            // Validar que sea una imagen
+            if (!file.type.startsWith('image/')) {
+                throw new Error('Solo se permiten archivos de imagen para las recetas.');
+            }
+
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const base64Data = e.target.result;
+                        
+                        console.log(`✅ Imagen de receta convertida: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`);
+                        
+                        // Para recetas, retornamos directamente la data URL
+                        resolve(base64Data);
+                    } catch (error) {
+                        console.error('❌ Error procesando imagen:', error);
+                        reject(new Error('Error al procesar la imagen'));
+                    }
+                };
+                
+                reader.onerror = function(error) {
+                    console.error('❌ Error leyendo imagen:', error);
+                    reject(new Error('Error al leer la imagen'));
+                };
+                
+                reader.readAsDataURL(file);
+            });
         } catch (error) {
             console.error('Error uploading receta image:', error);
             throw error;

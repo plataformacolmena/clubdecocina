@@ -31,23 +31,26 @@ export const ADMIN_EMAIL2 = 'agustinasantiago88@gmail.com';
 // Array de todos los emails de administradores para validación
 export const ADMIN_EMAILS = [ADMIN_EMAIL, ADMIN_EMAIL1, ADMIN_EMAIL2];
 
-// Configuración de Google Drive (alternativa a Firebase Storage)
+// Configuración de Google Drive (DESACTIVADA - usando Base64 en Firestore)
+// NOTA: Para reactivar Google Drive, cambiar useGoogleDrive a true y configurar OAuth2
 export const GOOGLE_DRIVE_CONFIG = {
-    // ID de la carpeta pública de Google Drive donde se subirán archivos
-    folderId: '12C9grSBITz6u2pGOwa9D14rnI9g8FEwC', // Reemplazar con ID real
-    apiKey: 'AIzaSyBgzze_5LbojNAxZwSGd2zkMK-IpAL8eak', // Reemplazar con API Key real
+    // ID de la carpeta pública de Google Drive donde se subirían archivos
+    folderId: '12C9grSBITz6u2pGOwa9D14rnI9g8FEwC',
+    apiKey: 'AIzaSyBgzze_5LbojNAxZwSGd2zkMK-IpAL8eak',
     // Carpetas específicas
     folders: {
         comprobantes: '1fSKK2BjOgy0so2gK2KJTuSqaYAS-o-Lp',
         recetas: '1Py8bW-Mxzr7J41B-SFVvaFX7DMOy4IAx'
-    }
+    },
+    // PROBLEMA: Requiere OAuth2 para subir archivos, solo API Key no es suficiente
+    enabled: false
 };
 
 // Configuración de la aplicación
 export const APP_CONFIG = {
     currency: 'ARS',
     dateFormat: 'es-AR',
-    useGoogleDrive: true, // Usar Google Drive en lugar de Firebase Storage
+    useGoogleDrive: false, // Desactivado - usando sistema Base64 en Firestore
     bankInfo: {
         account: '6557575/67',
         cbu: '22222222222222222',

@@ -275,41 +275,36 @@ class InscripcionesManager {
 
         try {
             window.authManager.showLoading();
+            
+            console.log(`📤 Iniciando subida de comprobante: ${file.name}`);
 
-            let downloadURL = '';
-
-            // Verificar si usar Google Drive o método alternativo
-            if (APP_CONFIG.useGoogleDrive && window.googleDriveManager?.isReady()) {
-                try {
-                    // Subir a Google Drive
-                    const fileName = `comprobante_${inscripcionId}_${Date.now()}_${file.name}`;
-                    const driveFile = await window.googleDriveManager.uploadFile(file, 'comprobantes', fileName);
-                    downloadURL = driveFile.url;
-                    
-                    window.authManager.showMessage('Archivo subido a Google Drive', 'success');
-                } catch (driveError) {
-                    console.error('Error con Google Drive, usando método alternativo:', driveError);
-                    downloadURL = await this.uploadToAlternativeService(file, inscripcionId);
-                }
-            } else {
-                // Método alternativo sin Firebase Storage
-                downloadURL = await this.uploadToAlternativeService(file, inscripcionId);
-            }
-
-            // Actualizar inscripción en Firestore
+            // Sistema Base64 simplificado - Sin Google Drive
+            const fileData = await this.uploadToFirestoreBase64(file, inscripcionId);
+            
+            // Actualizar inscripción en Firestore con datos completos
             const inscripcionRef = doc(db, 'inscripciones', inscripcionId);
             await updateDoc(inscripcionRef, {
-                comprobanteUrl: downloadURL,
+                // URL para visualización
+                comprobanteUrl: fileData.displayUrl,
+                // Metadata del archivo
+                comprobanteMetadata: fileData.metadata,
+                // Datos del pago
                 metodoPago: metodoPago,
                 comentariosPago: comentarios,
                 fechaSubidaComprobante: new Date(),
-                estado: 'pagado' // Cambiar estado a pagado
+                // Cambiar estado
+                estado: 'pagado'
             });
 
+            console.log(`✅ Comprobante guardado en Firestore para inscripción: ${inscripcionId}`);
+
             modal.remove();
-            window.authManager.showMessage('Comprobante subido exitosamente', 'success');
+            window.authManager.showMessage(
+                `Comprobante "${file.name}" subido correctamente (${(file.size / 1024).toFixed(1)}KB)`, 
+                'success'
+            );
             
-            // Recargar inscripciones
+            // Recargar inscripciones para mostrar el cambio
             await this.loadInscripciones();
 
         } catch (error) {
@@ -320,30 +315,58 @@ class InscripcionesManager {
         }
     }
 
-    async uploadToAlternativeService(file, inscripcionId) {
-        // Método alternativo: convertir archivo a base64 y almacenar en Firestore
-        // NOTA: Solo para archivos pequeños (< 1MB) debido a límites de Firestore
+    async uploadToFirestoreBase64(file, inscripcionId) {
+        // Sistema principal Base64: almacenar directamente en Firestore
+        // Compatible con Firebase Spark - Sin necesidad de Storage o Cloud Functions
         
-        if (file.size > 1024 * 1024) { // 1MB
-            throw new Error('El archivo es muy grande. Máximo 1MB permitido sin Google Drive.');
+        // Validaciones mejoradas
+        if (file.size > 1024 * 1024) { // 1MB límite de Firestore
+            throw new Error('El archivo es muy grande. Máximo 1MB permitido (requerimiento de Firestore).');
         }
+
+        // Validar tipo de archivo
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+        if (!allowedTypes.includes(file.type)) {
+            throw new Error('Tipo de archivo no permitido. Use JPG, PNG, GIF, WebP o PDF.');
+        }
+
+        console.log(`📤 Convirtiendo archivo ${file.name} (${(file.size / 1024).toFixed(1)}KB) a Base64...`);
 
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = function(e) {
-                const base64 = e.target.result;
-                // Crear URL temporal para el archivo
-                const dataUrl = `data:${file.type};base64,${base64.split(',')[1]}`;
-                
-                // Mostrar mensaje de advertencia sobre método alternativo
-                window.authManager.showMessage(
-                    'Archivo convertido a formato temporal. Recomendamos configurar Google Drive para mejor rendimiento.',
-                    'info'
-                );
-                
-                resolve(dataUrl);
+                try {
+                    const base64Data = e.target.result;
+                    
+                    // Crear metadata del archivo
+                    const fileMetadata = {
+                        originalName: file.name,
+                        size: file.size,
+                        type: file.type,
+                        uploadDate: new Date().toISOString(),
+                        inscripcionId: inscripcionId,
+                        storageMethod: 'firestore-base64'
+                    };
+                    
+                    console.log(`✅ Archivo convertido exitosamente: ${file.name}`);
+                    
+                    // Retornar objeto con datos y metadata
+                    resolve({
+                        dataUrl: base64Data,
+                        metadata: fileMetadata,
+                        displayUrl: base64Data // Para mostrar en la interfaz
+                    });
+                } catch (error) {
+                    console.error('❌ Error procesando archivo:', error);
+                    reject(new Error('Error al procesar el archivo: ' + error.message));
+                }
             };
-            reader.onerror = reject;
+            
+            reader.onerror = function(error) {
+                console.error('❌ Error leyendo archivo:', error);
+                reject(new Error('Error al leer el archivo'));
+            };
+            
             reader.readAsDataURL(file);
         });
     }
