@@ -17,6 +17,14 @@ class AdminManager {
         this.cursos = [];
         this.inscripciones = [];
         this.recetas = [];
+        
+        // Configuración de tabla de inscripciones
+        this.filteredInscripciones = [];
+        this.currentPage = 1;
+        this.itemsPerPage = 20;
+        this.sortColumn = 'fechaInscripcion';
+        this.sortDirection = 'desc';
+        
         this.setupEventListeners();
     }
 
@@ -50,15 +58,64 @@ class AdminManager {
 
         // Filtros de admin
         this.setupAdminFilters();
+        
+        // Configurar tabla de inscripciones
+        this.setupInscripcionesTable();
     }
 
     setupAdminFilters() {
         document.getElementById('filter-curso-admin')?.addEventListener('change', (e) => {
-            this.filterInscripcionesBycurso(e.target.value);
+            this.applyInscripcionFilters();
         });
 
         document.getElementById('filter-estado')?.addEventListener('change', (e) => {
-            this.filterInscripcionesByEstado(e.target.value);
+            this.applyInscripcionFilters();
+        });
+    }
+    
+    setupInscripcionesTable() {
+        // Filtro de búsqueda por inscripto
+        document.getElementById('filter-inscripto')?.addEventListener('input', (e) => {
+            this.applyInscripcionFilters();
+        });
+
+        // Filtro por fecha
+        document.getElementById('filter-fecha')?.addEventListener('change', (e) => {
+            this.applyInscripcionFilters();
+        });
+
+        // Botón limpiar filtros
+        document.getElementById('clear-filters-btn')?.addEventListener('click', () => {
+            this.clearAllFilters();
+        });
+
+        // Botón exportar CSV
+        document.getElementById('export-inscripciones-btn')?.addEventListener('click', () => {
+            this.exportInscripcionesToCSV();
+        });
+
+        // Ordenamiento de tabla
+        document.querySelectorAll('.sortable').forEach(th => {
+            th.addEventListener('click', (e) => {
+                const column = e.currentTarget.dataset.column;
+                this.sortInscripciones(column);
+            });
+        });
+
+        // Paginación
+        document.getElementById('prev-page')?.addEventListener('click', () => {
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.renderInscripcionesTable();
+            }
+        });
+
+        document.getElementById('next-page')?.addEventListener('click', () => {
+            const totalPages = Math.ceil(this.filteredInscripciones.length / this.itemsPerPage);
+            if (this.currentPage < totalPages) {
+                this.currentPage++;
+                this.renderInscripcionesTable();
+            }
         });
     }
 
@@ -359,94 +416,268 @@ class AdminManager {
     }
 
     // === GESTIÓN DE INSCRIPCIONES ===
-    renderAdminInscripciones(inscripcionesToRender = this.inscripciones) {
-        const list = document.getElementById('admin-inscripciones-list');
-        if (!list) return;
+    renderAdminInscripciones() {
+        this.filteredInscripciones = [...this.inscripciones];
+        this.applyInscripcionFilters();
+        this.updateInscripcionStats();
+        this.renderInscripcionesTable();
+    }
 
-        if (inscripcionesToRender.length === 0) {
-            list.innerHTML = `
-                <div class="no-content">
-                    <i class="fas fa-user-check"></i>
-                    <p>No hay inscripciones</p>
-                </div>
-            `;
+    updateInscripcionStats() {
+        const total = this.inscripciones.length;
+        const confirmadas = this.inscripciones.filter(i => i.estado === 'confirmado').length;
+        const pendientes = this.inscripciones.filter(i => i.estado === 'pendiente').length;
+
+        document.getElementById('total-inscripciones').textContent = total;
+        document.getElementById('inscripciones-confirmadas').textContent = confirmadas;
+        document.getElementById('inscripciones-pendientes').textContent = pendientes;
+    }
+
+    applyInscripcionFilters() {
+        let filtered = [...this.inscripciones];
+
+        // Filtro por inscripto (nombre o email)
+        const inscriptoFilter = document.getElementById('filter-inscripto')?.value.toLowerCase();
+        if (inscriptoFilter) {
+            filtered = filtered.filter(inscripcion =>
+                inscripcion.usuarioNombre.toLowerCase().includes(inscriptoFilter) ||
+                inscripcion.usuarioEmail.toLowerCase().includes(inscriptoFilter)
+            );
+        }
+
+        // Filtro por curso
+        const cursoFilter = document.getElementById('filter-curso-admin')?.value;
+        if (cursoFilter) {
+            filtered = filtered.filter(inscripcion =>
+                inscripcion.cursoNombre === cursoFilter
+            );
+        }
+
+        // Filtro por estado
+        const estadoFilter = document.getElementById('filter-estado')?.value;
+        if (estadoFilter) {
+            filtered = filtered.filter(inscripcion =>
+                inscripcion.estado === estadoFilter
+            );
+        }
+
+        // Filtro por fecha
+        const fechaFilter = document.getElementById('filter-fecha')?.value;
+        if (fechaFilter) {
+            const filterDate = new Date(fechaFilter);
+            filtered = filtered.filter(inscripcion => {
+                const inscripcionDate = new Date(inscripcion.fechaInscripcion.seconds * 1000);
+                return inscripcionDate.toDateString() === filterDate.toDateString();
+            });
+        }
+
+        this.filteredInscripciones = filtered;
+        this.currentPage = 1; // Reset page when filtering
+        this.renderInscripcionesTable();
+    }
+
+    sortInscripciones(column) {
+        // Toggle sort direction if same column
+        if (this.sortColumn === column) {
+            this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.sortColumn = column;
+            this.sortDirection = 'asc';
+        }
+
+        // Update visual indicators
+        document.querySelectorAll('.sortable').forEach(th => {
+            th.classList.remove('asc', 'desc');
+        });
+        document.querySelector(`[data-column="${column}"]`).classList.add(this.sortDirection);
+
+        // Sort data
+        this.filteredInscripciones.sort((a, b) => {
+            let valueA, valueB;
+
+            switch (column) {
+                case 'nombre':
+                    valueA = a.usuarioNombre;
+                    valueB = b.usuarioNombre;
+                    break;
+                case 'email':
+                    valueA = a.usuarioEmail;
+                    valueB = b.usuarioEmail;
+                    break;
+                case 'curso':
+                    valueA = a.cursoNombre;
+                    valueB = b.cursoNombre;
+                    break;
+                case 'fechaCurso':
+                    valueA = new Date(a.cursoFecha.seconds * 1000);
+                    valueB = new Date(b.cursoFecha.seconds * 1000);
+                    break;
+                case 'fechaInscripcion':
+                    valueA = new Date(a.fechaInscripcion.seconds * 1000);
+                    valueB = new Date(b.fechaInscripcion.seconds * 1000);
+                    break;
+                case 'estado':
+                    valueA = a.estado;
+                    valueB = b.estado;
+                    break;
+                case 'monto':
+                    valueA = a.costo;
+                    valueB = b.costo;
+                    break;
+                default:
+                    return 0;
+            }
+
+            if (valueA < valueB) return this.sortDirection === 'asc' ? -1 : 1;
+            if (valueA > valueB) return this.sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        this.renderInscripcionesTable();
+    }
+
+    renderInscripcionesTable() {
+        const tableBody = document.getElementById('inscripciones-table-body');
+        const noInscripciones = document.getElementById('no-inscripciones');
+        const loading = document.getElementById('loading-inscripciones');
+        
+        if (!tableBody) return;
+
+        // Hide loading
+        loading.style.display = 'none';
+
+        if (this.filteredInscripciones.length === 0) {
+            tableBody.innerHTML = '';
+            noInscripciones.style.display = 'block';
+            this.updatePagination();
             return;
         }
 
-        list.innerHTML = inscripcionesToRender.map(inscripcion => 
-            this.createAdminInscripcionCard(inscripcion)
-        ).join('');
+        noInscripciones.style.display = 'none';
+
+        // Calculate pagination
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const endIndex = startIndex + this.itemsPerPage;
+        const pageData = this.filteredInscripciones.slice(startIndex, endIndex);
+
+        // Render rows
+        tableBody.innerHTML = pageData.map(inscripcion => this.createInscripcionTableRow(inscripcion)).join('');
         
-        this.setupInscripcionEventListeners();
+        // Setup event listeners for actions
+        this.setupTableEventListeners();
+        
+        // Update pagination
+        this.updatePagination();
     }
 
-    createAdminInscripcionCard(inscripcion) {
+    createInscripcionTableRow(inscripcion) {
         const fechaInscripcion = new Date(inscripcion.fechaInscripcion.seconds * 1000).toLocaleDateString('es-AR');
-        
+        const fechaCurso = inscripcion.cursoFecha ? 
+            new Date(inscripcion.cursoFecha.seconds * 1000).toLocaleDateString('es-AR') : 'N/A';
+
         return `
-            <div class="card admin-inscripcion-card">
-                <div class="card__header">
-                    <h3 class="card__title">${inscripcion.usuarioNombre}</h3>
-                    <div class="status status--${inscripcion.estado}">
+            <tr>
+                <td>
+                    <div class="user-info">
+                        <strong>${inscripcion.usuarioNombre}</strong>
+                    </div>
+                </td>
+                <td>${inscripcion.usuarioEmail}</td>
+                <td>${inscripcion.cursoNombre}</td>
+                <td>${fechaCurso}</td>
+                <td>${fechaInscripcion}</td>
+                <td>
+                    <span class="estado-badge ${inscripcion.estado}">
                         ${this.getEstadoText(inscripcion.estado)}
-                    </div>
-                </div>
-                <div class="card__content">
-                    <div class="card__info">
-                        <div class="card__info-item">
-                            <i class="fas fa-envelope"></i>
-                            <span>${inscripcion.usuarioEmail}</span>
-                        </div>
-                        <div class="card__info-item">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                            <span>${inscripcion.cursoNombre}</span>
-                        </div>
-                        <div class="card__info-item">
-                            <i class="fas fa-calendar-alt"></i>
-                            <span>Inscripto: ${fechaInscripcion}</span>
-                        </div>
-                        <div class="card__info-item">
-                            <i class="fas fa-dollar-sign"></i>
-                            <span>$${inscripcion.costo.toLocaleString()}</span>
-                        </div>
-                        ${inscripcion.metodoPago ? `
-                            <div class="card__info-item">
-                                <i class="fas fa-credit-card"></i>
-                                <span>${inscripcion.metodoPago}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-                <div class="card__actions">
+                    </span>
+                </td>
+                <td>$${inscripcion.costo.toLocaleString()}</td>
+                <td>
                     ${inscripcion.comprobanteUrl ? `
-                        <a href="${inscripcion.comprobanteUrl}" target="_blank" 
-                           class="btn btn--outline">
-                            <i class="fas fa-file-image"></i>
-                            Ver Comprobante
+                        <a href="${inscripcion.comprobanteUrl}" target="_blank" class="comprobante-link">
+                            <i class="fas fa-file-image"></i> Ver
                         </a>
-                    ` : ''}
-                    ${inscripcion.estado === 'pagado' ? `
-                        <button class="btn btn--primary confirm-inscripcion-btn" 
-                                data-inscripcion-id="${inscripcion.id}">
-                            <i class="fas fa-check"></i>
-                            Confirmar
+                    ` : '<span class="text-muted">Sin comprobante</span>'}
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        ${inscripcion.estado === 'pagado' ? `
+                            <button class="action-btn confirm" data-inscripcion-id="${inscripcion.id}" title="Confirmar inscripción">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        ` : ''}
+                        <button class="action-btn view" data-inscripcion-id="${inscripcion.id}" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
                         </button>
-                    ` : ''}
-                </div>
-            </div>
+                        <button class="action-btn delete" data-inscripcion-id="${inscripcion.id}" title="Eliminar inscripción">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
         `;
     }
 
-    setupInscripcionEventListeners() {
-        document.querySelectorAll('.confirm-inscripcion-btn').forEach(btn => {
+    setupTableEventListeners() {
+        // Confirmar inscripciones
+        document.querySelectorAll('.action-btn.confirm').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const inscripcionId = e.target.dataset.inscripcionId;
+                const inscripcionId = e.currentTarget.dataset.inscripcionId;
                 this.confirmInscripcion(inscripcionId);
+            });
+        });
+
+        // Ver detalles
+        document.querySelectorAll('.action-btn.view').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const inscripcionId = e.currentTarget.dataset.inscripcionId;
+                this.viewInscripcionDetails(inscripcionId);
+            });
+        });
+
+        // Eliminar inscripciones
+        document.querySelectorAll('.action-btn.delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const inscripcionId = e.currentTarget.dataset.inscripcionId;
+                this.deleteInscripcion(inscripcionId);
             });
         });
     }
 
+    updatePagination() {
+        const pagination = document.getElementById('inscripciones-pagination');
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+        const pageInfo = document.getElementById('page-info');
+
+        if (!pagination) return;
+
+        const totalPages = Math.ceil(this.filteredInscripciones.length / this.itemsPerPage);
+
+        if (totalPages <= 1) {
+            pagination.style.display = 'none';
+            return;
+        }
+
+        pagination.style.display = 'flex';
+        pageInfo.textContent = `Página ${this.currentPage} de ${totalPages}`;
+        
+        prevBtn.disabled = this.currentPage === 1;
+        nextBtn.disabled = this.currentPage === totalPages;
+    }
+
+    clearAllFilters() {
+        document.getElementById('filter-inscripto').value = '';
+        document.getElementById('filter-curso-admin').value = '';
+        document.getElementById('filter-estado').value = '';
+        document.getElementById('filter-fecha').value = '';
+        
+        this.applyInscripcionFilters();
+    }
+
     async confirmInscripcion(inscripcionId) {
+        if (!confirm('¿Estás seguro de confirmar esta inscripción?')) return;
+
         try {
             window.authManager.showLoading();
             
@@ -455,7 +686,7 @@ class AdminManager {
                 fechaConfirmacion: new Date()
             });
             
-            window.authManager.showMessage('Inscripción confirmada', 'success');
+            window.authManager.showMessage('Inscripción confirmada exitosamente', 'success');
             await this.loadAdminInscripciones();
             this.renderAdminInscripciones();
 
@@ -467,28 +698,88 @@ class AdminManager {
         }
     }
 
-    filterInscripcionesBycurso(cursoNombre) {
-        if (!cursoNombre) {
-            this.renderAdminInscripciones();
-            return;
-        }
+    viewInscripcionDetails(inscripcionId) {
+        const inscripcion = this.inscripciones.find(i => i.id === inscripcionId);
+        if (!inscripcion) return;
 
-        const filtered = this.inscripciones.filter(inscripcion =>
-            inscripcion.cursoNombre === cursoNombre
-        );
-        this.renderAdminInscripciones(filtered);
+        const fechaInscripcion = new Date(inscripcion.fechaInscripcion.seconds * 1000).toLocaleString('es-AR');
+        const fechaCurso = inscripcion.cursoFecha ? 
+            new Date(inscripcion.cursoFecha.seconds * 1000).toLocaleString('es-AR') : 'No definida';
+
+        const details = `
+            Inscripto: ${inscripcion.usuarioNombre}
+            Email: ${inscripcion.usuarioEmail}
+            Curso: ${inscripcion.cursoNombre}
+            Fecha del Curso: ${fechaCurso}
+            Fecha de Inscripción: ${fechaInscripcion}
+            Estado: ${this.getEstadoText(inscripcion.estado)}
+            Costo: $${inscripcion.costo.toLocaleString()}
+            ${inscripcion.metodoPago ? `Método de Pago: ${inscripcion.metodoPago}` : ''}
+        `;
+
+        alert(details);
     }
 
-    filterInscripcionesByEstado(estado) {
-        if (!estado) {
+    async deleteInscripcion(inscripcionId) {
+        if (!confirm('¿Estás seguro de eliminar esta inscripción? Esta acción no se puede deshacer.')) return;
+
+        try {
+            window.authManager.showLoading();
+            
+            await deleteDoc(doc(db, 'inscripciones', inscripcionId));
+            
+            window.authManager.showMessage('Inscripción eliminada exitosamente', 'success');
+            await this.loadAdminInscripciones();
             this.renderAdminInscripciones();
+
+        } catch (error) {
+            console.error('Error deleting inscripcion:', error);
+            window.authManager.showMessage('Error al eliminar inscripción', 'error');
+        } finally {
+            window.authManager.hideLoading();
+        }
+    }
+
+    exportInscripcionesToCSV() {
+        if (this.filteredInscripciones.length === 0) {
+            window.authManager.showMessage('No hay datos para exportar', 'warning');
             return;
         }
 
-        const filtered = this.inscripciones.filter(inscripcion =>
-            inscripcion.estado === estado
-        );
-        this.renderAdminInscripciones(filtered);
+        const headers = ['Nombre', 'Email', 'Curso', 'Fecha Curso', 'Fecha Inscripción', 'Estado', 'Monto', 'Método Pago'];
+        const csvContent = [
+            headers.join(','),
+            ...this.filteredInscripciones.map(inscripcion => {
+                const fechaInscripcion = new Date(inscripcion.fechaInscripcion.seconds * 1000).toLocaleDateString('es-AR');
+                const fechaCurso = inscripcion.cursoFecha ? 
+                    new Date(inscripcion.cursoFecha.seconds * 1000).toLocaleDateString('es-AR') : 'N/A';
+                
+                return [
+                    `"${inscripcion.usuarioNombre}"`,
+                    `"${inscripcion.usuarioEmail}"`,
+                    `"${inscripcion.cursoNombre}"`,
+                    `"${fechaCurso}"`,
+                    `"${fechaInscripcion}"`,
+                    `"${this.getEstadoText(inscripcion.estado)}"`,
+                    inscripcion.costo,
+                    `"${inscripcion.metodoPago || 'N/A'}"`
+                ].join(',');
+            })
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `inscripciones_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        window.authManager.showMessage('CSV exportado exitosamente', 'success');
     }
 
     // === GESTIÓN DE RECETAS ===

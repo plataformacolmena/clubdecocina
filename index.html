@@ -133,19 +133,114 @@
 
                 <!-- Gestión de Inscripciones -->
                 <div id="inscripciones-admin" class="tab-content">
-                    <div class="filters">
-                        <select id="filter-curso-admin" class="select">
-                            <option value="">Todos los cursos</option>
-                        </select>
-                        <select id="filter-estado" class="select">
-                            <option value="">Todos los estados</option>
-                            <option value="pendiente">Pendiente</option>
-                            <option value="pagado">Pagado</option>
-                            <option value="confirmado">Confirmado</option>
-                        </select>
+                    <div class="admin__header">
+                        <h3>Tabla de Inscriptos</h3>
+                        <div class="admin__stats">
+                            <div class="stat-card">
+                                <span class="stat-number" id="total-inscripciones">0</span>
+                                <span class="stat-label">Total Inscripciones</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-number" id="inscripciones-confirmadas">0</span>
+                                <span class="stat-label">Confirmadas</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-number" id="inscripciones-pendientes">0</span>
+                                <span class="stat-label">Pendientes</span>
+                            </div>
+                        </div>
                     </div>
-                    <div id="admin-inscripciones-list" class="admin__list">
-                        <!-- Las inscripciones se cargarán dinámicamente -->
+                    
+                    <div class="filters-section">
+                        <div class="filters-row">
+                            <div class="filter-group">
+                                <label>Buscar por inscripto:</label>
+                                <input type="text" id="filter-inscripto" class="input" placeholder="Nombre o email...">
+                            </div>
+                            <div class="filter-group">
+                                <label>Filtrar por curso:</label>
+                                <select id="filter-curso-admin" class="select">
+                                    <option value="">Todos los cursos</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Estado de pago:</label>
+                                <select id="filter-estado" class="select">
+                                    <option value="">Todos los estados</option>
+                                    <option value="pendiente">Pendiente</option>
+                                    <option value="pagado">Pagado</option>
+                                    <option value="confirmado">Confirmado</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Fecha de inscripción:</label>
+                                <input type="date" id="filter-fecha" class="input">
+                            </div>
+                            <div class="filter-group">
+                                <button id="clear-filters-btn" class="btn btn--outline">
+                                    <i class="fas fa-eraser"></i> Limpiar Filtros
+                                </button>
+                                <button id="export-inscripciones-btn" class="btn btn--secondary">
+                                    <i class="fas fa-download"></i> Exportar CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="inscripciones-table" class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" data-column="nombre">
+                                        Inscripto <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" data-column="email">
+                                        Email <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" data-column="curso">
+                                        Curso <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" data-column="fechaCurso">
+                                        Fecha Curso <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" data-column="fechaInscripcion">
+                                        Fecha Inscripción <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" data-column="estado">
+                                        Estado <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" data-column="monto">
+                                        Monto <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th>Comprobante</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inscripciones-table-body">
+                                <!-- Las inscripciones se cargarán dinámicamente -->
+                            </tbody>
+                        </table>
+                        
+                        <div id="no-inscripciones" class="empty-state" style="display: none;">
+                            <i class="fas fa-users"></i>
+                            <h3>No hay inscripciones</h3>
+                            <p>No se encontraron inscripciones con los filtros aplicados.</p>
+                        </div>
+                        
+                        <div id="loading-inscripciones" class="loading-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Cargando inscripciones...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="pagination" id="inscripciones-pagination" style="display: none;">
+                        <button id="prev-page" class="btn btn--outline" disabled>
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </button>
+                        <span id="page-info">Página 1 de 1</span>
+                        <button id="next-page" class="btn btn--outline" disabled>
+                            Siguiente <i class="fas fa-chevron-right"></i>
+                        </button>
                     </div>
                 </div>
 
