@@ -9,7 +9,9 @@ import {
     deleteDoc,
     query,
     orderBy,
-    where
+    where,
+    limit,
+    serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
 class AdminManager {
@@ -61,6 +63,48 @@ class AdminManager {
         
         // Configurar tabla de inscripciones
         this.setupInscripcionesTable();
+        
+        // Configurar listeners para logs
+        this.setupLogsEventListeners();
+        
+        // Configurar tabs del panel de admin
+        this.setupAdminTabs();
+    }
+    
+    setupAdminTabs() {
+        // Manejar clicks en las tabs
+        document.querySelectorAll('.admin-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Remover clase activa de todas las tabs
+                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                // Activar la tab clickeada
+                tab.classList.add('active');
+                
+                // Mostrar el contenido correspondiente
+                const targetTab = tab.getAttribute('data-tab');
+                const targetContent = document.getElementById(targetTab + '-tab');
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                }
+                
+                // Cargar datos específicos según la tab
+                if (targetTab === 'system-logs') {
+                    this.loadSystemLogs();
+                }
+            });
+        });
+        
+        // Activar la primera tab por defecto
+        const firstTab = document.querySelector('.admin-tab');
+        const firstContent = document.querySelector('.tab-content');
+        if (firstTab && firstContent) {
+            firstTab.classList.add('active');
+            firstContent.classList.add('active');
+        }
     }
 
     setupAdminFilters() {
@@ -631,23 +675,55 @@ class AdminManager {
                     ` : '<span class="text-muted">Sin comprobante</span>'}
                 </td>
                 <td>
-                    <div class="action-buttons">
-                        ${inscripcion.estado === 'pagado' ? `
+                    <div class="action-buttons" style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <!-- Estado: Confirmar -->
+                        ${(inscripcion.estado === 'pagado' || inscripcion.estado === 'pendiente') ? `
                             <button class="action-btn confirm" data-inscripcion-id="${inscripcion.id}" title="Confirmar inscripción">
                                 <i class="fas fa-check"></i>
                             </button>
                         ` : ''}
-                        ${inscripcion.estado !== 'confirmado' && inscripcion.estado !== 'cancelado' ? `
+                        
+                        <!-- Estado: Marcar como Pendiente -->
+                        ${inscripcion.estado !== 'pendiente' && inscripcion.estado !== 'cancelado' ? `
+                            <button class="action-btn set-pending" data-inscripcion-id="${inscripcion.id}" title="Marcar como pendiente">
+                                <i class="fas fa-clock"></i>
+                            </button>
+                        ` : ''}
+                        
+                        <!-- Estado: Cancelar -->
+                        ${inscripcion.estado !== 'cancelado' ? `
                             <button class="action-btn cancel" data-inscripcion-id="${inscripcion.id}" title="Cancelar inscripción">
                                 <i class="fas fa-ban"></i>
                             </button>
                         ` : ''}
-                        <button class="action-btn view" data-inscripcion-id="${inscripcion.id}" title="Ver detalles">
+                        
+                        <!-- Reactivar (si está cancelado) -->
+                        ${inscripcion.estado === 'cancelado' ? `
+                            <button class="action-btn reactivate" data-inscripcion-id="${inscripcion.id}" title="Reactivar inscripción">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                        ` : ''}
+                        
+                        <!-- Editar información -->
+                        <button class="action-btn edit" data-inscripcion-id="${inscripcion.id}" title="Editar información">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        
+                        <!-- Ver detalles -->
+                        <button class="action-btn view" data-inscripcion-id="${inscripcion.id}" title="Ver detalles completos">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button class="action-btn delete" data-inscripcion-id="${inscripcion.id}" title="Eliminar inscripción">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        
+                        <!-- Eliminar (solo para cancelados o con confirmación) -->
+                        ${inscripcion.estado === 'cancelado' || inscripcion.estado === 'pendiente' ? `
+                            <button class="action-btn delete" data-inscripcion-id="${inscripcion.id}" title="Eliminar inscripción">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : `
+                            <button class="action-btn delete-confirm" data-inscripcion-id="${inscripcion.id}" title="Eliminar (requiere confirmación)">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        `}
                     </div>
                 </td>
             </tr>
@@ -679,11 +755,43 @@ class AdminManager {
             });
         });
 
-        // Eliminar inscripciones
+        // Eliminar inscripciones (directo)
         document.querySelectorAll('.action-btn.delete').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const inscripcionId = e.currentTarget.dataset.inscripcionId;
-                this.deleteInscripcion(inscripcionId);
+                this.deleteInscripcion(inscripcionId, false); // Sin confirmación extra
+            });
+        });
+
+        // Eliminar con confirmación fuerte
+        document.querySelectorAll('.action-btn.delete-confirm').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const inscripcionId = e.currentTarget.dataset.inscripcionId;
+                this.deleteInscripcion(inscripcionId, true); // Con confirmación extra
+            });
+        });
+
+        // Marcar como pendiente
+        document.querySelectorAll('.action-btn.set-pending').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const inscripcionId = e.currentTarget.dataset.inscripcionId;
+                this.changeInscripcionStatus(inscripcionId, 'pendiente');
+            });
+        });
+
+        // Reactivar inscripción cancelada
+        document.querySelectorAll('.action-btn.reactivate').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const inscripcionId = e.currentTarget.dataset.inscripcionId;
+                this.changeInscripcionStatus(inscripcionId, 'pendiente');
+            });
+        });
+
+        // Editar inscripción
+        document.querySelectorAll('.action-btn.edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const inscripcionId = e.currentTarget.dataset.inscripcionId;
+                this.editInscripcion(inscripcionId);
             });
         });
 
@@ -1351,6 +1459,508 @@ class AdminManager {
             } catch (fallbackError) {
                 console.error('❌ Fallback también falló:', fallbackError);
             }
+        }
+    }
+
+    // Cambiar estado de inscripción
+    async changeInscripcionStatus(inscripcionId, newStatus) {
+        try {
+            const statusNames = {
+                'pendiente': 'Pendiente',
+                'pagado': 'Pagado',
+                'confirmado': 'Confirmado',
+                'cancelado': 'Cancelado'
+            };
+
+            const confirmMessage = `¿Cambiar estado a "${statusNames[newStatus]}"?`;
+            if (!confirm(confirmMessage)) return;
+
+            await this.logSystemAction('change_status', {
+                inscripcionId,
+                oldStatus: 'unknown', // Se actualizará en el método
+                newStatus,
+                adminAction: true
+            });
+
+            const inscripcionRef = doc(db, 'inscripciones', inscripcionId);
+            await updateDoc(inscripcionRef, {
+                estado: newStatus,
+                fechaActualizacion: new Date(),
+                actualizadoPor: auth.currentUser.email
+            });
+
+            window.authManager.showMessage(`Estado cambiado a "${statusNames[newStatus]}"`, 'success');
+            await this.loadAdminInscripciones();
+
+        } catch (error) {
+            console.error('Error cambiando estado:', error);
+            window.authManager.showMessage('Error al cambiar el estado', 'error');
+        }
+    }
+
+    // Editar información de inscripción
+    async editInscripcion(inscripcionId) {
+        try {
+            // Buscar la inscripción
+            const inscripcion = this.inscripciones.find(i => i.id === inscripcionId);
+            if (!inscripcion) {
+                window.authManager.showMessage('Inscripción no encontrada', 'error');
+                return;
+            }
+
+            // Crear modal de edición
+            this.showEditInscripcionModal(inscripcion);
+
+        } catch (error) {
+            console.error('Error abriendo editor:', error);
+            window.authManager.showMessage('Error al abrir el editor', 'error');
+        }
+    }
+
+    // Modal para editar inscripción
+    showEditInscripcionModal(inscripcion) {
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal__content" style="max-width: 600px;">
+                <span class="modal__close">&times;</span>
+                <h2 class="modal__title">
+                    <i class="fas fa-edit"></i> Editar Inscripción
+                </h2>
+                
+                <form id="edit-inscripcion-form" class="form">
+                    <div class="form__group">
+                        <label>Usuario (Email)</label>
+                        <input type="email" id="edit-usuario-email" value="${inscripcion.usuarioEmail}" readonly 
+                               style="background: #f5f5f5;">
+                    </div>
+
+                    <div class="form__group">
+                        <label>Estado</label>
+                        <select id="edit-estado" required>
+                            <option value="pendiente" ${inscripcion.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                            <option value="pagado" ${inscripcion.estado === 'pagado' ? 'selected' : ''}>Pagado</option>
+                            <option value="confirmado" ${inscripcion.estado === 'confirmado' ? 'selected' : ''}>Confirmado</option>
+                            <option value="cancelado" ${inscripcion.estado === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                        </select>
+                    </div>
+
+                    <div class="form__group">
+                        <label>Método de Pago</label>
+                        <select id="edit-metodo-pago">
+                            <option value="transferencia" ${inscripcion.metodoPago === 'transferencia' ? 'selected' : ''}>Transferencia</option>
+                            <option value="efectivo" ${inscripcion.metodoPago === 'efectivo' ? 'selected' : ''}>Efectivo</option>
+                            <option value="tarjeta" ${inscripcion.metodoPago === 'tarjeta' ? 'selected' : ''}>Tarjeta</option>
+                            <option value="otro" ${inscripcion.metodoPago === 'otro' ? 'selected' : ''}>Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="form__group">
+                        <label>Comentarios del Pago</label>
+                        <textarea id="edit-comentarios" rows="3">${inscripcion.comentariosPago || ''}</textarea>
+                    </div>
+
+                    <div class="form__group">
+                        <label>Notas del Administrador</label>
+                        <textarea id="edit-notas-admin" rows="3" placeholder="Notas internas...">${inscripcion.notasAdmin || ''}</textarea>
+                    </div>
+
+                    <div class="form__actions">
+                        <button type="submit" class="btn btn--primary">
+                            <i class="fas fa-save"></i> Guardar Cambios
+                        </button>
+                        <button type="button" class="btn btn--secondary close-modal-btn">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Event listeners
+        const form = modal.querySelector('#edit-inscripcion-form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.saveInscripcionChanges(inscripcion.id, modal);
+        });
+
+        const closeModal = () => modal.remove();
+        modal.querySelector('.modal__close').addEventListener('click', closeModal);
+        modal.querySelector('.close-modal-btn').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+    }
+
+    // Guardar cambios de inscripción
+    async saveInscripcionChanges(inscripcionId, modal) {
+        try {
+            const formData = {
+                estado: modal.querySelector('#edit-estado').value,
+                metodoPago: modal.querySelector('#edit-metodo-pago').value,
+                comentariosPago: modal.querySelector('#edit-comentarios').value,
+                notasAdmin: modal.querySelector('#edit-notas-admin').value,
+                fechaActualizacion: new Date(),
+                actualizadoPor: auth.currentUser.email
+            };
+
+            await this.logSystemAction('edit_inscription', {
+                inscripcionId,
+                changes: formData,
+                adminAction: true
+            });
+
+            const inscripcionRef = doc(db, 'inscripciones', inscripcionId);
+            await updateDoc(inscripcionRef, formData);
+
+            modal.remove();
+            window.authManager.showMessage('Inscripción actualizada correctamente', 'success');
+            await this.loadAdminInscripciones();
+
+        } catch (error) {
+            console.error('Error guardando cambios:', error);
+            window.authManager.showMessage('Error al guardar los cambios', 'error');
+        }
+    }
+
+    // Sistema de logging mejorado
+    async logSystemAction(action, details = {}) {
+        try {
+            const logEntry = {
+                action,
+                details,
+                timestamp: new Date(),
+                userEmail: auth.currentUser?.email || 'sistema',
+                userType: ADMIN_EMAILS.includes(auth.currentUser?.email) ? 'admin' : 'alumno',
+                sessionId: this.getSessionId(),
+                userAgent: navigator.userAgent,
+                url: window.location.href
+            };
+
+            // Guardar en Firestore
+            await addDoc(collection(db, 'system_logs'), logEntry);
+            
+            console.log(`📝 Acción registrada: ${action}`, details);
+
+        } catch (error) {
+            console.error('Error registrando acción:', error);
+            // No mostrar error al usuario, es logging interno
+        }
+    }
+
+    // Generar o recuperar ID de sesión
+    getSessionId() {
+        let sessionId = sessionStorage.getItem('admin_session_id');
+        if (!sessionId) {
+            sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            sessionStorage.setItem('admin_session_id', sessionId);
+        }
+        return sessionId;
+    }
+
+    // SISTEMA DE LOGS - Gestión completa del registro del sistema
+    
+    async loadSystemLogs(filters = {}) {
+        try {
+            console.log('📊 Cargando logs del sistema...');
+            
+            let logsQuery = collection(db, 'system_logs');
+            const constraints = [];
+
+            // Aplicar filtros
+            if (filters.userType) {
+                constraints.push(where('userType', '==', filters.userType));
+            }
+            if (filters.action) {
+                constraints.push(where('action', '==', filters.action));
+            }
+            if (filters.dateFrom) {
+                constraints.push(where('timestamp', '>=', new Date(filters.dateFrom)));
+            }
+            if (filters.dateTo) {
+                const dateTo = new Date(filters.dateTo);
+                dateTo.setHours(23, 59, 59, 999);
+                constraints.push(where('timestamp', '<=', dateTo));
+            }
+
+            // Aplicar constraints y ordenar
+            if (constraints.length > 0) {
+                logsQuery = query(logsQuery, ...constraints, orderBy('timestamp', 'desc'), limit(100));
+            } else {
+                logsQuery = query(logsQuery, orderBy('timestamp', 'desc'), limit(100));
+            }
+
+            const querySnapshot = await getDocs(logsQuery);
+            const logs = [];
+            
+            querySnapshot.forEach((doc) => {
+                logs.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+
+            this.renderLogsTable(logs);
+            this.updateLogsStats(logs);
+            
+            console.log(`✅ ${logs.length} logs cargados`);
+
+        } catch (error) {
+            console.error('❌ Error cargando logs:', error);
+            window.authManager?.showMessage('Error cargando el registro del sistema', 'error');
+        }
+    }
+
+    renderLogsTable(logs) {
+        const tbody = document.getElementById('logs-table-body');
+        if (!tbody) return;
+
+        if (logs.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: #666;">
+                        <i class="fas fa-inbox" style="font-size: 2em; margin-bottom: 10px;"></i><br>
+                        No se encontraron registros con los filtros aplicados
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = logs.map(log => this.renderLogRow(log)).join('');
+        document.getElementById('logs-info').textContent = `Mostrando ${logs.length} registros`;
+    }
+
+    renderLogRow(log) {
+        const timestamp = log.timestamp?.toDate ? log.timestamp.toDate() : new Date(log.timestamp);
+        const formattedDate = timestamp.toLocaleDateString('es-AR', {
+            day: '2-digit',
+            month: '2-digit', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        const actionIcons = {
+            'login': '<i class="fas fa-sign-in-alt" style="color: #28a745;"></i>',
+            'register': '<i class="fas fa-user-plus" style="color: #007bff;"></i>',
+            'inscripcion': '<i class="fas fa-calendar-plus" style="color: #17a2b8;"></i>',
+            'upload_comprobante': '<i class="fas fa-file-upload" style="color: #6f42c1;"></i>',
+            'change_status': '<i class="fas fa-exchange-alt" style="color: #fd7e14;"></i>',
+            'edit_inscription': '<i class="fas fa-edit" style="color: #ffc107;"></i>',
+            'create_course': '<i class="fas fa-plus-circle" style="color: #20c997;"></i>',
+            'create_recipe': '<i class="fas fa-utensils" style="color: #e83e8c;"></i>',
+            'delete': '<i class="fas fa-trash" style="color: #dc3545;"></i>'
+        };
+
+        const actionIcon = actionIcons[log.action] || '<i class="fas fa-circle" style="color: #6c757d;"></i>';
+        const userTypeClass = log.userType === 'admin' ? 'admin-user' : 'student-user';
+        
+        const details = this.formatLogDetails(log.details);
+        const sessionInfo = this.formatSessionInfo(log);
+
+        return `
+            <tr class="log-row ${userTypeClass}">
+                <td>
+                    <div style="font-size: 0.9em;">
+                        <strong>${formattedDate}</strong>
+                    </div>
+                </td>
+                <td>
+                    <div class="user-info">
+                        <span class="user-email" style="font-weight: 500;">${log.userEmail}</span>
+                        <span class="user-type-badge ${log.userType}" style="font-size: 0.8em; padding: 2px 6px; border-radius: 12px; ${this.getUserTypeBadgeStyle(log.userType)}">
+                            ${log.userType.toUpperCase()}
+                        </span>
+                    </div>
+                </td>
+                <td style="text-align: center;">${actionIcon}</td>
+                <td>
+                    <strong>${this.getActionDisplayName(log.action)}</strong>
+                </td>
+                <td>
+                    <div class="log-details" style="max-width: 300px; font-size: 0.9em;">
+                        ${details}
+                    </div>
+                </td>
+                <td style="font-size: 0.8em; color: #666;">
+                    ${sessionInfo}
+                </td>
+            </tr>
+        `;
+    }
+
+    formatLogDetails(details) {
+        if (!details) return '-';
+        
+        // Formatear diferentes tipos de detalles
+        if (details.inscripcionId) {
+            return `<strong>Inscripción:</strong> ${details.inscripcionId.substring(0, 8)}...`;
+        }
+        
+        if (details.cursoId) {
+            return `<strong>Curso:</strong> ${details.cursoNombre || details.cursoId.substring(0, 8) + '...'}`;
+        }
+        
+        if (details.changes) {
+            const changesCount = Object.keys(details.changes).length;
+            return `<strong>Cambios:</strong> ${changesCount} campos modificados`;
+        }
+        
+        if (details.oldStatus && details.newStatus) {
+            return `<strong>Estado:</strong> ${details.oldStatus} → ${details.newStatus}`;
+        }
+        
+        // Si hay otros detalles, mostrar resumen
+        const detailsStr = JSON.stringify(details);
+        if (detailsStr.length > 50) {
+            return detailsStr.substring(0, 50) + '...';
+        }
+        
+        return detailsStr;
+    }
+
+    formatSessionInfo(log) {
+        const sessionId = log.sessionId ? log.sessionId.substring(-8) : 'N/A';
+        return `
+            <div>Session: ${sessionId}</div>
+            <div style="margin-top: 2px;">
+                ${log.userAgent ? this.getBrowserInfo(log.userAgent) : 'Browser N/A'}
+            </div>
+        `;
+    }
+
+    getBrowserInfo(userAgent) {
+        if (userAgent.includes('Chrome')) return '<i class="fab fa-chrome"></i> Chrome';
+        if (userAgent.includes('Firefox')) return '<i class="fab fa-firefox"></i> Firefox';
+        if (userAgent.includes('Safari')) return '<i class="fab fa-safari"></i> Safari';
+        if (userAgent.includes('Edge')) return '<i class="fab fa-edge"></i> Edge';
+        return '<i class="fas fa-globe"></i> Unknown';
+    }
+
+    getUserTypeBadgeStyle(userType) {
+        if (userType === 'admin') {
+            return 'background: #dc3545; color: white;';
+        }
+        return 'background: #28a745; color: white;';
+    }
+
+    getActionDisplayName(action) {
+        const actionNames = {
+            'login': 'Inicio de Sesión',
+            'register': 'Registro',
+            'inscripcion': 'Inscripción a Curso',
+            'upload_comprobante': 'Subir Comprobante',
+            'change_status': 'Cambio de Estado',
+            'edit_inscription': 'Editar Inscripción',
+            'create_course': 'Crear Curso',
+            'create_recipe': 'Crear Receta',
+            'delete': 'Eliminar'
+        };
+        return actionNames[action] || action;
+    }
+
+    updateLogsStats(logs) {
+        const totalActions = logs.length;
+        const uniqueUsers = new Set(logs.map(log => log.userEmail)).size;
+        const adminActions = logs.filter(log => log.userType === 'admin').length;
+        const lastActivity = logs.length > 0 ? 
+            new Date(logs[0].timestamp?.toDate ? logs[0].timestamp.toDate() : logs[0].timestamp)
+                .toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+            : 'N/A';
+
+        document.getElementById('stat-total-actions').textContent = totalActions;
+        document.getElementById('stat-unique-users').textContent = uniqueUsers;
+        document.getElementById('stat-admin-actions').textContent = adminActions;
+        document.getElementById('stat-last-activity').textContent = lastActivity;
+    }
+
+    setupLogsEventListeners() {
+        // Filtros
+        document.getElementById('apply-log-filters')?.addEventListener('click', () => {
+            const filters = {
+                userType: document.getElementById('filter-user-type').value,
+                action: document.getElementById('filter-action-type').value,
+                dateFrom: document.getElementById('filter-date-from').value,
+                dateTo: document.getElementById('filter-date-to').value
+            };
+            this.loadSystemLogs(filters);
+        });
+
+        document.getElementById('clear-log-filters')?.addEventListener('click', () => {
+            document.getElementById('filter-user-type').value = '';
+            document.getElementById('filter-action-type').value = '';
+            document.getElementById('filter-date-from').value = '';
+            document.getElementById('filter-date-to').value = '';
+            this.loadSystemLogs();
+        });
+
+        // Exportar logs
+        document.getElementById('export-logs')?.addEventListener('click', () => {
+            this.exportLogs();
+        });
+    }
+
+    async exportLogs() {
+        try {
+            const logs = await this.getAllLogsForExport();
+            const csvContent = this.convertLogsToCSV(logs);
+            this.downloadCSV(csvContent, 'system_logs_' + new Date().toISOString().split('T')[0] + '.csv');
+        } catch (error) {
+            console.error('Error exportando logs:', error);
+            window.authManager?.showMessage('Error al exportar los logs', 'error');
+        }
+    }
+
+    convertLogsToCSV(logs) {
+        const headers = ['Fecha', 'Usuario', 'Tipo Usuario', 'Acción', 'Detalles', 'Session ID'];
+        const rows = logs.map(log => [
+            log.timestamp?.toDate ? log.timestamp.toDate().toISOString() : log.timestamp,
+            log.userEmail,
+            log.userType,
+            log.action,
+            JSON.stringify(log.details || {}),
+            log.sessionId || ''
+        ]);
+
+        return [headers, ...rows].map(row => 
+            row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
+        ).join('\n');
+    }
+
+    downloadCSV(content, filename) {
+        const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+    }
+
+    async getAllLogsForExport() {
+        try {
+            const logsQuery = query(
+                collection(db, 'system_logs'),
+                orderBy('timestamp', 'desc'),
+                limit(1000) // Limitar a 1000 registros más recientes para exportación
+            );
+            
+            const querySnapshot = await getDocs(logsQuery);
+            const logs = [];
+            
+            querySnapshot.forEach((doc) => {
+                logs.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+
+            return logs;
+            
+        } catch (error) {
+            console.error('Error obteniendo logs para exportar:', error);
+            throw error;
         }
     }
 }
