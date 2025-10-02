@@ -219,7 +219,7 @@ class AdminManager {
                 // Agregar datos completos del curso si existe
                 if (inscripcionData.cursoId && cursosMap[inscripcionData.cursoId]) {
                     const curso = cursosMap[inscripcionData.cursoId];
-                    inscripcionData.cursoFecha = curso.fecha;
+                    inscripcionData.cursoFecha = curso.fechaHora; // Corregido: usar fechaHora
                     inscripcionData.cursoHorario = curso.horario;
                     inscripcionData.cursoUbicacion = curso.ubicacion;
                 }
@@ -643,9 +643,36 @@ class AdminManager {
 
     createInscripcionTableRow(inscripcion) {
         const fechaInscripcion = new Date(inscripcion.fechaInscripcion.seconds * 1000).toLocaleDateString('es-AR');
-        const fechaCurso = inscripcion.cursoFecha ? 
-            new Date(inscripcion.cursoFecha.seconds * 1000).toLocaleDateString('es-AR') : 
-            'Fecha no disponible';
+        
+        // Debug: mostrar información de la fecha del curso
+        console.log('Debug fecha curso:', {
+            cursoFecha: inscripcion.cursoFecha,
+            tipoFecha: typeof inscripcion.cursoFecha,
+            inscripcionId: inscripcion.id
+        });
+        
+        let fechaCurso = 'Fecha no disponible';
+        if (inscripcion.cursoFecha) {
+            try {
+                // Intentar diferentes formatos de fecha
+                if (inscripcion.cursoFecha.seconds) {
+                    // Formato Firestore Timestamp
+                    fechaCurso = new Date(inscripcion.cursoFecha.seconds * 1000).toLocaleDateString('es-AR');
+                } else if (inscripcion.cursoFecha.toDate) {
+                    // Formato Timestamp con método toDate
+                    fechaCurso = inscripcion.cursoFecha.toDate().toLocaleDateString('es-AR');
+                } else if (typeof inscripcion.cursoFecha === 'string') {
+                    // Formato string
+                    fechaCurso = new Date(inscripcion.cursoFecha).toLocaleDateString('es-AR');
+                } else {
+                    // Intentar convertir directamente
+                    fechaCurso = new Date(inscripcion.cursoFecha).toLocaleDateString('es-AR');
+                }
+            } catch (error) {
+                console.error('Error procesando fecha del curso:', error, inscripcion.cursoFecha);
+                fechaCurso = 'Error en fecha';
+            }
+        }
 
         return `
             <tr>

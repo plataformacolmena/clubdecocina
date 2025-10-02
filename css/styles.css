@@ -743,11 +743,13 @@ body {
     background: var(--white);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
 .admin-table {
     width: 100%;
+    min-width: 1200px;
     border-collapse: collapse;
     font-size: 14px;
 }
@@ -795,8 +797,50 @@ body {
 }
 
 .admin-table tr:hover {
-    background: #fafafa;
+    background: var(--light-gray);
 }
+
+/* Estilos para las acciones administrativas */
+.admin-actions {
+    display: flex;
+    gap: 5px;
+    flex-wrap: nowrap;
+    min-width: 200px;
+}
+
+.admin-actions .btn {
+    font-size: 12px;
+    padding: 6px 10px;
+    white-space: nowrap;
+}
+
+/* Ancho específico para columnas */
+.admin-table th:nth-child(1),
+.admin-table td:nth-child(1) { width: 150px; } /* Nombre */
+
+.admin-table th:nth-child(2),
+.admin-table td:nth-child(2) { width: 200px; } /* Email */
+
+.admin-table th:nth-child(3),
+.admin-table td:nth-child(3) { width: 150px; } /* Curso */
+
+.admin-table th:nth-child(4),
+.admin-table td:nth-child(4) { width: 120px; } /* Fecha Curso */
+
+.admin-table th:nth-child(5),
+.admin-table td:nth-child(5) { width: 120px; } /* Fecha Inscripción */
+
+.admin-table th:nth-child(6),
+.admin-table td:nth-child(6) { width: 100px; } /* Estado */
+
+.admin-table th:nth-child(7),
+.admin-table td:nth-child(7) { width: 80px; } /* Monto */
+
+.admin-table th:nth-child(8),
+.admin-table td:nth-child(8) { width: 120px; } /* Comprobante */
+
+.admin-table th:nth-child(9),
+.admin-table td:nth-child(9) { width: 220px; } /* Acciones */
 
 .estado-badge {
     display: inline-block;
