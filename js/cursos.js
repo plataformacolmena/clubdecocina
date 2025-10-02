@@ -29,6 +29,11 @@ class CursosManager {
             this.filterByFecha(e.target.value);
         });
 
+        // Filtro de estado del curso
+        document.getElementById('filter-estado-curso')?.addEventListener('change', (e) => {
+            this.filterByEstadoCurso(e.target.value);
+        });
+
         // Navegación a cursos
         document.querySelector('a[href="#cursos"]')?.addEventListener('click', (e) => {
             e.preventDefault();
@@ -105,14 +110,35 @@ class CursosManager {
         const inscriptosActuales = curso.inscriptos || 0;
         const disponibles = curso.capacidadMaxima - inscriptosActuales;
         const estaCompleto = disponibles <= 0;
-        const yaTermino = new Date(curso.fechaHora.seconds * 1000) < new Date();
+        
+        const now = new Date();
+        const cursoDate = new Date(curso.fechaHora.seconds * 1000);
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const cursoDay = new Date(cursoDate.getFullYear(), cursoDate.getMonth(), cursoDate.getDate());
+        
+        let estadoCurso = '';
+        let estadoClass = '';
+        
+        if (cursoDay < today) {
+            estadoCurso = 'Terminado';
+            estadoClass = 'status--terminado';
+        } else if (cursoDay.getTime() === today.getTime()) {
+            estadoCurso = estaCompleto ? 'Completo (Hoy)' : 'Hoy';
+            estadoClass = 'status--hoy';
+        } else if (estaCompleto) {
+            estadoCurso = 'Completo';
+            estadoClass = 'status--completo';
+        } else {
+            estadoCurso = 'Disponible';
+            estadoClass = 'status--disponible';
+        }
 
         return `
-            <div class="card curso-card">
+            <div class="card curso-card ${cursoDay < today ? 'curso-terminado' : ''}">
                 <div class="card__header">
                     <h3 class="card__title">${curso.nombre}</h3>
-                    <div class="status ${estaCompleto ? 'status--completo' : 'status--disponible'}">
-                        ${estaCompleto ? 'Completo' : 'Disponible'}
+                    <div class="status ${estadoClass}">
+                        ${estadoCurso}
                     </div>
                 </div>
                 <div class="card__content">
@@ -141,11 +167,16 @@ class CursosManager {
                     ` : ''}
                 </div>
                 <div class="card__actions">
-                    ${!estaCompleto && !yaTermino ? `
+                    ${cursoDay >= today && !estaCompleto ? `
                         <button class="btn btn--primary inscribirse-btn" data-curso-id="${curso.id}">
                             <i class="fas fa-user-plus"></i>
                             Inscribirse
                         </button>
+                    ` : cursoDay < today ? `
+                        <span class="curso-terminado-label">
+                            <i class="fas fa-check-circle"></i>
+                            Curso finalizado
+                        </span>
                     ` : ''}
                     <button class="btn btn--outline ver-detalles-btn" data-curso-id="${curso.id}">
                         <i class="fas fa-info-circle"></i>
@@ -175,6 +206,36 @@ class CursosManager {
             const filterDate = new Date(fechaFilter);
             
             return cursoDate.toDateString() === filterDate.toDateString();
+        });
+        
+        this.renderCursos(filtered);
+    }
+
+    filterByEstadoCurso(estadoFilter) {
+        if (!estadoFilter) {
+            this.renderCursos();
+            return;
+        }
+
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        const filtered = this.cursos.filter(curso => {
+            const cursoDate = new Date(curso.fechaHora.seconds * 1000);
+            const cursoDay = new Date(cursoDate.getFullYear(), cursoDate.getMonth(), cursoDate.getDate());
+            
+            switch (estadoFilter) {
+                case 'proximo':
+                    return cursoDay >= tomorrow;
+                case 'activo':
+                    return cursoDay.getTime() === today.getTime();
+                case 'terminado':
+                    return cursoDay < today;
+                default:
+                    return true;
+            }
         });
         
         this.renderCursos(filtered);

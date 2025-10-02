@@ -73,6 +73,12 @@
                 <h2 class="section__title">Cursos Disponibles</h2>
                 <div class="filters">
                     <input type="text" id="search-cursos" placeholder="Buscar cursos..." class="input">
+                    <select id="filter-estado-curso" class="select">
+                        <option value="">Todos los cursos</option>
+                        <option value="proximo">Próximos</option>
+                        <option value="activo">Activos (hoy)</option>
+                        <option value="terminado">Terminados</option>
+                    </select>
                     <select id="filter-fecha" class="select">
                         <option value="">Todas las fechas</option>
                     </select>
@@ -170,6 +176,7 @@
                                     <option value="pendiente">Pendiente</option>
                                     <option value="pagado">Pagado</option>
                                     <option value="confirmado">Confirmado</option>
+                                    <option value="cancelado">Cancelado</option>
                                 </select>
                             </div>
                             <div class="filter-group">

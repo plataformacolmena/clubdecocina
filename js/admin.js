@@ -606,6 +606,11 @@ class AdminManager {
                                 <i class="fas fa-check"></i>
                             </button>
                         ` : ''}
+                        ${inscripcion.estado !== 'confirmado' && inscripcion.estado !== 'cancelado' ? `
+                            <button class="action-btn cancel" data-inscripcion-id="${inscripcion.id}" title="Cancelar inscripción">
+                                <i class="fas fa-ban"></i>
+                            </button>
+                        ` : ''}
                         <button class="action-btn view" data-inscripcion-id="${inscripcion.id}" title="Ver detalles">
                             <i class="fas fa-eye"></i>
                         </button>
@@ -632,6 +637,14 @@ class AdminManager {
             btn.addEventListener('click', (e) => {
                 const inscripcionId = e.currentTarget.dataset.inscripcionId;
                 this.viewInscripcionDetails(inscripcionId);
+            });
+        });
+
+        // Cancelar inscripciones
+        document.querySelectorAll('.action-btn.cancel').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const inscripcionId = e.currentTarget.dataset.inscripcionId;
+                this.cancelInscripcionAdmin(inscripcionId);
             });
         });
 
@@ -718,6 +731,32 @@ class AdminManager {
         `;
 
         alert(details);
+    }
+
+    async cancelInscripcionAdmin(inscripcionId) {
+        if (!confirm('¿Estás seguro de cancelar esta inscripción? El alumno será notificado por email.')) return;
+
+        try {
+            window.authManager.showLoading();
+            
+            await updateDoc(doc(db, 'inscripciones', inscripcionId), {
+                estado: 'cancelado',
+                fechaCancelacion: new Date(),
+                canceladoPor: 'admin'
+            });
+            
+            // TODO: Enviar email de notificación de cancelación
+            
+            window.authManager.showMessage('Inscripción cancelada exitosamente', 'success');
+            await this.loadAdminInscripciones();
+            this.renderAdminInscripciones();
+
+        } catch (error) {
+            console.error('Error canceling inscripcion:', error);
+            window.authManager.showMessage('Error al cancelar inscripción', 'error');
+        } finally {
+            window.authManager.hideLoading();
+        }
     }
 
     async deleteInscripcion(inscripcionId) {
@@ -1115,7 +1154,8 @@ class AdminManager {
         const estados = {
             'pendiente': 'Pendiente',
             'pagado': 'Pago enviado',
-            'confirmado': 'Confirmado'
+            'confirmado': 'Confirmado',
+            'cancelado': 'Cancelado'
         };
         return estados[estado] || estado;
     }

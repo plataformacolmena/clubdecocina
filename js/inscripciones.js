@@ -125,11 +125,25 @@ class InscripcionesManager {
                             ${inscripcion.comprobanteUrl ? 'Cambiar' : 'Subir'} Comprobante
                         </button>
                     ` : ''}
+                    ${inscripcion.estado !== 'confirmado' ? `
+                        <button class="btn btn--secondary editar-inscripcion-btn" 
+                                data-inscripcion-id="${inscripcion.id}">
+                            <i class="fas fa-edit"></i>
+                            Editar Inscripción
+                        </button>
+                    ` : ''}
                     <button class="btn btn--outline ver-detalles-pago-btn" 
                             data-inscripcion-id="${inscripcion.id}">
                         <i class="fas fa-info-circle"></i>
                         Datos de Pago
                     </button>
+                    ${inscripcion.estado === 'pendiente' ? `
+                        <button class="btn btn--outline btn--danger cancelar-inscripcion-btn" 
+                                data-inscripcion-id="${inscripcion.id}">
+                            <i class="fas fa-times"></i>
+                            Cancelar Inscripción
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -150,6 +164,22 @@ class InscripcionesManager {
                 const inscripcionId = e.target.dataset.inscripcionId;
                 const inscripcion = this.inscripciones.find(i => i.id === inscripcionId);
                 this.showPaymentDetails(inscripcion);
+            });
+        });
+
+        // Botones de editar inscripción
+        document.querySelectorAll('.editar-inscripcion-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const inscripcionId = e.target.dataset.inscripcionId;
+                this.showEditInscripcionModal(inscripcionId);
+            });
+        });
+
+        // Botones de cancelar inscripción
+        document.querySelectorAll('.cancelar-inscripcion-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const inscripcionId = e.target.dataset.inscripcionId;
+                this.cancelInscripcion(inscripcionId);
             });
         });
     }
@@ -310,7 +340,7 @@ class InscripcionesManager {
     }
 
     showPaymentDetails(inscripcion) {
-        const { bankInfo } = window.APP_CONFIG;
+        const { bankInfo } = APP_CONFIG;
         
         const modal = document.createElement('div');
         modal.className = 'modal active';
@@ -379,7 +409,8 @@ class InscripcionesManager {
         const estados = {
             'pendiente': 'Pendiente de pago',
             'pagado': 'Pago enviado',
-            'confirmado': 'Confirmado'
+            'confirmado': 'Confirmado',
+            'cancelado': 'Cancelado'
         };
         return estados[estado] || estado;
     }
@@ -388,7 +419,8 @@ class InscripcionesManager {
         const descripciones = {
             'pendiente': 'Realiza la transferencia y sube tu comprobante para confirmar tu inscripción.',
             'pagado': 'Tu comprobante fue enviado y está siendo verificado por el administrador.',
-            'confirmado': '¡Tu inscripción está confirmada! Recibirás más información por email.'
+            'confirmado': '¡Tu inscripción está confirmada! Recibirás más información por email.',
+            'cancelado': 'Esta inscripción ha sido cancelada.'
         };
         return descripciones[estado] || '';
     }
@@ -400,6 +432,113 @@ class InscripcionesManager {
             'efectivo': 'Efectivo'
         };
         return metodos[metodo] || metodo;
+    }
+
+    showEditInscripcionModal(inscripcionId) {
+        const inscripcion = this.inscripciones.find(i => i.id === inscripcionId);
+        if (!inscripcion) return;
+
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal__content">
+                <span class="modal__close">&times;</span>
+                <h2 class="modal__title">Editar Inscripción</h2>
+                <form id="edit-inscripcion-form" class="form">
+                    <div class="form__group">
+                        <label class="form__label">Curso</label>
+                        <input type="text" value="${inscripcion.cursoNombre}" class="input" readonly>
+                    </div>
+                    <div class="form__group">
+                        <label class="form__label">Nombre completo</label>
+                        <input type="text" id="edit-nombre" value="${inscripcion.usuarioNombre}" class="input" required>
+                    </div>
+                    <div class="form__group">
+                        <label class="form__label">Teléfono</label>
+                        <input type="tel" id="edit-telefono" value="${inscripcion.telefono || ''}" class="input">
+                    </div>
+                    <div class="form__group">
+                        <label class="form__label">Comentarios adicionales</label>
+                        <textarea id="edit-comentarios" class="input" rows="3">${inscripcion.comentarios || ''}</textarea>
+                    </div>
+                    <div class="form__actions">
+                        <button type="submit" class="btn btn--primary">
+                            <i class="fas fa-save"></i>
+                            Guardar Cambios
+                        </button>
+                        <button type="button" class="btn btn--outline modal-cancel">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Event listeners del modal
+        modal.querySelector('.modal__close').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+
+        modal.querySelector('.modal-cancel').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+
+        modal.querySelector('#edit-inscripcion-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.updateInscripcion(inscripcionId, {
+                usuarioNombre: modal.querySelector('#edit-nombre').value,
+                telefono: modal.querySelector('#edit-telefono').value,
+                comentarios: modal.querySelector('#edit-comentarios').value
+            });
+            document.body.removeChild(modal);
+        });
+    }
+
+    async updateInscripcion(inscripcionId, updates) {
+        try {
+            window.authManager.showLoading();
+            
+            await updateDoc(doc(db, 'inscripciones', inscripcionId), {
+                ...updates,
+                fechaModificacion: new Date()
+            });
+            
+            window.authManager.showMessage('Inscripción actualizada exitosamente', 'success');
+            await this.loadInscripciones();
+            
+        } catch (error) {
+            console.error('Error updating inscripcion:', error);
+            window.authManager.showMessage('Error al actualizar inscripción', 'error');
+        } finally {
+            window.authManager.hideLoading();
+        }
+    }
+
+    async cancelInscripcion(inscripcionId) {
+        if (!confirm('¿Estás seguro de cancelar esta inscripción? Esta acción no se puede deshacer.')) return;
+
+        try {
+            window.authManager.showLoading();
+            
+            await updateDoc(doc(db, 'inscripciones', inscripcionId), {
+                estado: 'cancelado',
+                fechaCancelacion: new Date(),
+                canceladoPor: 'usuario'
+            });
+            
+            // TODO: Enviar email de notificación de cancelación
+            
+            window.authManager.showMessage('Inscripción cancelada exitosamente', 'success');
+            await this.loadInscripciones();
+            
+        } catch (error) {
+            console.error('Error canceling inscripcion:', error);
+            window.authManager.showMessage('Error al cancelar inscripción', 'error');
+        } finally {
+            window.authManager.hideLoading();
+        }
     }
 
     // Método para usar desde otros módulos
