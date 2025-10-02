@@ -622,9 +622,12 @@ class AdminManager {
                 <td>$${inscripcion.costo.toLocaleString()}</td>
                 <td>
                     ${inscripcion.comprobanteUrl ? `
-                        <a href="${inscripcion.comprobanteUrl}" target="_blank" class="comprobante-link">
-                            <i class="fas fa-file-image"></i> Ver
-                        </a>
+                        <button class="btn btn--small btn--outline view-comprobante-btn" 
+                                data-comprobante-url="${inscripcion.comprobanteUrl}"
+                                data-inscripcion-id="${inscripcion.id}"
+                                data-metadata='${JSON.stringify(inscripcion.comprobanteMetadata || {})}'>
+                            <i class="fas fa-file-image"></i> Ver Comprobante
+                        </button>
                     ` : '<span class="text-muted">Sin comprobante</span>'}
                 </td>
                 <td>
@@ -681,6 +684,16 @@ class AdminManager {
             btn.addEventListener('click', (e) => {
                 const inscripcionId = e.currentTarget.dataset.inscripcionId;
                 this.deleteInscripcion(inscripcionId);
+            });
+        });
+
+        // Ver comprobantes
+        document.querySelectorAll('.view-comprobante-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const comprobanteUrl = e.currentTarget.dataset.comprobanteUrl;
+                const inscripcionId = e.currentTarget.dataset.inscripcionId;
+                const metadata = JSON.parse(e.currentTarget.dataset.metadata || '{}');
+                this.showComprobanteModal(comprobanteUrl, inscripcionId, metadata);
             });
         });
     }
@@ -1203,6 +1216,142 @@ class AdminManager {
             'cancelado': 'Cancelado'
         };
         return estados[estado] || estado;
+    }
+
+    // Modal para ver comprobantes con opción de descarga
+    showComprobanteModal(comprobanteUrl, inscripcionId, metadata = {}) {
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        
+        const fileName = metadata.originalName || `comprobante_${inscripcionId}`;
+        const fileSize = metadata.size ? `(${(metadata.size / 1024).toFixed(1)}KB)` : '';
+        const fileType = metadata.type || 'Archivo';
+        const uploadDate = metadata.uploadDate ? new Date(metadata.uploadDate).toLocaleDateString('es-AR') : '';
+
+        modal.innerHTML = `
+            <div class="modal__content" style="max-width: 90vw; max-height: 90vh;">
+                <span class="modal__close">&times;</span>
+                <div class="modal__header">
+                    <h2 class="modal__title">
+                        <i class="fas fa-file-image"></i> Comprobante de Pago
+                    </h2>
+                    <div class="comprobante-info" style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                        <p><strong>Archivo:</strong> ${fileName} ${fileSize}</p>
+                        <p><strong>Tipo:</strong> ${fileType}</p>
+                        ${uploadDate ? `<p><strong>Subido:</strong> ${uploadDate}</p>` : ''}
+                        <p><strong>Inscripción:</strong> ${inscripcionId}</p>
+                    </div>
+                </div>
+                
+                <div class="modal__body" style="text-align: center; overflow: auto; max-height: 60vh; margin: 20px 0;">
+                    ${this.renderComprobanteContent(comprobanteUrl, fileType)}
+                </div>
+                
+                <div class="modal__footer" style="display: flex; gap: 10px; justify-content: center; padding-top: 20px; border-top: 1px solid #eee;">
+                    <button class="btn btn--outline download-comprobante-btn">
+                        <i class="fas fa-download"></i> Descargar Archivo
+                    </button>
+                    <button class="btn btn--secondary close-modal-btn">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Event listeners del modal
+        const downloadBtn = modal.querySelector('.download-comprobante-btn');
+        const closeBtn = modal.querySelector('.close-modal-btn');
+        const closeX = modal.querySelector('.modal__close');
+
+        // Función de descarga
+        downloadBtn.addEventListener('click', () => {
+            this.downloadComprobante(comprobanteUrl, fileName);
+        });
+
+        // Funciones de cerrar
+        const closeModal = () => modal.remove();
+        closeBtn.addEventListener('click', closeModal);
+        closeX.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // Escape key
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+    }
+
+    renderComprobanteContent(comprobanteUrl, fileType) {
+        if (fileType && fileType.includes('pdf')) {
+            return `
+                <div style="background: #f5f5f5; padding: 20px; border-radius: 8px;">
+                    <i class="fas fa-file-pdf" style="font-size: 3rem; color: #e74c3c; margin-bottom: 10px;"></i>
+                    <p><strong>Archivo PDF</strong></p>
+                    <p style="color: #666;">Use el botón "Descargar" para ver el contenido completo del PDF.</p>
+                </div>
+            `;
+        } else {
+            return `
+                <img src="${comprobanteUrl}" alt="Comprobante de Pago" 
+                     style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <div style="display: none; padding: 2rem; color: #666; background: #f5f5f5; border-radius: 8px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem; color: #f39c12;"></i>
+                    <p><strong>Error cargando imagen</strong></p>
+                    <p>Use el botón "Descargar" para obtener el archivo.</p>
+                </div>
+            `;
+        }
+    }
+
+    downloadComprobante(dataUrl, fileName) {
+        try {
+            // Crear elemento de descarga temporal
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = fileName;
+            
+            // Agregar al DOM temporalmente y hacer clic
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log(`✅ Descarga iniciada: ${fileName}`);
+            
+            // Mostrar mensaje de éxito
+            window.authManager?.showMessage('Descarga iniciada correctamente', 'success');
+            
+        } catch (error) {
+            console.error('❌ Error en descarga:', error);
+            window.authManager?.showMessage('Error al descargar el archivo', 'error');
+            
+            // Fallback: Abrir en nueva pestaña
+            try {
+                const newWindow = window.open();
+                newWindow.document.write(`
+                    <html>
+                        <head><title>${fileName}</title></head>
+                        <body style="margin:0; text-align:center; background:#f5f5f5;">
+                            <div style="padding:20px;">
+                                <h3>Comprobante: ${fileName}</h3>
+                                <img src="${dataUrl}" style="max-width:100%; height:auto;">
+                                <br><br>
+                                <button onclick="window.close()">Cerrar</button>
+                            </div>
+                        </body>
+                    </html>
+                `);
+            } catch (fallbackError) {
+                console.error('❌ Fallback también falló:', fallbackError);
+            }
+        }
     }
 }
 
