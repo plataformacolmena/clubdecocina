@@ -1,5 +1,5 @@
 // Módulo de gestión de cursos
-import { db } from './firebase-config.js';
+import { db, APP_CONFIG } from './firebase-config.js';
 import {
     collection,
     addDoc,
@@ -343,7 +343,7 @@ class CursosManager {
     }
 
     mostrarInformacionPago(curso) {
-        const { bankInfo } = window.APP_CONFIG;
+        const { bankInfo } = APP_CONFIG;
         
         const message = `
             ¡Te has inscripto exitosamente al curso "${curso.nombre}"!
