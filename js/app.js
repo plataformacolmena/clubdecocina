@@ -14,7 +14,7 @@ class App {
 
     initializeApp() {
         // Los managers se inicializan automáticamente al importarse
-        console.log('🎉 Club de Cocina Colmena - Aplicación iniciada');
+        console.log('🎉 Club de Cocina - Aplicación iniciada');
         
         // Agregar estilos CSS adicionales dinámicamente
         this.addDynamicStyles();

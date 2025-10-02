@@ -110,9 +110,10 @@ class InscripcionesManager {
                         ${inscripcion.comprobanteUrl ? `
                             <div class="card__info-item">
                                 <i class="fas fa-file-image"></i>
-                                <a href="${inscripcion.comprobanteUrl}" target="_blank" class="btn btn--outline btn--small">
+                                <button class="btn btn--outline btn--small ver-comprobante-btn" 
+                                        data-comprobante-url="${inscripcion.comprobanteUrl}">
                                     Ver Comprobante
-                                </a>
+                                </button>
                             </div>
                         ` : ''}
                     </div>
@@ -164,6 +165,14 @@ class InscripcionesManager {
                 const inscripcionId = e.target.dataset.inscripcionId;
                 const inscripcion = this.inscripciones.find(i => i.id === inscripcionId);
                 this.showPaymentDetails(inscripcion);
+            });
+        });
+
+        // Botones de ver comprobante
+        document.querySelectorAll('.ver-comprobante-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const comprobanteUrl = e.target.dataset.comprobanteUrl;
+                this.showComprobanteModal(comprobanteUrl);
             });
         });
 
@@ -539,6 +548,41 @@ class InscripcionesManager {
         } finally {
             window.authManager.hideLoading();
         }
+    }
+
+    // Mostrar modal con el comprobante
+    showComprobanteModal(comprobanteUrl) {
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal__content" style="max-width: 90vw; max-height: 90vh;">
+                <span class="modal__close">&times;</span>
+                <h2 class="modal__title">Comprobante de Pago</h2>
+                <div style="text-align: center; overflow: auto; max-height: 70vh;">
+                    <img src="${comprobanteUrl}" alt="Comprobante de Pago" 
+                         style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div style="display: none; padding: 2rem; color: #666;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <p>No se pudo cargar la imagen del comprobante.</p>
+                        <p>Esto puede ocurrir si el archivo se subió usando el método alternativo.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Event listeners
+        modal.querySelector('.modal__close').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
     }
 
     // Método para usar desde otros módulos
