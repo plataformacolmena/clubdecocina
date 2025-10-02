@@ -153,13 +153,40 @@ class AdminManager {
     }
 
     async loadAdminInscripciones() {
-        const q = query(collection(db, 'inscripciones'), orderBy('fechaInscripcion', 'desc'));
-        const querySnapshot = await getDocs(q);
-        
-        this.inscripciones = [];
-        querySnapshot.forEach((doc) => {
-            this.inscripciones.push({ id: doc.id, ...doc.data() });
-        });
+        try {
+            // Cargar todas las inscripciones
+            const inscripcionesQuery = query(collection(db, 'inscripciones'), orderBy('fechaInscripcion', 'desc'));
+            const inscripcionesSnapshot = await getDocs(inscripcionesQuery);
+            
+            // Cargar todos los cursos para obtener fechas completas
+            const cursosQuery = query(collection(db, 'cursos'));
+            const cursosSnapshot = await getDocs(cursosQuery);
+            
+            // Crear mapa de cursos para búsqueda rápida
+            const cursosMap = {};
+            cursosSnapshot.forEach((doc) => {
+                cursosMap[doc.id] = { id: doc.id, ...doc.data() };
+            });
+            
+            this.inscripciones = [];
+            inscripcionesSnapshot.forEach((doc) => {
+                const inscripcionData = { id: doc.id, ...doc.data() };
+                
+                // Agregar datos completos del curso si existe
+                if (inscripcionData.cursoId && cursosMap[inscripcionData.cursoId]) {
+                    const curso = cursosMap[inscripcionData.cursoId];
+                    inscripcionData.cursoFecha = curso.fecha;
+                    inscripcionData.cursoHorario = curso.horario;
+                    inscripcionData.cursoUbicacion = curso.ubicacion;
+                }
+                
+                this.inscripciones.push(inscripcionData);
+            });
+            
+        } catch (error) {
+            console.error('Error cargando inscripciones:', error);
+            window.authManager.showMessage('Error cargando inscripciones', 'error');
+        }
     }
 
     async loadAdminRecetas() {
@@ -573,7 +600,8 @@ class AdminManager {
     createInscripcionTableRow(inscripcion) {
         const fechaInscripcion = new Date(inscripcion.fechaInscripcion.seconds * 1000).toLocaleDateString('es-AR');
         const fechaCurso = inscripcion.cursoFecha ? 
-            new Date(inscripcion.cursoFecha.seconds * 1000).toLocaleDateString('es-AR') : 'N/A';
+            new Date(inscripcion.cursoFecha.seconds * 1000).toLocaleDateString('es-AR') : 
+            'Fecha no disponible';
 
         return `
             <tr>

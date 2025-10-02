@@ -25,8 +25,8 @@ export const db = getFirestore(app);
 
 // Emails de los administradores
 export const ADMIN_EMAIL = 'info@plataformacolmena.com';
-export const ADMIN_EMAIL1 = 'admin1@plataformacolmena.com'; 
-export const ADMIN_EMAIL2 = 'admin2@plataformacolmena.com';
+export const ADMIN_EMAIL1 = 'clubtiendacocina@gmail.com'; 
+export const ADMIN_EMAIL2 = 'agustinasantiago88@gmail.com';
 
 // Array de todos los emails de administradores para validación
 export const ADMIN_EMAILS = [ADMIN_EMAIL, ADMIN_EMAIL1, ADMIN_EMAIL2];
