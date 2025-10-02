@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club de Cocina Colmena</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="nav__brand">
+                <i class="fas fa-utensils"></i>
+                <span>Club de Cocina Colmena</span>
+            </div>
+            <div class="nav__menu" id="nav-menu">
+                <ul class="nav__list">
+                    <li class="nav__item">
+                        <a href="#home" class="nav__link active">Inicio</a>
+                    </li>
+                    <li class="nav__item user-section" style="display: none;">
+                        <a href="#cursos" class="nav__link">Cursos</a>
+                    </li>
+                    <li class="nav__item user-section" style="display: none;">
+                        <a href="#inscripciones" class="nav__link">Mis Inscripciones</a>
+                    </li>
+                    <li class="nav__item user-section" style="display: none;">
+                        <a href="#recetario" class="nav__link">Recetario</a>
+                    </li>
+                    <li class="nav__item admin-section" style="display: none;">
+                        <a href="#admin" class="nav__link">Administración</a>
+                    </li>
+                </ul>
+                <div class="nav__auth">
+                    <button id="login-btn" class="btn btn--secondary">Iniciar Sesión</button>
+                    <div id="user-menu" class="user-menu" style="display: none;">
+                        <span id="user-name"></span>
+                        <button id="logout-btn" class="btn btn--outline">Cerrar Sesión</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Home Section -->
+        <section id="home" class="section home">
+            <div class="container">
+                <div class="home__content">
+                    <h1 class="home__title">Bienvenido al Club de Cocina Colmena</h1>
+                    <p class="home__description">
+                        Descubre el arte de la cocina con nuestros cursos especializados. 
+                        Aprende técnicas culinarias, recetas exclusivas y comparte tu pasión por la gastronomía.
+                    </p>
+                    <div class="home__actions">
+                        <button id="home-register-btn" class="btn btn--primary">Registrarse</button>
+                        <button id="home-login-btn" class="btn btn--secondary">Iniciar Sesión</button>
+                    </div>
+                </div>
+                <div class="home__image">
+                    <i class="fas fa-chef-hat"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cursos Section -->
+        <section id="cursos" class="section cursos" style="display: none;">
+            <div class="container">
+                <h2 class="section__title">Cursos Disponibles</h2>
+                <div class="filters">
+                    <input type="text" id="search-cursos" placeholder="Buscar cursos..." class="input">
+                    <select id="filter-fecha" class="select">
+                        <option value="">Todas las fechas</option>
+                    </select>
+                </div>
+                <div id="cursos-grid" class="cursos__grid">
+                    <!-- Los cursos se cargarán dinámicamente -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Inscripciones Section -->
+        <section id="inscripciones" class="section inscripciones" style="display: none;">
+            <div class="container">
+                <h2 class="section__title">Mis Inscripciones</h2>
+                <div id="inscripciones-list" class="inscripciones__list">
+                    <!-- Las inscripciones se cargarán dinámicamente -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Recetario Section -->
+        <section id="recetario" class="section recetario" style="display: none;">
+            <div class="container">
+                <h2 class="section__title">Recetario</h2>
+                <div class="filters">
+                    <input type="text" id="search-recetas" placeholder="Buscar recetas..." class="input">
+                    <select id="filter-curso" class="select">
+                        <option value="">Todos los cursos</option>
+                    </select>
+                </div>
+                <div id="recetas-grid" class="recetas__grid">
+                    <!-- Las recetas se cargarán dinámicamente -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Section -->
+        <section id="admin" class="section admin" style="display: none;">
+            <div class="container">
+                <h2 class="section__title">Panel de Administración</h2>
+                <div class="admin__tabs">
+                    <button class="tab-btn active" data-tab="cursos-admin">Gestión de Cursos</button>
+                    <button class="tab-btn" data-tab="inscripciones-admin">Inscripciones</button>
+                    <button class="tab-btn" data-tab="recetas-admin">Recetas</button>
+                </div>
+
+                <!-- Gestión de Cursos -->
+                <div id="cursos-admin" class="tab-content active">
+                    <div class="admin__actions">
+                        <button id="nuevo-curso-btn" class="btn btn--primary">
+                            <i class="fas fa-plus"></i> Nuevo Curso
+                        </button>
+                    </div>
+                    <div id="admin-cursos-grid" class="admin__grid">
+                        <!-- Los cursos se cargarán dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Gestión de Inscripciones -->
+                <div id="inscripciones-admin" class="tab-content">
+                    <div class="filters">
+                        <select id="filter-curso-admin" class="select">
+                            <option value="">Todos los cursos</option>
+                        </select>
+                        <select id="filter-estado" class="select">
+                            <option value="">Todos los estados</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="pagado">Pagado</option>
+                            <option value="confirmado">Confirmado</option>
+                        </select>
+                    </div>
+                    <div id="admin-inscripciones-list" class="admin__list">
+                        <!-- Las inscripciones se cargarán dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Gestión de Recetas -->
+                <div id="recetas-admin" class="tab-content">
+                    <div class="admin__actions">
+                        <button id="nueva-receta-btn" class="btn btn--primary">
+                            <i class="fas fa-plus"></i> Nueva Receta
+                        </button>
+                    </div>
+                    <div id="admin-recetas-grid" class="admin__grid">
+                        <!-- Las recetas se cargarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <!-- Modal de Login -->
+    <div id="login-modal" class="modal">
+        <div class="modal__content">
+            <span class="modal__close">&times;</span>
+            <h2 class="modal__title">Iniciar Sesión</h2>
+            <form id="login-form" class="form">
+                <div class="form__group">
+                    <input type="email" id="login-email" class="input" placeholder="Correo electrónico" required>
+                </div>
+                <div class="form__group">
+                    <input type="password" id="login-password" class="input" placeholder="Contraseña" required>
+                </div>
+                <button type="submit" class="btn btn--primary btn--full">Iniciar Sesión</button>
+            </form>
+            <div class="divider">
+                <span>O continúa con</span>
+            </div>
+            <div class="social-login">
+                <button id="google-login" class="btn btn--social btn--google">
+                    <i class="fab fa-google"></i> Google
+                </button>
+                <button id="microsoft-login" class="btn btn--social btn--microsoft">
+                    <i class="fab fa-microsoft"></i> Microsoft
+                </button>
+            </div>
+            <p class="modal__footer">
+                ¿No tienes cuenta? 
+                <a href="#" id="show-register">Regístrate aquí</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Modal de Registro -->
+    <div id="register-modal" class="modal">
+        <div class="modal__content">
+            <span class="modal__close">&times;</span>
+            <h2 class="modal__title">Registrarse</h2>
+            <form id="register-form" class="form">
+                <div class="form__group">
+                    <input type="text" id="register-name" class="input" placeholder="Nombre completo" required>
+                </div>
+                <div class="form__group">
+                    <input type="email" id="register-email" class="input" placeholder="Correo electrónico" required>
+                </div>
+                <div class="form__group">
+                    <input type="tel" id="register-phone" class="input" placeholder="Teléfono">
+                </div>
+                <div class="form__group">
+                    <input type="password" id="register-password" class="input" placeholder="Contraseña" required>
+                </div>
+                <div class="form__group">
+                    <input type="password" id="register-confirm" class="input" placeholder="Confirmar contraseña" required>
+                </div>
+                <button type="submit" class="btn btn--primary btn--full">Registrarse</button>
+            </form>
+            <div class="divider">
+                <span>O continúa con</span>
+            </div>
+            <div class="social-login">
+                <button id="google-register" class="btn btn--social btn--google">
+                    <i class="fab fa-google"></i> Google
+                </button>
+                <button id="microsoft-register" class="btn btn--social btn--microsoft">
+                    <i class="fab fa-microsoft"></i> Microsoft
+                </button>
+            </div>
+            <p class="modal__footer">
+                ¿Ya tienes cuenta? 
+                <a href="#" id="show-login">Inicia sesión aquí</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/google-drive.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/cursos.js"></script>
+    <script type="module" src="js/inscripciones.js"></script>
+    <script type="module" src="js/recetas.js"></script>
+    <script type="module" src="js/admin.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
