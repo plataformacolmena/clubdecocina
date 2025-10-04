@@ -395,8 +395,8 @@ body {
 .column-config-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 18px;
-    margin: 20px 0;
+    gap: 12px;
+    margin: 15px 0;
     height: auto;
     min-height: fit-content;
 }
@@ -432,14 +432,14 @@ body {
 
 .column-config-item {
     background: var(--light-gray);
-    padding: 8px;
-    border-radius: var(--border-radius);
-    border: 2px solid transparent;
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid transparent;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 45px;
+    min-height: 36px;
     height: auto;
 }
 
@@ -451,12 +451,12 @@ body {
 .checkbox-label {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     cursor: pointer;
     font-weight: 400;
     color: var(--text-dark);
     margin: 0;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -464,10 +464,10 @@ body {
 }
 
 .checkbox-label .checkmark {
-    width: 20px;
-    height: 20px;
-    border: 2px solid #ddd;
-    border-radius: 4px;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
     position: relative;
     transition: all 0.2s;
     flex-shrink: 0;
@@ -486,7 +486,7 @@ body {
     transform: translate(-50%, -50%);
     color: white;
     font-weight: bold;
-    font-size: 12px;
+    font-size: 10px;
 }
 
 .checkbox-label input[type="checkbox"]:disabled + .checkmark {
@@ -497,7 +497,8 @@ body {
 
 .checkbox-label i {
     color: var(--primary-color);
-    width: 16px;
+    width: 14px;
+    font-size: 0.8rem;
 }
 
 .modal__content--medium {
@@ -574,57 +575,65 @@ body {
     border-radius: 12px;
 }
 
-/* Ajustes responsive específicos para modal horizontal */
+/* Responsive para modal de columnas */
 @media (max-width: 768px) {
-    .modal__content--medium {
-        width: 96vw;
-        margin: 20px auto;
-        padding: 2rem;
-        max-height: 90vh;
+    .modal__content--columns {
+        width: 98vw;
+        padding: 1rem;
+        min-width: unset;
+        max-width: none;
     }
     
     .column-config-item {
-        padding: 6px;
-        min-height: 42px;
+        padding: 4px;
+        min-height: 32px;
+    }
+    
+    .column-config-grid {
+        gap: 8px;
+        margin: 10px 0;
     }
     
     .modal__title {
-        font-size: 1.4rem;
-        margin-bottom: 1.2rem;
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
     }
     
     .modal__description {
-        font-size: 0.9rem;
-        margin-bottom: 15px;
+        font-size: 0.85rem;
+        margin-bottom: 10px;
     }
 }
 
 @media (max-width: 480px) {
-    .modal__content--medium {
-        width: 95vw;
-        margin: 10px auto;
-        padding: 1.5rem;
-        max-height: 95vh;
-        border-radius: var(--border-radius);
+    .modal__content--columns {
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        padding: 1rem;
+        border-radius: 0;
+        max-height: 100vh;
     }
     
     .column-config-grid {
-        margin: 15px 0;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+        margin: 10px 0;
     }
     
     .checkbox-label {
-        font-size: 0.85rem;
-        gap: 6px;
+        font-size: 0.8rem;
+        gap: 4px;
     }
     
     .column-config-item {
-        min-height: 38px;
-        padding: 6px;
+        min-height: 30px;
+        padding: 4px;
     }
     
     #restore-default-columns {
-        font-size: 0.85rem;
-        padding: 10px 14px;
+        font-size: 0.8rem;
+        padding: 8px 12px;
     }
 }
 
@@ -696,6 +705,19 @@ body {
     max-width: 400px;
     position: relative;
     animation: slideIn 0.3s ease;
+}
+
+.modal__content--columns {
+    background-color: var(--white);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    width: 95%;
+    max-width: 800px;
+    min-width: 600px;
+    position: relative;
+    animation: slideIn 0.3s ease;
+    max-height: 85vh;
+    overflow-y: auto;
 }
 
 .modal__close {
