@@ -395,53 +395,52 @@ body {
 .column-config-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 15px;
-    margin: 15px 0;
-    max-height: 200px;
+    gap: 18px;
+    margin: 20px 0;
+    height: auto;
+    min-height: fit-content;
 }
 
 /* Responsive grid para orientación horizontal */
 @media (max-width: 1200px) {
     .column-config-grid {
         grid-template-columns: repeat(4, 1fr);
-        grid-template-rows: repeat(3, 1fr);
+        gap: 16px;
     }
 }
 
 @media (max-width: 900px) {
     .column-config-grid {
         grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: repeat(3, 1fr);
+        gap: 15px;
     }
 }
 
 @media (max-width: 640px) {
     .column-config-grid {
         grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: repeat(5, 1fr);
-        max-height: 300px;
+        gap: 14px;
     }
 }
 
 @media (max-width: 480px) {
     .column-config-grid {
         grid-template-columns: 1fr;
-        grid-template-rows: repeat(9, 1fr);
-        max-height: 400px;
+        gap: 12px;
     }
 }
 
 .column-config-item {
     background: var(--light-gray);
-    padding: 12px;
+    padding: 14px;
     border-radius: var(--border-radius);
     border: 2px solid transparent;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 60px;
+    min-height: 65px;
+    height: auto;
 }
 
 .column-config-item:hover {
@@ -503,10 +502,11 @@ body {
 .modal__content--medium {
     max-width: 1200px;
     width: 98vw;
-    min-height: 40vh;
-    max-height: 70vh;
+    height: auto;
+    min-height: fit-content;
+    max-height: 85vh;
     overflow-y: auto;
-    aspect-ratio: 16/9;
+    padding: 2.5rem;
 }
 
 .modal__actions {
@@ -576,56 +576,63 @@ body {
 /* Ajustes responsive específicos para modal horizontal */
 @media (max-width: 768px) {
     .modal__content--medium {
-        width: 98vw;
-        margin: 10px;
-        padding: 1.5rem;
-        aspect-ratio: 4/3;
-        min-height: 50vh;
+        width: 96vw;
+        margin: 20px auto;
+        padding: 2rem;
+        max-height: 90vh;
     }
     
     .column-config-item {
-        padding: 10px;
-        min-height: 50px;
+        padding: 12px;
+        min-height: 55px;
     }
     
     .modal__title {
         font-size: 1.4rem;
-        margin-bottom: 1rem;
+        margin-bottom: 1.2rem;
     }
     
     .modal__description {
         font-size: 0.9rem;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
     }
 }
 
 @media (max-width: 480px) {
     .modal__content--medium {
+        width: 95vw;
+        margin: 10px auto;
+        padding: 1.5rem;
+        max-height: 95vh;
+        border-radius: var(--border-radius);
+    }
+    
+    .column-config-grid {
+        margin: 15px 0;
+    }
+    
+    .checkbox-label {
+        font-size: 0.9rem;
+    }
+    
+    .column-config-item {
+        min-height: 50px;
+        padding: 10px;
+    }
+    
+    #restore-default-columns {
+        font-size: 0.85rem;
+        padding: 10px 14px;
+    }
+}
+
+@media (max-width: 360px) {
+    .modal__content--medium {
         width: 100vw;
         height: 100vh;
         margin: 0;
         border-radius: 0;
-        max-height: 100vh;
-        aspect-ratio: unset;
-    }
-    
-    .column-config-grid {
-        gap: 12px;
-        margin: 10px 0;
-    }
-    
-    .checkbox-label {
-        font-size: 0.85rem;
-    }
-    
-    .column-config-item {
-        min-height: 45px;
-        padding: 8px;
-    }
-    
-    #restore-default-columns {
-        font-size: 0.8rem;
-        padding: 8px 12px;
+        padding: 1.5rem;
     }
 }
 
