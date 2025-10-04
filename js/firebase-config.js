@@ -23,14 +23,6 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 // export const storage = getStorage(app); // DESHABILITADO - Plan Spark
 
-// Emails de los administradores
-export const ADMIN_EMAIL = 'info@plataformacolmena.com';
-export const ADMIN_EMAIL1 = 'clubtiendacocina@gmail.com'; 
-export const ADMIN_EMAIL2 = 'agustinasantiago88@gmail.com';
-
-// Array de todos los emails de administradores para validación
-export const ADMIN_EMAILS = [ADMIN_EMAIL, ADMIN_EMAIL1, ADMIN_EMAIL2];
-
 // Configuración de Google Drive (DESACTIVADA - usando Base64 en Firestore)
 // NOTA: Para reactivar Google Drive, cambiar useGoogleDrive a true y configurar OAuth2
 export const GOOGLE_DRIVE_CONFIG = {
@@ -51,10 +43,8 @@ export const APP_CONFIG = {
     currency: 'ARS',
     dateFormat: 'es-AR',
     useGoogleDrive: false, // Desactivado - usando sistema Base64 en Firestore
-    // Sistema de administradores dinámico
+    // Sistema de administradores dinámico (solo Firestore)
     adminSystem: {
-        useDynamicAdmins: true, // Usar Firestore en lugar de variables hardcodeadas
-        fallbackToHardcoded: true, // Fallback a ADMIN_EMAILS si Firestore falla
         cacheExpiry: 5 * 60 * 1000, // Cache por 5 minutos
         collection: 'admins'
     },

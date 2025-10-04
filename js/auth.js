@@ -1,5 +1,5 @@
 // Módulo de autenticación
-import { auth, db, ADMIN_EMAIL, ADMIN_EMAIL1, ADMIN_EMAIL2, ADMIN_EMAILS, APP_CONFIG } from './firebase-config.js';
+import { auth, db, APP_CONFIG } from './firebase-config.js';
 import { 
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -31,51 +31,15 @@ class AdminManager {
     constructor() {
         this.adminCache = new Map();
         this.cacheExpiry = APP_CONFIG.adminSystem.cacheExpiry;
-        this.isInitialized = false;
     }
 
-    // Inicializar administradores por defecto en Firestore
-    async initializeDefaultAdmins() {
-        try {
-            console.log('🔐 Inicializando administradores por defecto...');
-            
-            for (const email of ADMIN_EMAILS) {
-                const adminDoc = doc(db, APP_CONFIG.adminSystem.collection, email);
-                const adminExists = await getDoc(adminDoc);
-                
-                if (!adminExists.exists()) {
-                    await setDoc(adminDoc, {
-                        email: email,
-                        role: 'admin',
-                        active: true,
-                        createdAt: serverTimestamp(),
-                        createdBy: 'system',
-                        permissions: ['all'], // Permisos completos
-                        lastLogin: null
-                    });
-                    console.log(`✅ Admin inicializado: ${email}`);
-                }
-            }
-            
-            this.isInitialized = true;
-            console.log('✅ Sistema de administradores inicializado');
-            
-        } catch (error) {
-            console.error('❌ Error inicializando administradores:', error);
-            this.isInitialized = false;
-        }
-    }
 
-    // Verificar si un usuario es administrador (método principal)
+
+    // Verificar si un usuario es administrador (solo Firestore)
     async isUserAdmin(userEmail) {
         if (!userEmail) return false;
 
         try {
-            // Si el sistema dinámico está deshabilitado, usar fallback
-            if (!APP_CONFIG.adminSystem.useDynamicAdmins) {
-                return ADMIN_EMAILS.includes(userEmail);
-            }
-
             // Verificar cache primero
             const cached = this.adminCache.get(userEmail);
             if (cached && Date.now() < cached.expiry) {
@@ -95,14 +59,7 @@ class AdminManager {
 
         } catch (error) {
             console.error('❌ Error verificando admin:', error);
-            
-            // Fallback a sistema hardcodeado si está habilitado
-            if (APP_CONFIG.adminSystem.fallbackToHardcoded) {
-                console.log('🔄 Usando fallback a administradores hardcodeados');
-                return ADMIN_EMAILS.includes(userEmail);
-            }
-            
-            return false; // Por seguridad, denegar acceso
+            return false; // Por seguridad, denegar acceso si falla Firestore
         }
     }
 
@@ -258,12 +215,7 @@ class AuthManager {
             this.currentUser = user;
             
             if (user) {
-                // Inicializar administradores por defecto si es la primera vez
-                if (!this.adminManager.isInitialized) {
-                    await this.adminManager.initializeDefaultAdmins();
-                }
-                
-                // Verificar si es administrador usando el nuevo sistema
+                // Verificar si es administrador usando Firestore
                 this.isAdmin = await this.adminManager.isUserAdmin(user.email);
                 
                 // Crear/actualizar documento de usuario

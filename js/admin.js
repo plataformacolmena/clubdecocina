@@ -1,5 +1,5 @@
 // Módulo de administración
-import { db, APP_CONFIG, ADMIN_EMAILS } from './firebase-config.js';
+import { db, APP_CONFIG, auth } from './firebase-config.js';
 import {
     collection,
     addDoc,
@@ -1932,7 +1932,7 @@ class AdminManager {
                 details,
                 timestamp: new Date(),
                 userEmail: auth.currentUser?.email || 'sistema',
-                userType: ADMIN_EMAILS.includes(auth.currentUser?.email) ? 'admin' : 'alumno',
+                userType: await window.authManager?.adminManager?.isUserAdmin(auth.currentUser?.email) ? 'admin' : 'alumno',
                 sessionId: this.getSessionId(),
                 userAgent: navigator.userAgent,
                 url: window.location.href
