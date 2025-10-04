@@ -1340,12 +1340,31 @@ body {
     color: #721c24;
 }
 
-.admin-status--system {
-    background: #cce7ff;
-    color: #004085;
-}
+    .admin-status--system {
+        background: #cce7ff;
+        color: #004085;
+    }
 
-/* Responsive para logs */
+    /* Badges para administradores */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+
+    .badge--primary {
+        background: var(--primary-color);
+        color: var(--white);
+    }
+
+    .badge--secondary {
+        background: var(--text-light);
+        color: var(--white);
+    }/* Responsive para logs */
 @media (max-width: 768px) {
     .logs-stats {
         grid-template-columns: repeat(2, 1fr);

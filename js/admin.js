@@ -1,10 +1,11 @@
 // Módulo de administración
-import { db, APP_CONFIG } from './firebase-config.js';
+import { db, APP_CONFIG, ADMIN_EMAILS } from './firebase-config.js';
 import {
     collection,
     addDoc,
     getDocs,
     doc,
+    getDoc,
     updateDoc,
     deleteDoc,
     query,
@@ -73,12 +74,12 @@ class AdminManager {
     
     setupAdminTabs() {
         // Manejar clicks en las tabs
-        document.querySelectorAll('.admin-tab').forEach(tab => {
+        document.querySelectorAll('.tab-btn').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 e.preventDefault();
                 
                 // Remover clase activa de todas las tabs
-                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
                 
                 // Activar la tab clickeada
@@ -86,22 +87,22 @@ class AdminManager {
                 
                 // Mostrar el contenido correspondiente
                 const targetTab = tab.getAttribute('data-tab');
-                const targetContent = document.getElementById(targetTab + '-tab');
+                const targetContent = document.getElementById(targetTab);
                 if (targetContent) {
                     targetContent.classList.add('active');
                 }
                 
                 // Cargar datos específicos según la tab
-                if (targetTab === 'system-logs') {
+                if (targetTab === 'logs-admin') {
                     this.loadSystemLogs();
-                } else if (targetTab === 'administradores') {
+                } else if (targetTab === 'administradores-admin') {
                     this.loadAdministratorsTab();
                 }
             });
         });
         
         // Activar la primera tab por defecto
-        const firstTab = document.querySelector('.admin-tab');
+        const firstTab = document.querySelector('.tab-btn');
         const firstContent = document.querySelector('.tab-content');
         if (firstTab && firstContent) {
             firstTab.classList.add('active');
@@ -117,34 +118,57 @@ class AdminManager {
         try {
             console.log('📋 Cargando gestión de administradores...');
             
+            // Asegurar que authManager esté disponible
+            if (!window.authManager) {
+                console.log('⏳ Esperando authManager...');
+                // Esperar un poco y reintentar
+                setTimeout(() => this.loadAdministratorsTab(), 500);
+                return;
+            }
+            
+            // Configurar event listeners PRIMERO
+            this.setupAdminManagementListeners();
+            
             // Cargar lista de administradores
             await this.loadAdminsList();
             
             // Actualizar estadísticas
             await this.updateAdminsStats();
             
-            // Configurar event listeners si no están configurados
-            this.setupAdminManagementListeners();
+            console.log('✅ Gestión de administradores cargada');
             
         } catch (error) {
-            console.error('Error cargando administradores:', error);
+            console.error('❌ Error cargando administradores:', error);
             window.authManager?.showMessage('Error cargando administradores', 'error');
         }
     }
 
     async loadAdminsList() {
         try {
+            console.log('🔄 Cargando lista de administradores...');
+            
+            // Verificar si authManager existe
+            if (!window.authManager) {
+                console.error('❌ AuthManager no está disponible');
+                throw new Error('AuthManager no inicializado');
+            }
+            
+            console.log('✅ AuthManager disponible, obteniendo lista...');
             const admins = await window.authManager.getAdminList();
+            console.log('📋 Administradores obtenidos:', admins);
+            
             this.renderAdminsTable(admins);
+            console.log('✅ Tabla renderizada');
+            
         } catch (error) {
-            console.error('Error obteniendo lista de administradores:', error);
+            console.error('❌ Error obteniendo lista de administradores:', error);
             const tbody = document.getElementById('admins-table-body');
             if (tbody) {
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="6" style="text-align: center; padding: 40px; color: #dc3545;">
                             <i class="fas fa-exclamation-triangle"></i><br>
-                            Error cargando administradores
+                            Error: ${error.message || 'Error cargando administradores'}
                         </td>
                     </tr>
                 `;
@@ -285,21 +309,29 @@ class AdminManager {
     }
 
     async handleAddAdmin() {
+        console.log('🔄 Iniciando proceso de agregar administrador...');
+        
         const emailInput = document.getElementById('new-admin-email');
         const email = emailInput.value.trim();
+        
+        console.log('📧 Email ingresado:', email);
 
         if (!email) {
+            console.log('❌ Email vacío');
             window.authManager?.showMessage('Ingresa un email válido', 'error');
             return;
         }
 
         if (!this.isValidEmail(email)) {
+            console.log('❌ Formato de email inválido');
             window.authManager?.showMessage('El formato del email no es válido', 'error');
             return;
         }
 
         try {
+            console.log('🔄 Llamando addNewAdmin...');
             const result = await window.authManager.addNewAdmin(email);
+            console.log('📋 Resultado:', result);
             
             if (result.success) {
                 window.authManager?.showMessage('Administrador agregado exitosamente', 'success');
