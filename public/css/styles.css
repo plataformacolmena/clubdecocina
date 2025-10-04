@@ -391,33 +391,57 @@ body {
     color: #004085;
 }
 
-/* Configuración de columnas */
+/* Configuración de columnas - Layout horizontal */
 .column-config-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin: 20px 0;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 15px;
+    margin: 15px 0;
+    max-height: 200px;
 }
 
-/* Responsive grid para diferentes pantallas */
-@media (max-width: 1024px) {
+/* Responsive grid para orientación horizontal */
+@media (max-width: 1200px) {
     .column-config-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .column-config-grid {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
     }
 }
 
 @media (max-width: 640px) {
     .column-config-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(5, 1fr);
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .column-config-grid {
         grid-template-columns: 1fr;
+        grid-template-rows: repeat(9, 1fr);
+        max-height: 400px;
     }
 }
 
 .column-config-item {
     background: var(--light-gray);
-    padding: 15px;
+    padding: 12px;
     border-radius: var(--border-radius);
     border: 2px solid transparent;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
 }
 
 .column-config-item:hover {
@@ -477,11 +501,12 @@ body {
 }
 
 .modal__content--medium {
-    max-width: 900px;
-    width: 95vw;
-    min-height: 60vh;
-    max-height: 90vh;
+    max-width: 1200px;
+    width: 98vw;
+    min-height: 40vh;
+    max-height: 70vh;
     overflow-y: auto;
+    aspect-ratio: 16/9;
 }
 
 .modal__actions {
@@ -548,16 +573,19 @@ body {
     border-radius: 12px;
 }
 
-/* Ajustes responsive específicos para modal de columnas */
+/* Ajustes responsive específicos para modal horizontal */
 @media (max-width: 768px) {
     .modal__content--medium {
         width: 98vw;
         margin: 10px;
         padding: 1.5rem;
+        aspect-ratio: 4/3;
+        min-height: 50vh;
     }
     
     .column-config-item {
-        padding: 12px;
+        padding: 10px;
+        min-height: 50px;
     }
     
     .modal__title {
@@ -567,6 +595,7 @@ body {
     
     .modal__description {
         font-size: 0.9rem;
+        margin-bottom: 10px;
     }
 }
 
@@ -577,14 +606,21 @@ body {
         margin: 0;
         border-radius: 0;
         max-height: 100vh;
+        aspect-ratio: unset;
     }
     
     .column-config-grid {
-        gap: 15px;
+        gap: 12px;
+        margin: 10px 0;
     }
     
     .checkbox-label {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+    }
+    
+    .column-config-item {
+        min-height: 45px;
+        padding: 8px;
     }
     
     #restore-default-columns {
