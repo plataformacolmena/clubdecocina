@@ -144,10 +144,10 @@ class AdminManager {
     // Obtener lista de administradores activos (solo para otros admins)
     async getActiveAdmins() {
         try {
+            // Consulta simplificada para evitar índice compuesto
             const adminsQuery = query(
                 collection(db, APP_CONFIG.adminSystem.collection),
-                where('active', '==', true),
-                orderBy('createdAt', 'asc')
+                where('active', '==', true)
             );
             
             const querySnapshot = await getDocs(adminsQuery);
@@ -155,6 +155,13 @@ class AdminManager {
             
             querySnapshot.forEach((doc) => {
                 admins.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // Ordenar en memoria por fecha de creación
+            admins.sort((a, b) => {
+                const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+                const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+                return dateA - dateB;
             });
             
             return admins;
