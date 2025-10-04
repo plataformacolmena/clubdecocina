@@ -27,21 +27,25 @@ En el mismo archivo, cambiar:
 export const ADMIN_EMAIL = 'info@plataformacolmena.com';
 ```
 
-### 3. Configurar Datos Bancarios
+### 3. ✅ Datos Bancarios (Configuración Dinámica)
 
-Actualizar la información de pago:
-```javascript
-export const APP_CONFIG = {
-    currency: 'ARS',
-    dateFormat: 'es-AR', 
-    bankInfo: {
-        account: '6557575/67',
-        cbu: '22222222222222222',
-        alias: 'TU.ALIAS.BANCARIO',
-        bank: 'Banco'
-    }
-};
-```
+**🎉 ¡Ya no necesitas configurar datos bancarios en el código!**
+
+Los datos bancarios ahora se gestionan dinámicamente desde el **Panel de Administración**:
+
+1. **Registra tu cuenta admin** (paso 2)
+2. **Accede al Panel** → Pestaña **"Cuentas"**
+3. **Configura tu cuenta bancaria** con:
+   - **CVU/CBU**: Tu clave bancaria uniforme
+   - **Alias**: Tu alias bancario  
+   - **CUIT**: CUIT del titular (formato XX-XXXXXXXX-X)
+   - **Titular**: Nombre completo del titular
+
+✅ **Ventajas del nuevo sistema:**
+- Cambios sin tocar código
+- Múltiples cuentas bancarias
+- Activar/desactivar cuentas
+- Validaciones automáticas
 
 ## 🏗️ Configuración de Firebase
 
@@ -63,6 +67,50 @@ export const APP_CONFIG = {
 2. Crear base de datos
 3. Modo: "Iniciar en modo de prueba" (temporal)
 4. Las reglas se actualizarán automáticamente con el archivo `firestore.rules`
+
+## 🏦 Sistema de Cuentas Bancarias Dinámico
+
+### ✨ Nueva Funcionalidad Implementada
+El sistema ahora gestiona los datos bancarios de forma **completamente dinámica** desde la interfaz web:
+
+### 🎯 Características Principales:
+- **✅ Sin hardcodeo**: No más datos bancarios en el código
+- **✅ CRUD completo**: Crear, editar, activar/desactivar cuentas
+- **✅ Validaciones automáticas**: CVU (22 dígitos), CUIT (XX-XXXXXXXX-X)
+- **✅ Múltiples cuentas**: Soporte para varias cuentas bancarias
+- **✅ Estado dinámico**: Solo cuentas activas se muestran a alumnos
+
+### 📋 Cómo Configurar (Una vez desplegada la aplicación):
+
+1. **Acceder como Administrador**
+   - Registrarse con el email configurado como admin
+   - Ir al Panel de Administración
+
+2. **Gestionar Cuentas Bancarias**
+   - Clic en pestaña **"Cuentas"**
+   - Botón **"Nueva Cuenta Bancaria"**
+
+3. **Completar Datos Requeridos:**
+   - **CVU/CBU**: Clave Bancaria Uniforme (22 dígitos)
+   - **Alias**: Tu alias bancario (ej: COLMENA.COCINA.CLUB)
+   - **CUIT**: CUIT del titular (formato: 20-12345678-9)
+   - **Titular**: Nombre completo del titular de la cuenta
+
+4. **Activar la Cuenta**
+   - Marcar como "Cuenta Activa"
+   - Solo las cuentas activas aparecen a los alumnos
+
+### 🔄 Migración Automática
+- Al primer acceso de admin, se crea una cuenta de ejemplo
+- Puedes editarla con tus datos reales
+- El sistema funciona inmediatamente
+
+### 💡 Ventajas del Sistema Dinámico:
+- **Flexibilidad**: Cambiar datos sin tocar código ni redeployar
+- **Múltiples cuentas**: Gestionar varias opciones de pago
+- **Control de estado**: Activar/desactivar según necesidad
+- **Validaciones**: Garantiza formato correcto de datos bancarios
+- **Historial**: Ver todas las cuentas configuradas históricamente
 
 ### ⚠️ Storage DESHABILITADO (Plan Spark)
 Firebase Storage requiere plan Blaze. Como alternativa:
@@ -270,7 +318,7 @@ firebase emulators:start
 - [ ] Firebase proyecto creado
 - [x] Credenciales configuradas en `firebase-config.js`
 - [x] Email de admin configurado
-- [x] Datos bancarios actualizados
+- [x] ✅ Sistema de cuentas bancarias dinámico implementado
 - [ ] Authentication habilitado (Email, Google, Microsoft)
 - [ ] Firestore Database creado
 - [ ] ⚠️ Storage OMITIDO (Plan Spark) - Configurar Google Drive como alternativa
@@ -354,15 +402,22 @@ Si no configuras Google Drive:
 Una vez configurado correctamente:
 
 1. **Registrar cuenta admin** con el email configurado
-2. **Crear primeros cursos** desde panel admin
-3. **Probar inscripción** como alumno
-4. **Subir recetas** con imágenes
-5. **Configurar Google Drive** (opcional pero recomendado)
-6. **Configurar dominio personalizado** (opcional)
+2. **🏦 Configurar cuenta bancaria** desde Panel → Cuentas
+3. **Crear primeros cursos** desde panel admin
+4. **Probar inscripción** como alumno
+5. **Subir recetas** con imágenes
+6. **Configurar Google Drive** (opcional pero recomendado)
+7. **Configurar dominio personalizado** (opcional)
 
 ---
 
 **¡La aplicación está lista para usar! 🎉**
+
+### 🚀 Pasos Finales:
+1. **Registrar cuenta admin** con el email configurado
+2. **🏦 Configurar cuenta bancaria** en Panel → Cuentas (¡NUEVO!)
+3. **Crear cursos y recetas** desde panel administrativo
+4. **¡Listo para recibir alumnos!**
 
 *Recuerda: El primer usuario que se registre con el ADMIN_EMAIL tendrá permisos de administrador automáticamente.*
 
