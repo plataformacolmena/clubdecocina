@@ -342,8 +342,22 @@ class CursosManager {
         return !querySnapshot.empty;
     }
 
-    mostrarInformacionPago(curso) {
-        const { bankInfo } = APP_CONFIG;
+    async mostrarInformacionPago(curso) {
+        // Obtener datos bancarios dinámicos
+        const bankAccount = await window.bankAccountManager?.getActiveAccount();
+        
+        if (!bankAccount) {
+            const message = `
+                ¡Te has inscripto exitosamente al curso "${curso.nombre}"!
+                
+                ⚠️ Los datos bancarios no están configurados.
+                Por favor contacta al administrador para obtener la información de pago.
+                
+                Luego sube tu comprobante en "Mis Inscripciones".
+            `;
+            alert(message);
+            return;
+        }
         
         const message = `
             ¡Te has inscripto exitosamente al curso "${curso.nombre}"!
@@ -351,10 +365,10 @@ class CursosManager {
             Para completar tu inscripción, realiza la transferencia:
             
             Monto: $${curso.costo.toLocaleString()}
-            Cuenta: ${bankInfo.account}
-            CBU: ${bankInfo.cbu}
-            Alias: ${bankInfo.alias}
-            Banco: ${bankInfo.bank}
+            CVU/CBU: ${bankAccount.cvu}
+            Alias: ${bankAccount.alias}
+            CUIT: ${bankAccount.cuit}
+            Titular: ${bankAccount.titular}
             
             Luego sube tu comprobante en "Mis Inscripciones".
         `;
@@ -373,10 +387,10 @@ class CursosManager {
                     
                     <div class="bank-details">
                         <h3>Datos para transferencia:</h3>
-                        <p><strong>Cuenta:</strong> ${bankInfo.account}</p>
-                        <p><strong>CBU:</strong> ${bankInfo.cbu}</p>
-                        <p><strong>Alias:</strong> ${bankInfo.alias}</p>
-                        <p><strong>Banco:</strong> ${bankInfo.bank}</p>
+                        <p><strong>CVU/CBU:</strong> ${bankAccount.cvu}</p>
+                        <p><strong>Alias:</strong> ${bankAccount.alias}</p>
+                        <p><strong>CUIT:</strong> ${bankAccount.cuit}</p>
+                        <p><strong>Titular:</strong> ${bankAccount.titular}</p>
                     </div>
                     
                     <p class="note">

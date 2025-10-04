@@ -371,53 +371,89 @@ class InscripcionesManager {
         });
     }
 
-    showPaymentDetails(inscripcion) {
-        const { bankInfo } = APP_CONFIG;
+    async showPaymentDetails(inscripcion) {
+        // Obtener datos bancarios dinámicos
+        const bankAccount = await window.bankAccountManager?.getActiveAccount();
         
         const modal = document.createElement('div');
         modal.className = 'modal active';
-        modal.innerHTML = `
-            <div class="modal__content">
-                <span class="modal__close">&times;</span>
-                <h2 class="modal__title">Datos de Pago</h2>
-                <div class="payment-details">
-                    <div class="course-info">
-                        <h3>${inscripcion.cursoNombre}</h3>
-                        <p><strong>Monto:</strong> $${inscripcion.costo.toLocaleString()}</p>
-                        <p><strong>Estado:</strong> ${this.getEstadoText(inscripcion.estado)}</p>
-                    </div>
-                    
-                    <div class="bank-details">
-                        <h3>Datos para transferencia:</h3>
-                        <div class="bank-info">
-                            <p><strong>Cuenta:</strong> ${bankInfo.account}</p>
-                            <p><strong>CBU:</strong> ${bankInfo.cbu}</p>
-                            <p><strong>Alias:</strong> ${bankInfo.alias}</p>
-                            <p><strong>Banco:</strong> ${bankInfo.bank}</p>
+        
+        if (!bankAccount) {
+            modal.innerHTML = `
+                <div class="modal__content">
+                    <span class="modal__close">&times;</span>
+                    <h2 class="modal__title">Datos de Pago</h2>
+                    <div class="payment-details">
+                        <div class="course-info">
+                            <h3>${inscripcion.cursoNombre}</h3>
+                            <p><strong>Monto:</strong> $${inscripcion.costo.toLocaleString()}</p>
+                            <p><strong>Estado:</strong> ${this.getEstadoText(inscripcion.estado)}</p>
+                        </div>
+                        
+                        <div class="bank-details">
+                            <h3>⚠️ Datos bancarios no configurados</h3>
+                            <p>Por favor contacta al administrador para obtener la información de pago.</p>
+                        </div>
+                        
+                        <div class="payment-status">
+                            <p class="note">
+                                <i class="fas fa-info-circle"></i>
+                                ${this.getEstadoDescription(inscripcion.estado)}
+                            </p>
                         </div>
                     </div>
-                    
-                    ${inscripcion.metodoPago ? `
-                        <div class="payment-method">
-                            <h3>Método de pago utilizado:</h3>
-                            <p>${this.getMetodoPagoText(inscripcion.metodoPago)}</p>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="payment-status">
-                        <p class="note">
-                            <i class="fas fa-info-circle"></i>
-                            ${this.getEstadoDescription(inscripcion.estado)}
-                        </p>
+                    <div class="modal__actions">
+                        <button class="btn btn--outline close-details-modal">
+                            Cerrar
+                        </button>
                     </div>
                 </div>
-                <div class="modal__actions">
-                    <button class="btn btn--outline close-details-modal">
-                        Cerrar
-                    </button>
+            `;
+        } else {
+            modal.innerHTML = `
+                <div class="modal__content">
+                    <span class="modal__close">&times;</span>
+                    <h2 class="modal__title">Datos de Pago</h2>
+                    <div class="payment-details">
+                        <div class="course-info">
+                            <h3>${inscripcion.cursoNombre}</h3>
+                            <p><strong>Monto:</strong> $${inscripcion.costo.toLocaleString()}</p>
+                            <p><strong>Estado:</strong> ${this.getEstadoText(inscripcion.estado)}</p>
+                        </div>
+                        
+                        <div class="bank-details">
+                            <h3>Datos para transferencia:</h3>
+                            <div class="bank-info">
+                                <p><strong>CVU/CBU:</strong> ${bankAccount.cvu}</p>
+                                <p><strong>Alias:</strong> ${bankAccount.alias}</p>
+                                <p><strong>CUIT:</strong> ${bankAccount.cuit}</p>
+                                <p><strong>Titular:</strong> ${bankAccount.titular}</p>
+                            </div>
+                        </div>
+                    
+                        
+                        ${inscripcion.metodoPago ? `
+                            <div class="payment-method">
+                                <h3>Método de pago utilizado:</h3>
+                                <p>${this.getMetodoPagoText(inscripcion.metodoPago)}</p>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="payment-status">
+                            <p class="note">
+                                <i class="fas fa-info-circle"></i>
+                                ${this.getEstadoDescription(inscripcion.estado)}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="modal__actions">
+                        <button class="btn btn--outline close-details-modal">
+                            Cerrar
+                        </button>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        }
 
         document.body.appendChild(modal);
 

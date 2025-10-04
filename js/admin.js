@@ -15,6 +15,282 @@ import {
     serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
+// Gestor de Cuentas Bancarias
+class BankAccountManager {
+    constructor() {
+        this.accounts = [];
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        // Botón nueva cuenta
+        document.getElementById('nueva-cuenta-btn')?.addEventListener('click', () => {
+            this.showAccountModal();
+        });
+
+        // Form de cuenta bancaria
+        document.getElementById('cuenta-bancaria-form')?.addEventListener('submit', (e) => {
+            this.handleSaveAccount(e);
+        });
+
+        // Cancelar modal
+        document.getElementById('cancelar-cuenta-btn')?.addEventListener('click', () => {
+            this.hideAccountModal();
+        });
+
+        // Cerrar modal con X
+        document.querySelector('#cuenta-bancaria-modal .modal__close')?.addEventListener('click', () => {
+            this.hideAccountModal();
+        });
+    }
+
+    async loadAccounts() {
+        try {
+            const accountsRef = collection(db, 'bankAccounts');
+            const accountsQuery = query(accountsRef, orderBy('createdAt', 'desc'));
+            const snapshot = await getDocs(accountsQuery);
+            
+            this.accounts = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            this.renderAccountsTable();
+        } catch (error) {
+            console.error('Error cargando cuentas bancarias:', error);
+            window.authManager?.showMessage('Error al cargar cuentas bancarias', 'error');
+        }
+    }
+
+    renderAccountsTable() {
+        const tbody = document.getElementById('cuentas-tbody');
+        if (!tbody) return;
+
+        if (this.accounts.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-muted">
+                        <i class="fas fa-university"></i>
+                        <p>No hay cuentas bancarias configuradas</p>
+                        <button class="btn btn--primary btn--small" onclick="window.bankAccountManager.showAccountModal()">
+                            <i class="fas fa-plus"></i> Agregar Primera Cuenta
+                        </button>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = this.accounts.map(account => `
+            <tr>
+                <td>
+                    <span class="account-cvu">${account.cvu}</span>
+                </td>
+                <td>
+                    <span class="account-alias">${account.alias}</span>
+                </td>
+                <td>
+                    <span class="account-cuit">${account.cuit}</span>
+                </td>
+                <td>
+                    <span class="account-titular">${account.titular}</span>
+                </td>
+                <td>
+                    <span class="status-badge ${account.active ? 'status-active' : 'status-inactive'}">
+                        <i class="fas fa-${account.active ? 'check-circle' : 'times-circle'}"></i>
+                        ${account.active ? 'Activa' : 'Inactiva'}
+                    </span>
+                </td>
+                <td>
+                    <span class="date-text">
+                        ${account.createdAt ? new Date(account.createdAt.seconds * 1000).toLocaleDateString('es-AR') : 'N/A'}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="action-btn edit" onclick="window.bankAccountManager.editAccount('${account.id}')" title="Editar cuenta">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn ${account.active ? 'deactivate' : 'activate'}" 
+                                onclick="window.bankAccountManager.toggleAccountStatus('${account.id}')" 
+                                title="${account.active ? 'Desactivar' : 'Activar'} cuenta">
+                            <i class="fas fa-${account.active ? 'eye-slash' : 'eye'}"></i>
+                        </button>
+                        <button class="action-btn delete" onclick="window.bankAccountManager.deleteAccount('${account.id}')" title="Eliminar cuenta">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    showAccountModal(accountId = null) {
+        const modal = document.getElementById('cuenta-bancaria-modal');
+        const form = document.getElementById('cuenta-bancaria-form');
+        const title = document.getElementById('cuenta-modal-title');
+        
+        // Resetear formulario
+        form.reset();
+        document.getElementById('cuenta-activa').checked = true;
+        
+        if (accountId) {
+            const account = this.accounts.find(acc => acc.id === accountId);
+            if (account) {
+                title.textContent = 'Editar Cuenta Bancaria';
+                document.getElementById('cuenta-cvu').value = account.cvu;
+                document.getElementById('cuenta-alias').value = account.alias;
+                document.getElementById('cuenta-cuit').value = account.cuit;
+                document.getElementById('cuenta-titular').value = account.titular;
+                document.getElementById('cuenta-activa').checked = account.active;
+                form.dataset.editId = accountId;
+            }
+        } else {
+            title.textContent = 'Nueva Cuenta Bancaria';
+            delete form.dataset.editId;
+        }
+        
+        modal.classList.add('active');
+    }
+
+    hideAccountModal() {
+        const modal = document.getElementById('cuenta-bancaria-modal');
+        modal.classList.remove('active');
+    }
+
+    async handleSaveAccount(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const cvu = document.getElementById('cuenta-cvu').value.trim();
+        const alias = document.getElementById('cuenta-alias').value.trim();
+        const cuit = document.getElementById('cuenta-cuit').value.trim();
+        const titular = document.getElementById('cuenta-titular').value.trim();
+        const active = document.getElementById('cuenta-activa').checked;
+        
+        if (!cvu || !alias || !cuit || !titular) {
+            window.authManager?.showMessage('Todos los campos son obligatorios', 'error');
+            return;
+        }
+
+        // Validaciones
+        if (!this.validateCVU(cvu)) {
+            window.authManager?.showMessage('CVU/CBU debe tener 22 dígitos', 'error');
+            return;
+        }
+
+        if (!this.validateCUIT(cuit)) {
+            window.authManager?.showMessage('CUIT debe tener formato válido (XX-XXXXXXXX-X)', 'error');
+            return;
+        }
+
+        try {
+            window.authManager?.showLoading();
+
+            const accountData = {
+                cvu,
+                alias: alias.toUpperCase(),
+                cuit,
+                titular,
+                active,
+                updatedAt: serverTimestamp()
+            };
+
+            if (form.dataset.editId) {
+                // Editar cuenta existente
+                const accountRef = doc(db, 'bankAccounts', form.dataset.editId);
+                await updateDoc(accountRef, accountData);
+                window.authManager?.showMessage('Cuenta bancaria actualizada correctamente', 'success');
+            } else {
+                // Nueva cuenta
+                accountData.createdAt = serverTimestamp();
+                await addDoc(collection(db, 'bankAccounts'), accountData);
+                window.authManager?.showMessage('Cuenta bancaria creada correctamente', 'success');
+            }
+
+            this.hideAccountModal();
+            await this.loadAccounts();
+        } catch (error) {
+            console.error('Error guardando cuenta bancaria:', error);
+            window.authManager?.showMessage('Error al guardar cuenta bancaria', 'error');
+        } finally {
+            window.authManager?.hideLoading();
+        }
+    }
+
+    async editAccount(accountId) {
+        this.showAccountModal(accountId);
+    }
+
+    async toggleAccountStatus(accountId) {
+        try {
+            const account = this.accounts.find(acc => acc.id === accountId);
+            if (!account) return;
+
+            const accountRef = doc(db, 'bankAccounts', accountId);
+            await updateDoc(accountRef, {
+                active: !account.active,
+                updatedAt: serverTimestamp()
+            });
+
+            window.authManager?.showMessage(
+                `Cuenta ${!account.active ? 'activada' : 'desactivada'} correctamente`, 
+                'success'
+            );
+            
+            await this.loadAccounts();
+        } catch (error) {
+            console.error('Error cambiando estado de cuenta:', error);
+            window.authManager?.showMessage('Error al cambiar estado de cuenta', 'error');
+        }
+    }
+
+    async deleteAccount(accountId) {
+        if (!confirm('¿Estás seguro de eliminar esta cuenta bancaria? Esta acción no se puede deshacer.')) {
+            return;
+        }
+
+        try {
+            await deleteDoc(doc(db, 'bankAccounts', accountId));
+            window.authManager?.showMessage('Cuenta bancaria eliminada correctamente', 'success');
+            await this.loadAccounts();
+        } catch (error) {
+            console.error('Error eliminando cuenta bancaria:', error);
+            window.authManager?.showMessage('Error al eliminar cuenta bancaria', 'error');
+        }
+    }
+
+    validateCVU(cvu) {
+        return /^\d{22}$/.test(cvu);
+    }
+
+    validateCUIT(cuit) {
+        return /^\d{2}-\d{8}-\d{1}$/.test(cuit);
+    }
+
+    // Método para obtener cuenta activa (para uso en otros módulos)
+    async getActiveAccount() {
+        try {
+            const accountsRef = collection(db, 'bankAccounts');
+            const activeQuery = query(accountsRef, where('active', '==', true), limit(1));
+            const snapshot = await getDocs(activeQuery);
+            
+            if (snapshot.empty) {
+                return null;
+            }
+            
+            const doc = snapshot.docs[0];
+            return {
+                id: doc.id,
+                ...doc.data()
+            };
+        } catch (error) {
+            console.error('Error obteniendo cuenta activa:', error);
+            return null;
+        }
+    }
+}
+
 class AdminManager {
     constructor() {
         this.cursos = [];
@@ -425,6 +701,9 @@ class AdminManager {
         try {
             window.authManager.showLoading();
             
+            // Migración inicial de datos bancarios si es necesario
+            await this.migrateInitialBankAccount();
+            
             // Cargar datos en paralelo
             await Promise.all([
                 this.loadAdminCursos(),
@@ -439,6 +718,33 @@ class AdminManager {
             window.authManager.showMessage('Error al cargar datos de administración', 'error');
         } finally {
             window.authManager.hideLoading();
+        }
+    }
+
+    // Migración inicial de cuenta bancaria
+    async migrateInitialBankAccount() {
+        try {
+            // Verificar si ya existen cuentas bancarias
+            const accountsRef = collection(db, 'bankAccounts');
+            const snapshot = await getDocs(accountsRef);
+            
+            if (snapshot.empty) {
+                // Crear cuenta inicial con datos de ejemplo
+                const initialAccount = {
+                    cvu: '2850590940090418135201', // CVU de ejemplo
+                    alias: 'COLMENA.COCINA.CLUB',
+                    cuit: '20-12345678-9',
+                    titular: 'Club de Cocina Colmena',
+                    active: true,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                };
+                
+                await addDoc(accountsRef, initialAccount);
+                console.log('✅ Cuenta bancaria inicial creada');
+            }
+        } catch (error) {
+            console.error('Error en migración de cuenta bancaria:', error);
         }
     }
 
@@ -518,6 +824,15 @@ class AdminManager {
             content.classList.remove('active');
         });
         document.getElementById(tabId).classList.add('active');
+
+        // Cargar datos específicos según la pestaña
+        switch(tabId) {
+            case 'cuentas-admin':
+                if (window.bankAccountManager) {
+                    window.bankAccountManager.loadAccounts();
+                }
+                break;
+        }
     }
 
     // === GESTIÓN DE CURSOS ===
@@ -2248,7 +2563,8 @@ class AdminManager {
     }
 }
 
-// Crear instancia global del AdminManager
+// Crear instancias globales
 window.adminManager = new AdminManager();
+window.bankAccountManager = new BankAccountManager();
 
 export default AdminManager;

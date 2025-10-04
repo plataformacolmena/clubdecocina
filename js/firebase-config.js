@@ -47,11 +47,5 @@ export const APP_CONFIG = {
     adminSystem: {
         cacheExpiry: 5 * 60 * 1000, // Cache por 5 minutos
         collection: 'admins'
-    },
-    bankInfo: {
-        account: '6557575/67',
-        cbu: '22222222222222222',
-        alias: 'COLMENA.COCINA.CLUB',
-        bank: 'Banco Ejemplo'
     }
 };

@@ -123,6 +123,9 @@
                     <button class="tab-btn active" data-tab="cursos-admin">Gestión de Cursos</button>
                     <button class="tab-btn" data-tab="inscripciones-admin">Inscripciones</button>
                     <button class="tab-btn" data-tab="recetas-admin">Recetas</button>
+                    <button class="tab-btn" data-tab="cuentas-admin">
+                        <i class="fas fa-university"></i> Cuentas
+                    </button>
                     <button class="tab-btn" data-tab="administradores-admin">
                         <i class="fas fa-users-cog"></i> Administradores
                     </button>
@@ -266,6 +269,56 @@
                     </div>
                     <div id="admin-recetas-grid" class="admin__grid">
                         <!-- Las recetas se cargarán dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Gestión de Cuentas Bancarias -->
+                <div id="cuentas-admin" class="tab-content">
+                    <div class="admin__header">
+                        <h3>
+                            <i class="fas fa-university"></i> Gestión de Cuenta Bancaria
+                        </h3>
+                        <p class="text-muted">Configurar datos bancarios que verán los alumnos para realizar pagos</p>
+                    </div>
+
+                    <!-- Agregar/Editar Cuenta Bancaria -->
+                    <div class="admin__section">
+                        <h4><i class="fas fa-plus-circle"></i> Configurar Cuenta Bancaria</h4>
+                        <div class="form-group">
+                            <button id="nueva-cuenta-btn" class="btn btn--primary">
+                                <i class="fas fa-plus"></i> Nueva Cuenta Bancaria
+                            </button>
+                            <small class="form-text text-muted">
+                                Configure los datos bancarios que los alumnos verán al realizar pagos
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Cuentas Bancarias -->
+                    <div class="admin__section">
+                        <h4><i class="fas fa-table"></i> Cuentas Configuradas</h4>
+                        <div class="table-container">
+                            <table class="admin-table" id="cuentas-table">
+                                <thead>
+                                    <tr>
+                                        <th>CVU/CBU</th>
+                                        <th>Alias</th>
+                                        <th>CUIT</th>
+                                        <th>Titular</th>
+                                        <th>Estado</th>
+                                        <th>Fecha Creación</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cuentas-tbody">
+                                    <tr>
+                                        <td colspan="7" class="text-center">
+                                            <i class="fas fa-spinner fa-spin"></i> Cargando cuentas bancarias...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -536,6 +589,55 @@
     <!-- Loading Spinner -->
     <div id="loading" class="loading" style="display: none;">
         <div class="spinner"></div>
+    </div>
+
+    <!-- Modal para Gestión de Cuenta Bancaria -->
+    <div id="cuenta-bancaria-modal" class="modal">
+        <div class="modal__content">
+            <span class="modal__close">&times;</span>
+            <h2 class="modal__title" id="cuenta-modal-title">Nueva Cuenta Bancaria</h2>
+            <form id="cuenta-bancaria-form">
+                <div class="form-group">
+                    <label for="cuenta-cvu">CVU/CBU *</label>
+                    <input type="text" id="cuenta-cvu" placeholder="2850590940090418135201" maxlength="22" required>
+                    <small class="form-text text-muted">Clave Bancaria Uniforme o Código Bancario Uniforme</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cuenta-alias">Alias *</label>
+                    <input type="text" id="cuenta-alias" placeholder="COLMENA.COCINA.CLUB" maxlength="20" required>
+                    <small class="form-text text-muted">Alias bancario para transferencias fáciles</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cuenta-cuit">CUIT *</label>
+                    <input type="text" id="cuenta-cuit" placeholder="20-12345678-9" maxlength="13" required>
+                    <small class="form-text text-muted">CUIT del titular de la cuenta (formato: 20-12345678-9)</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cuenta-titular">Titular de la Cuenta *</label>
+                    <input type="text" id="cuenta-titular" placeholder="Club de Cocina Colmena" maxlength="100" required>
+                    <small class="form-text text-muted">Nombre completo del titular de la cuenta</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-switch">
+                        <input type="checkbox" id="cuenta-activa" checked>
+                        <span class="switch"></span>
+                        Cuenta Activa
+                    </label>
+                    <small class="form-text text-muted">Solo las cuentas activas se mostrarán a los alumnos</small>
+                </div>
+                
+                <div class="modal__actions">
+                    <button type="button" class="btn btn--outline" id="cancelar-cuenta-btn">Cancelar</button>
+                    <button type="submit" class="btn btn--primary" id="guardar-cuenta-btn">
+                        <i class="fas fa-save"></i> Guardar Cuenta
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Firebase SDKs -->
