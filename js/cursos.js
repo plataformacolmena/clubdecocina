@@ -21,17 +21,17 @@ class CursosManager {
 
     setupEventListeners() {
         // Filtros de búsqueda
-        document.getElementById('search-cursos')?.addEventListener('input', (e) => {
-            this.filterCursos(e.target.value);
+        document.getElementById('search-cursos')?.addEventListener('input', async (e) => {
+            await this.filterCursos(e.target.value);
         });
         
-        document.getElementById('filter-fecha')?.addEventListener('change', (e) => {
-            this.filterByFecha(e.target.value);
+        document.getElementById('filter-fecha')?.addEventListener('change', async (e) => {
+            await this.filterByFecha(e.target.value);
         });
 
         // Filtro de estado del curso
-        document.getElementById('filter-estado-curso')?.addEventListener('change', (e) => {
-            this.filterByEstadoCurso(e.target.value);
+        document.getElementById('filter-estado-curso')?.addEventListener('change', async (e) => {
+            await this.filterByEstadoCurso(e.target.value);
         });
 
         // Navegación a cursos
@@ -78,21 +78,39 @@ class CursosManager {
         }
     }
 
-    renderCursos(cursosToRender = this.cursos) {
+    async renderCursos(cursosToRender = null) {
         const cursosGrid = document.getElementById('cursos-grid');
         if (!cursosGrid) return;
 
-        if (cursosToRender.length === 0) {
+        let cursos = cursosToRender || this.cursos;
+        
+        // Filtrar automáticamente cursos terminados y cancelados para usuarios normales
+        if (!window.authManager.getCurrentUser()?.isAdmin) {
+            const now = new Date();
+            cursos = cursos.filter(curso => {
+                // Filtrar cursos terminados (fecha ya pasó)
+                const cursoDate = new Date(curso.fechaHora.seconds * 1000);
+                const yaTermino = cursoDate < now;
+                
+                // Filtrar cursos cancelados (si tienen estado)
+                const estaCancelado = curso.estado === 'cancelado';
+                
+                return !yaTermino && !estaCancelado;
+            });
+        }
+
+        if (cursos.length === 0) {
             cursosGrid.innerHTML = `
-                <div class="no-content">
-                    <i class="fas fa-search"></i>
-                    <p>No se encontraron cursos</p>
+                <div class="empty-state">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h3>No hay cursos disponibles</h3>
+                    <p>Vuelve pronto para ver nuevos cursos</p>
                 </div>
             `;
             return;
         }
 
-        cursosGrid.innerHTML = cursosToRender.map(curso => this.createCursoCard(curso)).join('');
+        cursosGrid.innerHTML = await Promise.all(cursos.map(curso => this.createCursoCard(curso))).then(cards => cards.join(''));
         
         // Agregar event listeners a los botones de inscripción
         cursosGrid.querySelectorAll('.inscribirse-btn').forEach(btn => {
@@ -103,7 +121,7 @@ class CursosManager {
         });
     }
 
-    createCursoCard(curso) {
+    async createCursoCard(curso) {
         const fechaFormatted = new Date(curso.fechaHora.seconds * 1000).toLocaleString('es-AR', {
             weekday: 'long',
             year: 'numeric',
@@ -116,35 +134,36 @@ class CursosManager {
         const inscriptosActuales = curso.inscriptos || 0;
         const disponibles = curso.capacidadMaxima - inscriptosActuales;
         const estaCompleto = disponibles <= 0;
-        
-        const now = new Date();
-        const cursoDate = new Date(curso.fechaHora.seconds * 1000);
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const cursoDay = new Date(cursoDate.getFullYear(), cursoDate.getMonth(), cursoDate.getDate());
-        
-        let estadoCurso = '';
-        let estadoClass = '';
-        
-        if (cursoDay < today) {
-            estadoCurso = 'Terminado';
-            estadoClass = 'status--terminado';
-        } else if (cursoDay.getTime() === today.getTime()) {
-            estadoCurso = estaCompleto ? 'Completo (Hoy)' : 'Hoy';
-            estadoClass = 'status--hoy';
-        } else if (estaCompleto) {
-            estadoCurso = 'Completo';
-            estadoClass = 'status--completo';
-        } else {
-            estadoCurso = 'Disponible';
-            estadoClass = 'status--disponible';
+        const yaTermino = new Date(curso.fechaHora.seconds * 1000) < new Date();
+
+        // Verificar si el usuario actual está inscrito en este curso
+        let estaInscrito = false;
+        let estadoInscripcion = '';
+        if (window.authManager.getCurrentUser()) {
+            try {
+                const inscripcionInfo = await this.verificarInscripcionCompleta(curso.id);
+                estaInscrito = inscripcionInfo.inscrito;
+                estadoInscripcion = inscripcionInfo.estado || '';
+            } catch (error) {
+                console.log('Error verificando inscripción:', error);
+            }
         }
 
         return `
-            <div class="card curso-card ${cursoDay < today ? 'curso-terminado' : ''}">
+            <div class="card curso-card ${estaInscrito ? 'curso-card--inscrito' : ''}">
                 <div class="card__header">
                     <h3 class="card__title">${curso.nombre}</h3>
-                    <div class="status ${estadoClass}">
-                        ${estadoCurso}
+                    <div class="curso-status-container">
+                        ${estaInscrito ? `
+                            <div class="status status--inscrito">
+                                <i class="fas fa-check-circle"></i> 
+                                ${estadoInscripcion === 'pagado' ? 'Inscrito y Pagado' : 
+                                  estadoInscripcion === 'confirmado' ? 'Confirmado' : 'Inscrito'}
+                            </div>
+                        ` : ''}
+                        <div class="status ${estaCompleto ? 'status--completo' : 'status--disponible'}">
+                            ${estaCompleto ? 'Completo' : 'Disponible'}
+                        </div>
                     </div>
                 </div>
                 <div class="card__content">
@@ -173,17 +192,19 @@ class CursosManager {
                     ` : ''}
                 </div>
                 <div class="card__actions">
-                    ${cursoDay >= today && !estaCompleto ? `
-                        <button class="btn btn--primary inscribirse-btn" data-curso-id="${curso.id}">
-                            <i class="fas fa-user-plus"></i>
-                            Inscribirse
-                        </button>
-                    ` : cursoDay < today ? `
-                        <span class="curso-terminado-label">
-                            <i class="fas fa-check-circle"></i>
-                            Curso finalizado
-                        </span>
-                    ` : ''}
+                    ${!estaCompleto && !yaTermino ? (
+                        estaInscrito ? `
+                            <button class="btn btn--success" disabled>
+                                <i class="fas fa-check"></i>
+                                Ya inscrito
+                            </button>
+                        ` : `
+                            <button class="btn btn--primary inscribirse-btn" data-curso-id="${curso.id}">
+                                <i class="fas fa-user-plus"></i>
+                                Inscribirse
+                            </button>
+                        `
+                    ) : ''}
                     <button class="btn btn--outline ver-detalles-btn" data-curso-id="${curso.id}">
                         <i class="fas fa-info-circle"></i>
                         Ver Detalles
@@ -193,17 +214,17 @@ class CursosManager {
         `;
     }
 
-    filterCursos(searchTerm) {
+    async filterCursos(searchTerm) {
         const filtered = this.cursos.filter(curso =>
             curso.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
             curso.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
         );
-        this.renderCursos(filtered);
+        await this.renderCursos(filtered);
     }
 
-    filterByFecha(fechaFilter) {
+    async filterByFecha(fechaFilter) {
         if (!fechaFilter) {
-            this.renderCursos();
+            await this.renderCursos();
             return;
         }
 
@@ -214,12 +235,12 @@ class CursosManager {
             return cursoDate.toDateString() === filterDate.toDateString();
         });
         
-        this.renderCursos(filtered);
+        await this.renderCursos(filtered);
     }
 
-    filterByEstadoCurso(estadoFilter) {
+    async filterByEstadoCurso(estadoFilter) {
         if (!estadoFilter) {
-            this.renderCursos();
+            await this.renderCursos();
             return;
         }
 
@@ -244,7 +265,7 @@ class CursosManager {
             }
         });
         
-        this.renderCursos(filtered);
+        await this.renderCursos(filtered);
     }
 
     updateFechaFilter() {
@@ -346,6 +367,26 @@ class CursosManager {
 
         const querySnapshot = await getDocs(q);
         return !querySnapshot.empty;
+    }
+
+    async verificarInscripcionCompleta(cursoId) {
+        const q = query(
+            collection(db, 'inscripciones'),
+            where('usuarioId', '==', window.authManager.getCurrentUser().uid),
+            where('cursoId', '==', cursoId)
+        );
+
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+            return { inscrito: false, estado: null };
+        }
+        
+        const inscripcion = querySnapshot.docs[0].data();
+        return { 
+            inscrito: true, 
+            estado: inscripcion.estado || 'pendiente',
+            id: querySnapshot.docs[0].id
+        };
     }
 
     async mostrarInformacionPago(curso) {

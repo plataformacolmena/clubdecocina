@@ -369,6 +369,28 @@ body {
     color: #721c24;
 }
 
+.status--inscrito {
+    background-color: #cce5ff;
+    color: #004085;
+    font-weight: 600;
+}
+
+.curso-status-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-end;
+}
+
+.curso-card--inscrito {
+    border-left: 4px solid #007bff;
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.02) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.curso-card--inscrito .card__title {
+    color: #004085;
+}
+
 /* Lists */
 .inscripciones__list,
 .admin__list {
