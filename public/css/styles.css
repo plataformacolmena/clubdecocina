@@ -432,14 +432,14 @@ body {
 
 .column-config-item {
     background: var(--light-gray);
-    padding: 14px;
+    padding: 8px;
     border-radius: var(--border-radius);
     border: 2px solid transparent;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 65px;
+    min-height: 45px;
     height: auto;
 }
 
@@ -451,11 +451,12 @@ body {
 .checkbox-label {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 400;
     color: var(--text-dark);
     margin: 0;
+    font-size: 0.9rem;
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -583,8 +584,8 @@ body {
     }
     
     .column-config-item {
-        padding: 12px;
-        min-height: 55px;
+        padding: 6px;
+        min-height: 42px;
     }
     
     .modal__title {
@@ -612,12 +613,13 @@ body {
     }
     
     .checkbox-label {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+        gap: 6px;
     }
     
     .column-config-item {
-        min-height: 50px;
-        padding: 10px;
+        min-height: 38px;
+        padding: 6px;
     }
     
     #restore-default-columns {
