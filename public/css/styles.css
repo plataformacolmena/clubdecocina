@@ -391,6 +391,115 @@ body {
     color: #004085;
 }
 
+/* Configuración de columnas */
+.column-config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.column-config-item {
+    background: var(--light-gray);
+    padding: 15px;
+    border-radius: var(--border-radius);
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.column-config-item:hover {
+    border-color: var(--primary-color);
+    background: rgba(var(--primary-color-rgb), 0.05);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.checkbox-label .checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.checkbox-label input[type="checkbox"]:disabled + .checkmark {
+    background: #f0f0f0;
+    border-color: #ccc;
+    opacity: 0.6;
+}
+
+.checkbox-label i {
+    color: var(--primary-color);
+    width: 16px;
+}
+
+.modal__content--medium {
+    max-width: 600px;
+    width: 90vw;
+}
+
+.modal__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.text-muted {
+    color: #666;
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+}
+
+/* Clases para ocultar columnas */
+.admin-table th.column-hidden,
+.admin-table td.column-hidden {
+    display: none !important;
+}
+
+/* Indicador de columnas ocultas */
+.columns-indicator {
+    font-size: 12px;
+    color: var(--text-light);
+    margin-left: 10px;
+    padding: 2px 8px;
+    background: var(--light-gray);
+    border-radius: 12px;
+}
+
 /* Lists */
 .inscripciones__list,
 .admin__list {

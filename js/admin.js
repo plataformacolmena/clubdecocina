@@ -291,6 +291,190 @@ class BankAccountManager {
     }
 }
 
+class ColumnManager {
+    constructor() {
+        this.storageKey = 'inscripciones-column-config';
+        this.defaultColumns = {
+            inscripto: true,
+            email: true,
+            curso: true,
+            fechaCurso: true,
+            fechaInscripcion: true,
+            estado: true,
+            monto: true,
+            comprobante: true,
+            acciones: true // Siempre visible
+        };
+        this.currentConfig = this.loadConfig();
+        this.setupEventListeners();
+    }
+
+    loadConfig() {
+        try {
+            const saved = localStorage.getItem(this.storageKey);
+            return saved ? { ...this.defaultColumns, ...JSON.parse(saved) } : { ...this.defaultColumns };
+        } catch (error) {
+            console.error('Error loading column config:', error);
+            return { ...this.defaultColumns };
+        }
+    }
+
+    saveConfig() {
+        try {
+            localStorage.setItem(this.storageKey, JSON.stringify(this.currentConfig));
+        } catch (error) {
+            console.error('Error saving column config:', error);
+        }
+    }
+
+    setupEventListeners() {
+        // Botón de configuración de columnas
+        document.getElementById('column-config-btn')?.addEventListener('click', () => {
+            this.showColumnConfigModal();
+        });
+
+        // Cerrar modal
+        document.getElementById('column-config-close')?.addEventListener('click', () => {
+            this.hideColumnConfigModal();
+        });
+
+        document.getElementById('cancel-column-config')?.addEventListener('click', () => {
+            this.hideColumnConfigModal();
+        });
+
+        // Restaurar configuración predeterminada
+        document.getElementById('restore-default-columns')?.addEventListener('click', () => {
+            this.restoreDefaultConfig();
+        });
+
+        // Aplicar cambios
+        document.getElementById('apply-column-config')?.addEventListener('click', () => {
+            this.applyColumnConfig();
+        });
+
+        // Cerrar modal al hacer click fuera
+        document.getElementById('column-config-modal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'column-config-modal') {
+                this.hideColumnConfigModal();
+            }
+        });
+    }
+
+    showColumnConfigModal() {
+        // Actualizar checkboxes según configuración actual
+        Object.keys(this.currentConfig).forEach(columnId => {
+            const checkbox = document.getElementById(`col-${columnId}`);
+            if (checkbox) {
+                checkbox.checked = this.currentConfig[columnId];
+            }
+        });
+
+        document.getElementById('column-config-modal').classList.add('active');
+    }
+
+    hideColumnConfigModal() {
+        document.getElementById('column-config-modal').classList.remove('active');
+    }
+
+    restoreDefaultConfig() {
+        // Actualizar checkboxes
+        Object.keys(this.defaultColumns).forEach(columnId => {
+            const checkbox = document.getElementById(`col-${columnId}`);
+            if (checkbox) {
+                checkbox.checked = this.defaultColumns[columnId];
+            }
+        });
+    }
+
+    applyColumnConfig() {
+        // Leer estado de checkboxes
+        const newConfig = {};
+        Object.keys(this.defaultColumns).forEach(columnId => {
+            const checkbox = document.getElementById(`col-${columnId}`);
+            newConfig[columnId] = checkbox ? checkbox.checked : this.defaultColumns[columnId];
+        });
+
+        // Asegurar que acciones siempre esté visible
+        newConfig.acciones = true;
+
+        this.currentConfig = newConfig;
+        this.saveConfig();
+        this.applyColumnVisibility();
+        this.updateColumnIndicator();
+        this.hideColumnConfigModal();
+
+        window.authManager.showMessage('Configuración de columnas aplicada', 'success');
+    }
+
+    applyColumnVisibility() {
+        const table = document.getElementById('inscripciones-table');
+        if (!table) return;
+
+        // Obtener todas las columnas (headers y celdas)
+        const headers = table.querySelectorAll('thead th');
+        const rows = table.querySelectorAll('tbody tr');
+
+        // Aplicar visibilidad a headers
+        headers.forEach((header, index) => {
+            const columnId = header.getAttribute('data-column-id');
+            if (columnId && this.currentConfig.hasOwnProperty(columnId)) {
+                if (this.currentConfig[columnId]) {
+                    header.classList.remove('column-hidden');
+                } else {
+                    header.classList.add('column-hidden');
+                }
+            }
+        });
+
+        // Aplicar visibilidad a celdas de datos
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            cells.forEach((cell, index) => {
+                const header = headers[index];
+                if (header) {
+                    const columnId = header.getAttribute('data-column-id');
+                    if (columnId && this.currentConfig.hasOwnProperty(columnId)) {
+                        if (this.currentConfig[columnId]) {
+                            cell.classList.remove('column-hidden');
+                        } else {
+                            cell.classList.add('column-hidden');
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    updateColumnIndicator() {
+        const hiddenCount = Object.values(this.currentConfig).filter(visible => !visible).length;
+        const button = document.getElementById('column-config-btn');
+        
+        if (button) {
+            // Remover indicador anterior
+            const existingIndicator = button.querySelector('.columns-indicator');
+            if (existingIndicator) {
+                existingIndicator.remove();
+            }
+
+            // Agregar nuevo indicador si hay columnas ocultas
+            if (hiddenCount > 0) {
+                const indicator = document.createElement('span');
+                indicator.className = 'columns-indicator';
+                indicator.textContent = `${hiddenCount} oculta${hiddenCount > 1 ? 's' : ''}`;
+                button.appendChild(indicator);
+            }
+        }
+    }
+
+    getVisibleColumns() {
+        return Object.keys(this.currentConfig).filter(columnId => this.currentConfig[columnId]);
+    }
+
+    isColumnVisible(columnId) {
+        return this.currentConfig[columnId] !== false;
+    }
+}
+
 class AdminManager {
     constructor() {
         this.cursos = [];
@@ -303,6 +487,9 @@ class AdminManager {
         this.itemsPerPage = 20;
         this.sortColumn = 'fechaInscripcion';
         this.sortDirection = 'desc';
+        
+        // Gestor de columnas
+        this.columnManager = new ColumnManager();
         
         this.setupEventListeners();
     }
@@ -810,6 +997,12 @@ class AdminManager {
         this.renderAdminInscripciones();
         this.renderAdminRecetas();
         this.updateAdminFilters();
+        
+        // Aplicar configuración de columnas inicial
+        setTimeout(() => {
+            this.columnManager.applyColumnVisibility();
+            this.columnManager.updateColumnIndicator();
+        }, 100);
     }
 
     switchTab(tabId) {
@@ -1204,6 +1397,10 @@ class AdminManager {
 
         // Render rows
         tableBody.innerHTML = pageData.map(inscripcion => this.createInscripcionTableRow(inscripcion)).join('');
+        
+        // Apply column visibility configuration
+        this.columnManager.applyColumnVisibility();
+        this.columnManager.updateColumnIndicator();
         
         // Setup event listeners for actions
         this.setupTableEventListeners();

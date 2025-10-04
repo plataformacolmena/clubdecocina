@@ -199,6 +199,9 @@
                                 <button id="export-inscripciones-btn" class="btn btn--secondary">
                                     <i class="fas fa-download"></i> Exportar CSV
                                 </button>
+                                <button id="column-config-btn" class="btn btn--outline" title="Configurar columnas">
+                                    <i class="fas fa-columns"></i> Columnas
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -207,29 +210,29 @@
                         <table id="inscripciones-table" class="admin-table">
                             <thead>
                                 <tr>
-                                    <th class="sortable" data-column="nombre">
+                                    <th class="sortable" data-column="nombre" data-column-id="inscripto">
                                         Inscripto <i class="fas fa-sort"></i>
                                     </th>
-                                    <th class="sortable" data-column="email">
+                                    <th class="sortable" data-column="email" data-column-id="email">
                                         Email <i class="fas fa-sort"></i>
                                     </th>
-                                    <th class="sortable" data-column="curso">
+                                    <th class="sortable" data-column="curso" data-column-id="curso">
                                         Curso <i class="fas fa-sort"></i>
                                     </th>
-                                    <th class="sortable" data-column="fechaCurso">
+                                    <th class="sortable" data-column="fechaCurso" data-column-id="fechaCurso">
                                         Fecha Curso <i class="fas fa-sort"></i>
                                     </th>
-                                    <th class="sortable" data-column="fechaInscripcion">
+                                    <th class="sortable" data-column="fechaInscripcion" data-column-id="fechaInscripcion">
                                         Fecha Inscripción <i class="fas fa-sort"></i>
                                     </th>
-                                    <th class="sortable" data-column="estado">
+                                    <th class="sortable" data-column="estado" data-column-id="estado">
                                         Estado <i class="fas fa-sort"></i>
                                     </th>
-                                    <th class="sortable" data-column="monto">
+                                    <th class="sortable" data-column="monto" data-column-id="monto">
                                         Monto <i class="fas fa-sort"></i>
                                     </th>
-                                    <th>Comprobante</th>
-                                    <th>Acciones</th>
+                                    <th data-column-id="comprobante">Comprobante</th>
+                                    <th data-column-id="acciones">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="inscripciones-table-body">
@@ -637,6 +640,122 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal de Configuración de Columnas -->
+    <div id="column-config-modal" class="modal">
+        <div class="modal__content modal__content--medium">
+            <span class="modal__close" id="column-config-close">&times;</span>
+            <h2 class="modal__title">
+                <i class="fas fa-columns"></i>
+                Configurar Columnas Visibles
+            </h2>
+            <div class="modal__body">
+                <p class="modal__description">
+                    Selecciona qué columnas deseas mostrar u ocultar en la tabla de inscripciones:
+                </p>
+                
+                <div class="column-config-grid">
+                    <div class="column-config-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="col-inscripto" checked>
+                            <span class="checkmark"></span>
+                            <i class="fas fa-user"></i>
+                            Inscripto
+                        </label>
+                    </div>
+                    
+                    <div class="column-config-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="col-email" checked>
+                            <span class="checkmark"></span>
+                            <i class="fas fa-envelope"></i>
+                            Email
+                        </label>
+                    </div>
+                    
+                    <div class="column-config-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="col-curso" checked>
+                            <span class="checkmark"></span>
+                            <i class="fas fa-graduation-cap"></i>
+                            Curso
+                        </label>
+                    </div>
+                    
+                    <div class="column-config-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="col-fechaCurso" checked>
+                            <span class="checkmark"></span>
+                            <i class="fas fa-calendar-alt"></i>
+                            Fecha Curso
+                        </label>
+                    </div>
+                    
+                    <div class="column-config-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="col-fechaInscripcion" checked>
+                            <span class="checkmark"></span>
+                            <i class="fas fa-clock"></i>
+                            Fecha Inscripción
+                        </label>
+                    </div>
+                    
+                    <div class="column-config-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="col-estado" checked>
+                            <span class="checkmark"></span>
+                            <i class="fas fa-info-circle"></i>
+                            Estado
+                        </label>
+                    </div>
+                    
+                    <div class="column-config-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="col-monto" checked>
+                            <span class="checkmark"></span>
+                            <i class="fas fa-dollar-sign"></i>
+                            Monto
+                        </label>
+                    </div>
+                    
+                    <div class="column-config-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="col-comprobante" checked>
+                            <span class="checkmark"></span>
+                            <i class="fas fa-file-image"></i>
+                            Comprobante
+                        </label>
+                    </div>
+                    
+                    <div class="column-config-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="col-acciones" checked disabled>
+                            <span class="checkmark"></span>
+                            <i class="fas fa-cog"></i>
+                            Acciones
+                        </label>
+                        <small class="text-muted">Siempre visible</small>
+                    </div>
+                </div>
+                
+                <div class="modal__actions">
+                    <button type="button" id="restore-default-columns" class="btn btn--outline">
+                        <i class="fas fa-undo"></i>
+                        Restaurar Predeterminado
+                    </button>
+                    <div style="margin-left: auto; display: flex; gap: 10px;">
+                        <button type="button" id="cancel-column-config" class="btn btn--secondary">
+                            Cancelar
+                        </button>
+                        <button type="button" id="apply-column-config" class="btn btn--primary">
+                            <i class="fas fa-check"></i>
+                            Aplicar Cambios
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
