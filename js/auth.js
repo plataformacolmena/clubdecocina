@@ -567,8 +567,8 @@ class AuthManager {
         
         switch (error.code) {
             case 'auth/user-not-found':
-                message = 'Usuario no encontrado';
-                break;
+                this.handleUserNotFound();
+                return; // No mostrar mensaje genérico
             case 'auth/wrong-password':
                 message = 'Contraseña incorrecta';
                 break;
@@ -589,6 +589,33 @@ class AuthManager {
         }
         
         this.showMessage(message, 'error');
+    }
+
+    // Manejar caso específico de usuario no encontrado
+    handleUserNotFound() {
+        // Mostrar mensaje amigable con opción de registro
+        this.showMessage('📧 Este email no está registrado. Te abriremos el formulario de registro...', 'info');
+        
+        // Cerrar modal de login y abrir registro después de mostrar el mensaje
+        setTimeout(() => {
+            this.hideLoginModal();
+            
+            // Esperar un momento antes de abrir el registro para mejor UX
+            setTimeout(() => {
+                this.showRegisterModal();
+                
+                // Pre-llenar el email en el formulario de registro
+                const loginEmail = document.getElementById('login-email').value;
+                if (loginEmail) {
+                    const registerEmailField = document.getElementById('register-email');
+                    if (registerEmailField) {
+                        registerEmailField.value = loginEmail;
+                        // Mostrar mensaje adicional en el registro
+                        this.showMessage('✨ Email pre-completado. Solo completa los demás campos', 'success');
+                    }
+                }
+            }, 300);
+        }, 2500);
     }
 
     // Método para verificar si el usuario actual es admin
