@@ -213,30 +213,47 @@ class AuthManager {
         this.isAdmin = false;
         this.userData = null;
         this.adminManager = new AdminManager();
+        
+        // Mostrar loading inmediatamente al inicializar
+        this.showLoading();
+        
         this.initAuthStateListener();
         this.setupEventListeners();
     }
 
     initAuthStateListener() {
         onAuthStateChanged(auth, async (user) => {
-            this.currentUser = user;
+            // Mostrar loading durante verificación de estado
+            this.showLoading();
             
-            if (user) {
-                // Verificar si es administrador usando Firestore
-                this.isAdmin = await this.adminManager.isUserAdmin(user.email);
+            try {
+                this.currentUser = user;
                 
-                // Crear/actualizar documento de usuario
-                await this.createUserDocument(user);
-                
-                // Actualizar último login si es admin
-                if (this.isAdmin) {
-                    await this.updateAdminLastLogin(user.email);
+                if (user) {
+                    // Verificar si es administrador usando Firestore
+                    this.isAdmin = await this.adminManager.isUserAdmin(user.email);
+                    
+                    // Crear/actualizar documento de usuario
+                    await this.createUserDocument(user);
+                    
+                    // Actualizar último login si es admin
+                    if (this.isAdmin) {
+                        await this.updateAdminLastLogin(user.email);
+                    }
+                    
+                    this.updateUI(true);
+                } else {
+                    this.isAdmin = false;
+                    this.updateUI(false);
                 }
-                
-                this.updateUI(true);
-            } else {
+            } catch (error) {
+                console.error('Error en verificación de estado de autenticación:', error);
+                // En caso de error, mostrar como no logueado
                 this.isAdmin = false;
                 this.updateUI(false);
+            } finally {
+                // Ocultar loading al completar verificación (siempre)
+                this.hideLoading();
             }
         });
     }
