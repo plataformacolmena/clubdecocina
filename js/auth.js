@@ -455,6 +455,11 @@ class AuthManager {
             
             // Ocultar la sección home y mostrar cursos por defecto
             this.showSection('cursos');
+            
+            // Cargar cursos automáticamente para una mejor UX
+            if (window.cursosManager) {
+                window.cursosManager.loadCursos();
+            }
         } else {
             loginBtn?.classList.remove('hidden');
             userMenu?.classList.add('hidden');

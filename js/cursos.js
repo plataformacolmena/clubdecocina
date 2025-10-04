@@ -37,13 +37,19 @@ class CursosManager {
         // Navegación a cursos
         document.querySelector('a[href="#cursos"]')?.addEventListener('click', (e) => {
             e.preventDefault();
-            this.loadCursos();
+            this.loadCursos(true); // Forzar recarga al hacer click en el menú
             window.authManager.showSection('cursos');
         });
     }
 
-    async loadCursos() {
+    async loadCursos(forceReload = false) {
         try {
+            // Si ya hay cursos cargados y no se fuerza la recarga, solo renderizar
+            if (this.cursos.length > 0 && !forceReload) {
+                this.renderCursos();
+                return;
+            }
+            
             window.authManager.showLoading();
             
             const q = query(
