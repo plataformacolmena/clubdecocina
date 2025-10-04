@@ -290,22 +290,6 @@ class AdminManager {
                 await this.handleRemoveAdmin(adminEmail);
             }
         });
-
-        // Configuración de seguridad
-        document.getElementById('dynamic-admin-toggle')?.addEventListener('change', (e) => {
-            // Aquí se podría actualizar la configuración
-            console.log('Sistema dinámico:', e.target.checked);
-        });
-
-        document.getElementById('fallback-hardcoded-toggle')?.addEventListener('change', (e) => {
-            console.log('Fallback hardcoded:', e.target.checked);
-        });
-
-        // Limpiar cache
-        document.getElementById('clear-admin-cache-btn')?.addEventListener('click', () => {
-            window.authManager.clearAdminCache();
-            window.authManager?.showMessage('Cache de administradores limpiado', 'success');
-        });
     }
 
     async handleAddAdmin() {
