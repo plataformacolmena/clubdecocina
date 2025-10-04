@@ -1200,6 +1200,151 @@ body {
     display: block;
 }
 
+/* ============================================
+   GESTIÓN DE ADMINISTRADORES
+   ============================================ */
+
+.admin__section {
+    background: var(--white);
+    padding: 25px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 25px;
+}
+
+.admin__section h4 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.input-group .form-control {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+}
+
+.input-group .form-control:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, var(--primary-color), #ff8a65);
+    color: var(--white);
+    padding: 25px 20px;
+    border-radius: var(--border-radius);
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.security-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-switch {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.form-switch input[type="checkbox"] {
+    display: none;
+}
+
+.switch {
+    position: relative;
+    width: 50px;
+    height: 24px;
+    background: var(--border-color);
+    border-radius: 12px;
+    transition: background 0.3s ease;
+}
+
+.switch::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: var(--white);
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.form-switch input:checked + .switch {
+    background: var(--primary-color);
+}
+
+.form-switch input:checked + .switch::before {
+    transform: translateX(26px);
+}
+
+.form-text {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-top: 5px;
+    display: block;
+}
+
+/* Estados de administradores */
+.admin-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.admin-status--active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.admin-status--inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.admin-status--system {
+    background: #cce7ff;
+    color: #004085;
+}
+
 /* Responsive para logs */
 @media (max-width: 768px) {
     .logs-stats {

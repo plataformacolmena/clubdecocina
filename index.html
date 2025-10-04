@@ -123,6 +123,9 @@
                     <button class="tab-btn active" data-tab="cursos-admin">Gestión de Cursos</button>
                     <button class="tab-btn" data-tab="inscripciones-admin">Inscripciones</button>
                     <button class="tab-btn" data-tab="recetas-admin">Recetas</button>
+                    <button class="tab-btn" data-tab="administradores-admin">
+                        <i class="fas fa-users-cog"></i> Administradores
+                    </button>
                     <button class="tab-btn" data-tab="logs-admin">
                         <i class="fas fa-list-alt"></i> Registro del Sistema
                     </button>
@@ -263,6 +266,117 @@
                     </div>
                     <div id="admin-recetas-grid" class="admin__grid">
                         <!-- Las recetas se cargarán dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Gestión de Administradores -->
+                <div id="administradores-admin" class="tab-content">
+                    <div class="admin__header">
+                        <h3>
+                            <i class="fas fa-users-cog"></i> Gestión de Administradores
+                        </h3>
+                        <p class="text-muted">Administrar usuarios con privilegios administrativos del sistema</p>
+                    </div>
+
+                    <!-- Agregar Nuevo Administrador -->
+                    <div class="admin__section">
+                        <h4><i class="fas fa-user-plus"></i> Agregar Nuevo Administrador</h4>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <input 
+                                    type="email" 
+                                    id="new-admin-email" 
+                                    placeholder="email@ejemplo.com"
+                                    class="form-control"
+                                    autocomplete="off"
+                                >
+                                <button 
+                                    id="add-admin-btn" 
+                                    class="btn btn--primary"
+                                    type="button"
+                                >
+                                    <i class="fas fa-plus"></i> Agregar Admin
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">
+                                El nuevo administrador tendrá acceso completo al sistema
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Administradores Actuales -->
+                    <div class="admin__section">
+                        <h4><i class="fas fa-users"></i> Administradores Activos</h4>
+                        <div class="table-container">
+                            <table class="admin-table" id="admins-table">
+                                <thead>
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>Fecha Creación</th>
+                                        <th>Creado Por</th>
+                                        <th>Último Acceso</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admins-table-body">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; padding: 40px;">
+                                            <i class="fas fa-spinner fa-spin"></i> Cargando administradores...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Estadísticas de Administradores -->
+                    <div class="admin__section">
+                        <h4><i class="fas fa-chart-bar"></i> Estadísticas</h4>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-number" id="total-admins">0</div>
+                                <div class="stat-label">Total Administradores</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="active-admins">0</div>
+                                <div class="stat-label">Activos</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="recent-logins">0</div>
+                                <div class="stat-label">Accesos Recientes (7d)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sistema de Seguridad -->
+                    <div class="admin__section">
+                        <h4><i class="fas fa-shield-alt"></i> Configuración de Seguridad</h4>
+                        <div class="security-controls">
+                            <div class="form-group">
+                                <label class="form-switch">
+                                    <input type="checkbox" id="dynamic-admin-toggle" checked>
+                                    <span class="switch"></span>
+                                    Sistema Dinámico de Administradores
+                                </label>
+                                <small class="form-text text-muted">
+                                    Usar Firestore para gestión de administradores (recomendado)
+                                </small>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-switch">
+                                    <input type="checkbox" id="fallback-hardcoded-toggle" checked>
+                                    <span class="switch"></span>
+                                    Fallback a Administradores Hardcodeados
+                                </label>
+                                <small class="form-text text-muted">
+                                    Usar administradores predefinidos si falla Firestore (recomendado para seguridad)
+                                </small>
+                            </div>
+                            <button id="clear-admin-cache-btn" class="btn btn--outline">
+                                <i class="fas fa-trash"></i> Limpiar Cache
+                            </button>
+                        </div>
                     </div>
                 </div>
 

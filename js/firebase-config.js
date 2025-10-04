@@ -51,6 +51,13 @@ export const APP_CONFIG = {
     currency: 'ARS',
     dateFormat: 'es-AR',
     useGoogleDrive: false, // Desactivado - usando sistema Base64 en Firestore
+    // Sistema de administradores dinámico
+    adminSystem: {
+        useDynamicAdmins: true, // Usar Firestore en lugar de variables hardcodeadas
+        fallbackToHardcoded: true, // Fallback a ADMIN_EMAILS si Firestore falla
+        cacheExpiry: 5 * 60 * 1000, // Cache por 5 minutos
+        collection: 'admins'
+    },
     bankInfo: {
         account: '6557575/67',
         cbu: '22222222222222222',

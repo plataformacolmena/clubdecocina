@@ -94,6 +94,8 @@ class AdminManager {
                 // Cargar datos específicos según la tab
                 if (targetTab === 'system-logs') {
                     this.loadSystemLogs();
+                } else if (targetTab === 'administradores') {
+                    this.loadAdministratorsTab();
                 }
             });
         });
@@ -105,6 +107,244 @@ class AdminManager {
             firstTab.classList.add('active');
             firstContent.classList.add('active');
         }
+    }
+
+    // ============================================
+    // GESTIÓN DE ADMINISTRADORES
+    // ============================================
+
+    async loadAdministratorsTab() {
+        try {
+            console.log('📋 Cargando gestión de administradores...');
+            
+            // Cargar lista de administradores
+            await this.loadAdminsList();
+            
+            // Actualizar estadísticas
+            await this.updateAdminsStats();
+            
+            // Configurar event listeners si no están configurados
+            this.setupAdminManagementListeners();
+            
+        } catch (error) {
+            console.error('Error cargando administradores:', error);
+            window.authManager?.showMessage('Error cargando administradores', 'error');
+        }
+    }
+
+    async loadAdminsList() {
+        try {
+            const admins = await window.authManager.getAdminList();
+            this.renderAdminsTable(admins);
+        } catch (error) {
+            console.error('Error obteniendo lista de administradores:', error);
+            const tbody = document.getElementById('admins-table-body');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: #dc3545;">
+                            <i class="fas fa-exclamation-triangle"></i><br>
+                            Error cargando administradores
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+    }
+
+    renderAdminsTable(admins) {
+        const tbody = document.getElementById('admins-table-body');
+        if (!tbody) return;
+
+        if (admins.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px;">
+                        <i class="fas fa-users" style="font-size: 2em; color: #ccc; margin-bottom: 10px;"></i><br>
+                        No hay administradores registrados
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = admins.map(admin => this.renderAdminRow(admin)).join('');
+    }
+
+    renderAdminRow(admin) {
+        const createdDate = admin.createdAt?.toDate ? 
+            admin.createdAt.toDate().toLocaleDateString('es-AR') : 
+            'N/A';
+        
+        const lastLogin = admin.lastLogin?.toDate ? 
+            admin.lastLogin.toDate().toLocaleDateString('es-AR') :
+            'Nunca';
+
+        const isCurrentUser = admin.email === window.authManager?.currentUser?.email;
+        const isSystemCreated = admin.createdBy === 'system';
+
+        return `
+            <tr class="admin-row" data-admin-email="${admin.email}">
+                <td>
+                    <div class="admin-info">
+                        <strong>${admin.email}</strong>
+                        ${isCurrentUser ? '<span class="badge badge--primary">Tú</span>' : ''}
+                    </div>
+                </td>
+                <td>${createdDate}</td>
+                <td>
+                    <span class="${isSystemCreated ? 'admin-status--system' : 'admin-status--active'} admin-status">
+                        ${isSystemCreated ? 'Sistema' : admin.createdBy || 'N/A'}
+                    </span>
+                </td>
+                <td>${lastLogin}</td>
+                <td>
+                    <span class="admin-status admin-status--active">
+                        <i class="fas fa-check-circle"></i> Activo
+                    </span>
+                </td>
+                <td>
+                    ${!isCurrentUser ? `
+                        <button 
+                            class="btn btn--outline btn--small remove-admin-btn"
+                            data-admin-email="${admin.email}"
+                            title="Desactivar administrador"
+                        >
+                            <i class="fas fa-user-times"></i> Remover
+                        </button>
+                    ` : `
+                        <span class="text-muted">No disponible</span>
+                    `}
+                </td>
+            </tr>
+        `;
+    }
+
+    async updateAdminsStats() {
+        try {
+            const admins = await window.authManager.getAdminList();
+            const now = new Date();
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+            const recentLogins = admins.filter(admin => {
+                if (!admin.lastLogin?.toDate) return false;
+                return admin.lastLogin.toDate() > weekAgo;
+            }).length;
+
+            document.getElementById('total-admins').textContent = admins.length;
+            document.getElementById('active-admins').textContent = admins.length; // Todos están activos
+            document.getElementById('recent-logins').textContent = recentLogins;
+
+        } catch (error) {
+            console.error('Error actualizando estadísticas:', error);
+        }
+    }
+
+    setupAdminManagementListeners() {
+        // Prevenir múltiples event listeners
+        if (this.adminListenersSetup) return;
+        this.adminListenersSetup = true;
+
+        // Agregar nuevo administrador
+        document.getElementById('add-admin-btn')?.addEventListener('click', async () => {
+            await this.handleAddAdmin();
+        });
+
+        // Enter en campo de email
+        document.getElementById('new-admin-email')?.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                await this.handleAddAdmin();
+            }
+        });
+
+        // Remover administrador
+        document.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('remove-admin-btn') || e.target.closest('.remove-admin-btn')) {
+                const button = e.target.classList.contains('remove-admin-btn') ? 
+                    e.target : e.target.closest('.remove-admin-btn');
+                const adminEmail = button.getAttribute('data-admin-email');
+                await this.handleRemoveAdmin(adminEmail);
+            }
+        });
+
+        // Configuración de seguridad
+        document.getElementById('dynamic-admin-toggle')?.addEventListener('change', (e) => {
+            // Aquí se podría actualizar la configuración
+            console.log('Sistema dinámico:', e.target.checked);
+        });
+
+        document.getElementById('fallback-hardcoded-toggle')?.addEventListener('change', (e) => {
+            console.log('Fallback hardcoded:', e.target.checked);
+        });
+
+        // Limpiar cache
+        document.getElementById('clear-admin-cache-btn')?.addEventListener('click', () => {
+            window.authManager.clearAdminCache();
+            window.authManager?.showMessage('Cache de administradores limpiado', 'success');
+        });
+    }
+
+    async handleAddAdmin() {
+        const emailInput = document.getElementById('new-admin-email');
+        const email = emailInput.value.trim();
+
+        if (!email) {
+            window.authManager?.showMessage('Ingresa un email válido', 'error');
+            return;
+        }
+
+        if (!this.isValidEmail(email)) {
+            window.authManager?.showMessage('El formato del email no es válido', 'error');
+            return;
+        }
+
+        try {
+            const result = await window.authManager.addNewAdmin(email);
+            
+            if (result.success) {
+                window.authManager?.showMessage('Administrador agregado exitosamente', 'success');
+                emailInput.value = '';
+                
+                // Recargar lista
+                await this.loadAdminsList();
+                await this.updateAdminsStats();
+            } else {
+                window.authManager?.showMessage(result.message || 'Error agregando administrador', 'error');
+            }
+            
+        } catch (error) {
+            console.error('Error agregando admin:', error);
+            window.authManager?.showMessage('Error: ' + error.message, 'error');
+        }
+    }
+
+    async handleRemoveAdmin(adminEmail) {
+        if (!confirm(`¿Estás seguro de que deseas remover a ${adminEmail} como administrador?`)) {
+            return;
+        }
+
+        try {
+            const result = await window.authManager.removeAdmin(adminEmail);
+            
+            if (result.success) {
+                window.authManager?.showMessage('Administrador removido exitosamente', 'success');
+                
+                // Recargar lista
+                await this.loadAdminsList();
+                await this.updateAdminsStats();
+            } else {
+                window.authManager?.showMessage(result.message || 'Error removiendo administrador', 'error');
+            }
+            
+        } catch (error) {
+            console.error('Error removiendo admin:', error);
+            window.authManager?.showMessage('Error: ' + error.message, 'error');
+        }
+    }
+
+    isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
     }
 
     setupAdminFilters() {
