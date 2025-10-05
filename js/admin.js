@@ -2770,11 +2770,11 @@ class AdminManager {
     // ============================================
     
     initializeNotasManager() {
-        if (!this.notasManager && window.NotasManager) {
+        if (!this.notasManager && window.notasManager) {
             console.log('🔄 Inicializando gestor de notas...');
-            this.notasManager = new window.NotasManager();
+            this.notasManager = window.notasManager;
             console.log('✅ Gestor de notas inicializado');
-        } else if (!window.NotasManager) {
+        } else if (!window.notasManager) {
             console.error('❌ NotasManager no está disponible');
         }
     }

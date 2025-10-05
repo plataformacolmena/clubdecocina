@@ -290,7 +290,7 @@ class NotasManager {
         const form = document.getElementById('nota-form');
         const title = document.getElementById('nota-modal-title');
         const submitText = document.getElementById('nota-submit-text');
-        const statusGroup = document.getElementById('nota-status-group');
+        const statusField = document.getElementById('nota-estado');
 
         // Resetear formulario
         form.reset();
@@ -299,21 +299,21 @@ class NotasManager {
             // Modo edición
             title.textContent = 'Editar Nota';
             submitText.textContent = 'Guardar Cambios';
-            statusGroup.style.display = 'block';
+            if (statusField) statusField.style.display = 'block';
 
             document.getElementById('nota-titulo').value = note.titulo;
             document.getElementById('nota-descripcion').value = note.descripcion || '';
             document.getElementById('nota-prioridad').value = note.prioridad;
-            document.getElementById('nota-status').value = note.status;
+            document.getElementById('nota-estado').value = note.status;
             
             if (note.dueDate) {
-                document.getElementById('nota-fecha-limite').value = new Date(note.dueDate).toISOString().split('T')[0];
+                document.getElementById('nota-fecha-vencimiento').value = new Date(note.dueDate).toISOString().split('T')[0];
             }
         } else {
             // Modo creación
             title.textContent = 'Nueva Nota';
             submitText.textContent = 'Crear Nota';
-            statusGroup.style.display = 'none';
+            if (statusField) statusField.style.display = 'none';
         }
 
         modal.classList.add('active');
@@ -333,7 +333,7 @@ class NotasManager {
             titulo: document.getElementById('nota-titulo').value.trim(),
             descripcion: document.getElementById('nota-descripcion').value.trim(),
             prioridad: document.getElementById('nota-prioridad').value,
-            dueDate: document.getElementById('nota-fecha-limite').value || null
+            dueDate: document.getElementById('nota-fecha-vencimiento').value || null
         };
 
         if (!formData.titulo) {
@@ -353,7 +353,7 @@ class NotasManager {
                 const noteRef = doc(db, 'notes', this.editingNote.id);
                 const updateData = {
                     ...formData,
-                    status: document.getElementById('nota-status').value,
+                    status: document.getElementById('nota-estado').value,
                     updatedAt: serverTimestamp()
                 };
 
