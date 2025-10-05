@@ -5,6 +5,8 @@ import InscripcionesManager from './inscripciones.js';
 import RecetasManager from './recetas.js';
 import AdminManager from './admin.js';
 import NotasManager from './notas.js';
+import ConfiguracionManager from './configuracion.js';
+import ConfiguracionesInitializer from './init-configuraciones.js';
 
 class App {
     constructor() {

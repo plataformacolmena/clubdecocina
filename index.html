@@ -132,6 +132,9 @@
                     <button class="tab-btn" data-tab="notas-admin">
                         <i class="fas fa-sticky-note"></i> Notas
                     </button>
+                    <button class="tab-btn" data-tab="configuraciones-admin">
+                        <i class="fas fa-cogs"></i> Configuraciones
+                    </button>
                     <button class="tab-btn" data-tab="logs-admin">
                         <i class="fas fa-list-alt"></i> Registro del Sistema
                     </button>
@@ -590,6 +593,159 @@
                             </div>
                             <div class="kanban-body" id="kanban-done">
                                 <!-- Las notas se cargarán dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuraciones del Sistema -->
+                <div id="configuraciones-admin" class="tab-content">
+                    <div class="admin__header">
+                        <h3>
+                            <i class="fas fa-cogs"></i> Configuraciones del Sistema
+                        </h3>
+                        <p class="text-muted">Gestionar configuraciones de sede, contactos y emails</p>
+                        
+                        <!-- Sub-pestañas de Configuración -->
+                        <div class="config-subtabs" style="display: flex; gap: 10px; margin: 20px 0; border-bottom: 2px solid #f1f1f1; padding-bottom: 10px;">
+                            <button class="config-tab-btn active" data-config-tab="sede-contactos">
+                                <i class="fas fa-building"></i> Sede y Contactos
+                            </button>
+                            <button class="config-tab-btn" data-config-tab="configuracion-emails">
+                                <i class="fas fa-envelope-open-text"></i> Configuración de Emails
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Configuración Sede y Contactos -->
+                    <div id="config-sede-contactos" class="config-tab-content active">
+                        <div class="config-section-grid">
+                            <!-- Sede Principal -->
+                            <div class="config-section">
+                                <div class="config-header">
+                                    <h4><i class="fas fa-building"></i> Sede Principal</h4>
+                                    <button id="editar-sede-btn" class="btn btn--primary btn--small">
+                                        <i class="fas fa-edit"></i> Editar Sede
+                                    </button>
+                                </div>
+                                <div class="config-display" id="sede-display">
+                                    <div class="config-info">
+                                        <div class="config-info-item">
+                                            <label>Dirección:</label>
+                                            <span id="sede-direccion-display">Cargando...</span>
+                                        </div>
+                                        <div class="config-info-item">
+                                            <label>Email:</label>
+                                            <span id="sede-email-display">No configurado</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Profesores/Instructores -->
+                            <div class="config-section">
+                                <div class="config-header">
+                                    <h4><i class="fas fa-chalkboard-teacher"></i> Profesores</h4>
+                                    <button id="agregar-profesor-btn" class="btn btn--primary btn--small">
+                                        <i class="fas fa-user-plus"></i> Agregar Profesor
+                                    </button>
+                                </div>
+                                <div class="profesores-table-container">
+                                    <table class="data-table" id="profesores-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nombre</th>
+                                                <th>Email</th>
+                                                <th>Especialidad</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="profesores-table-body">
+                                            <!-- Los profesores se cargarán dinámicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuración de Emails -->
+                    <div id="config-configuracion-emails" class="config-tab-content">
+                        <div class="config-section-grid config-section-grid--emails">
+                            <!-- Apps Script URLs -->
+                            <div class="config-section">
+                                <div class="config-header">
+                                    <h4><i class="fas fa-code"></i> URLs Apps Script</h4>
+                                    <button id="agregar-script-btn" class="btn btn--primary btn--small">
+                                        <i class="fas fa-plus"></i> Agregar URL
+                                    </button>
+                                </div>
+                                <div class="scripts-table-container">
+                                    <table class="data-table" id="scripts-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nombre</th>
+                                                <th>URL</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="scripts-table-body">
+                                            <!-- Los scripts se cargarán dinámicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Configuración de Envío -->
+                            <div class="config-section">
+                                <div class="config-header">
+                                    <h4><i class="fas fa-paper-plane"></i> Configuración de Envío</h4>
+                                    <button id="editar-envio-btn" class="btn btn--primary btn--small">
+                                        <i class="fas fa-edit"></i> Configurar
+                                    </button>
+                                </div>
+                                <div class="config-display" id="envio-display">
+                                    <div class="config-section-row">
+                                        <h5>Notificaciones Admin:</h5>
+                                        <div class="config-status-list" id="notif-admin-list">
+                                            <!-- Se cargará dinámicamente -->
+                                        </div>
+                                    </div>
+                                    <div class="config-section-row">
+                                        <h5>Notificaciones Alumnos:</h5>
+                                        <div class="config-status-list" id="notif-alumno-list">
+                                            <!-- Se cargará dinámicamente -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Recordatorios de Cursos -->
+                            <div class="config-section">
+                                <div class="config-header">
+                                    <h4><i class="fas fa-clock"></i> Recordatorios</h4>
+                                    <button id="editar-recordatorios-btn" class="btn btn--primary btn--small">
+                                        <i class="fas fa-edit"></i> Configurar
+                                    </button>
+                                </div>
+                                <div class="config-display" id="recordatorios-display">
+                                    <div class="config-info">
+                                        <div class="config-info-item">
+                                            <label>Días antes:</label>
+                                            <span id="recordatorio-dias-display">1 día</span>
+                                        </div>
+                                        <div class="config-info-item">
+                                            <label>Horario:</label>
+                                            <span id="recordatorio-horario-display">11:00 AM</span>
+                                        </div>
+                                        <div class="config-info-item">
+                                            <label>Estado:</label>
+                                            <span id="recordatorio-estado-display">Activo</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1108,6 +1264,489 @@
         </div>
     </div>
 
+    <!-- Modales de Configuraciones -->
+    
+    <!-- Modal de Configuración de Sede -->
+    <div id="sede-modal" class="modal">
+        <div class="modal__content modal__content--horizontal">
+            <span class="modal__close" id="sede-modal-close">&times;</span>
+            <h2 class="modal__title">
+                <i class="fas fa-building"></i> Configuración de Sede
+            </h2>
+            <div class="modal__body">
+                <p class="modal__description">
+                    Configura la información de la sede principal del Club de Cocina:
+                </p>
+                
+                <form id="sede-form" class="config-form-horizontal">
+                    <div class="config-form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-map-marker-alt"></i> Dirección
+                        </h4>
+                        
+                        <div class="form-group-wide">
+                            <label class="form-label-compact">
+                                <i class="fas fa-address-card"></i> Dirección Completa
+                            </label>
+                            <input type="text" id="sede-direccion-input" class="form-control-wide" required 
+                                   maxlength="255" placeholder="Ej: Av. Corrientes 1234, CABA, Argentina">
+                        </div>
+                    </div>
+                    
+                    <div class="config-form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-envelope"></i> Contacto
+                        </h4>
+                        
+                        <div class="form-group-wide">
+                            <label class="form-label-compact">
+                                <i class="fas fa-at"></i> Email de Contacto
+                            </label>
+                            <input type="email" id="sede-email-input" class="form-control-wide" required 
+                                   maxlength="100" placeholder="contacto@clubcolmena.com.ar">
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="modal__actions">
+                    <div class="modal__actions-right">
+                        <button type="button" id="cancel-sede" class="btn btn--secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" form="sede-form" class="btn btn--primary">
+                            <i class="fas fa-save"></i> Guardar Configuración
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Profesor -->
+    <div id="profesor-modal" class="modal">
+        <div class="modal__content modal__content--horizontal">
+            <span class="modal__close" id="profesor-modal-close">&times;</span>
+            <h2 class="modal__title">
+                <i class="fas fa-chalkboard-teacher"></i> <span id="profesor-modal-title">Agregar Profesor</span>
+            </h2>
+            <div class="modal__body">
+                <p class="modal__description">
+                    Configura la información del profesor/instructor:
+                </p>
+                
+                <form id="profesor-form" class="config-form-horizontal">
+                    <div class="config-form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-user"></i> Información Personal
+                        </h4>
+                        
+                        <div class="form-row-compact">
+                            <div class="form-group-compact">
+                                <label class="form-label-compact">
+                                    <i class="fas fa-signature"></i> Nombre Completo
+                                </label>
+                                <input type="text" id="profesor-nombre-input" class="form-control-compact" required 
+                                       maxlength="100" placeholder="María González">
+                            </div>
+                            
+                            <div class="form-group-compact">
+                                <label class="form-label-compact">
+                                    <i class="fas fa-envelope"></i> Email
+                                </label>
+                                <input type="email" id="profesor-email-input" class="form-control-compact" required 
+                                       maxlength="100" placeholder="maria.gonzalez@clubcolmena.com.ar">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="config-form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-graduation-cap"></i> Información Profesional
+                        </h4>
+                        
+                        <div class="form-row-compact">
+                            <div class="form-group-compact">
+                                <label class="form-label-compact">
+                                    <i class="fas fa-star"></i> Especialidad
+                                </label>
+                                <input type="text" id="profesor-especialidad-input" class="form-control-compact" required 
+                                       maxlength="100" placeholder="Cocina Internacional">
+                            </div>
+                            
+                            <div class="form-group-compact">
+                                <label class="form-label-compact">
+                                    <i class="fas fa-calendar"></i> Experiencia
+                                </label>
+                                <input type="text" id="profesor-experiencia-input" class="form-control-compact"
+                                       maxlength="50" placeholder="10 años">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group-wide">
+                            <label class="form-label-compact">
+                                <i class="fas fa-info-circle"></i> Descripción
+                            </label>
+                            <textarea id="profesor-descripcion-input" class="form-control-wide" rows="3"
+                                      placeholder="Breve descripción del profesor y sus especialidades..."></textarea>
+                        </div>
+                        
+                        <div class="form-group-compact">
+                            <label class="form-switch">
+                                <input type="checkbox" id="profesor-activo-input" checked>
+                                <span class="switch"></span>
+                                Profesor Activo
+                            </label>
+                            <small class="form-text">Solo los profesores activos aparecerán en la web</small>
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="modal__actions">
+                    <div class="modal__actions-right">
+                        <button type="button" id="cancel-profesor" class="btn btn--secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" form="profesor-form" class="btn btn--primary">
+                            <i class="fas fa-save"></i> <span id="profesor-submit-text">Agregar Profesor</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Apps Script -->
+    <div id="script-modal" class="modal">
+        <div class="modal__content modal__content--horizontal">
+            <span class="modal__close" id="script-modal-close">&times;</span>
+            <h2 class="modal__title">
+                <i class="fas fa-code"></i> <span id="script-modal-title">Agregar Apps Script</span>
+            </h2>
+            <div class="modal__body">
+                <p class="modal__description">
+                    Configura una URL de Google Apps Script para automatización de emails:
+                </p>
+                
+                <form id="script-form" class="config-form-horizontal">
+                    <div class="config-form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-tag"></i> Información Básica
+                        </h4>
+                        
+                        <div class="form-row-compact">
+                            <div class="form-group-compact">
+                                <label class="form-label-compact">
+                                    <i class="fas fa-signature"></i> Nombre del Script
+                                </label>
+                                <input type="text" id="script-nombre-input" class="form-control-compact" required 
+                                       maxlength="100" placeholder="Notificaciones Email">
+                            </div>
+                            
+                            <div class="form-group-compact">
+                                <label class="form-label-compact">
+                                    <i class="fas fa-folder"></i> Tipo
+                                </label>
+                                <select id="script-tipo-input" class="form-control-compact" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="notificaciones">📧 Notificaciones</option>
+                                    <option value="recordatorios">⏰ Recordatorios</option>
+                                    <option value="backup">💾 Backup</option>
+                                    <option value="reportes">📊 Reportes</option>
+                                    <option value="otro">🔧 Otro</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="config-form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-link"></i> Configuración
+                        </h4>
+                        
+                        <div class="form-group-wide">
+                            <label class="form-label-compact">
+                                <i class="fas fa-external-link-alt"></i> URL del Apps Script
+                            </label>
+                            <input type="url" id="script-url-input" class="form-control-wide" required 
+                                   placeholder="https://script.google.com/macros/s/...../exec">
+                            <small class="form-text">URL del Google Apps Script deployado</small>
+                        </div>
+                        
+                        <div class="form-group-wide">
+                            <label class="form-label-compact">
+                                <i class="fas fa-info-circle"></i> Descripción
+                            </label>
+                            <textarea id="script-descripcion-input" class="form-control-wide" rows="2"
+                                      placeholder="Describe la función de este script..."></textarea>
+                        </div>
+                        
+                        <div class="form-group-compact">
+                            <label class="form-switch">
+                                <input type="checkbox" id="script-activo-input" checked>
+                                <span class="switch"></span>
+                                Script Activo
+                            </label>
+                            <small class="form-text">Solo los scripts activos se ejecutarán</small>
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="modal__actions">
+                    <button type="button" id="test-script" class="btn btn--outline">
+                        <i class="fas fa-play"></i> Probar Script
+                    </button>
+                    <div class="modal__actions-right">
+                        <button type="button" id="cancel-script" class="btn btn--secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" form="script-form" class="btn btn--primary">
+                            <i class="fas fa-save"></i> <span id="script-submit-text">Agregar Script</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configuración de Envío -->
+    <div id="envio-modal" class="modal">
+        <div class="modal__content modal__content--horizontal">
+            <span class="modal__close" id="envio-modal-close">&times;</span>
+            <h2 class="modal__title">
+                <i class="fas fa-paper-plane"></i> Configuración de Envío de Emails
+            </h2>
+            <div class="modal__body">
+                <p class="modal__description">
+                    Configura qué notificaciones automáticas se enviarán por email:
+                </p>
+                
+                <form id="envio-form" class="config-form-horizontal">
+                    <div class="config-form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-user-tie"></i> Notificaciones para Administradores
+                        </h4>
+                        
+                        <div class="notification-checkboxes">
+                            <label class="notification-checkbox">
+                                <input type="checkbox" id="notif-admin-nueva-inscripcion">
+                                <span class="checkmark"></span>
+                                <div class="notification-info">
+                                    <strong>Nueva Inscripción</strong>
+                                    <small>Cuando un alumno se inscribe a un curso</small>
+                                </div>
+                            </label>
+                            
+                            <label class="notification-checkbox">
+                                <input type="checkbox" id="notif-admin-cancelacion-curso">
+                                <span class="checkmark"></span>
+                                <div class="notification-info">
+                                    <strong>Cancelación de Curso</strong>
+                                    <small>Cuando un alumno cancela su inscripción</small>
+                                </div>
+                            </label>
+                            
+                            <label class="notification-checkbox">
+                                <input type="checkbox" id="notif-admin-pago-recibido">
+                                <span class="checkmark"></span>
+                                <div class="notification-info">
+                                    <strong>Pago Recibido</strong>
+                                    <small>Cuando se sube un comprobante de pago</small>
+                                </div>
+                            </label>
+                            
+                            <label class="notification-checkbox">
+                                <input type="checkbox" id="notif-admin-nuevo-usuario">
+                                <span class="checkmark"></span>
+                                <div class="notification-info">
+                                    <strong>Nuevo Usuario</strong>
+                                    <small>Cuando se registra un nuevo usuario</small>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="config-form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-users"></i> Notificaciones para Alumnos
+                        </h4>
+                        
+                        <div class="notification-checkboxes">
+                            <label class="notification-checkbox">
+                                <input type="checkbox" id="notif-alumno-confirmacion-inscripcion">
+                                <span class="checkmark"></span>
+                                <div class="notification-info">
+                                    <strong>Confirmación de Inscripción</strong>
+                                    <small>Confirma la inscripción exitosa al curso</small>
+                                </div>
+                            </label>
+                            
+                            <label class="notification-checkbox">
+                                <input type="checkbox" id="notif-alumno-recordatorio-curso">
+                                <span class="checkmark"></span>
+                                <div class="notification-info">
+                                    <strong>Recordatorio de Curso</strong>
+                                    <small>Recordatorio antes del día del curso</small>
+                                </div>
+                            </label>
+                            
+                            <label class="notification-checkbox">
+                                <input type="checkbox" id="notif-alumno-confirmacion-pago">
+                                <span class="checkmark"></span>
+                                <div class="notification-info">
+                                    <strong>Confirmación de Pago</strong>
+                                    <small>Cuando el pago es confirmado por admin</small>
+                                </div>
+                            </label>
+                            
+                            <label class="notification-checkbox">
+                                <input type="checkbox" id="notif-alumno-cancelacion-admin">
+                                <span class="checkmark"></span>
+                                <div class="notification-info">
+                                    <strong>Cancelación por Admin</strong>
+                                    <small>Cuando el admin cancela una inscripción</small>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="modal__actions">
+                    <button type="button" id="test-envio" class="btn btn--outline">
+                        <i class="fas fa-paper-plane"></i> Probar Envío
+                    </button>
+                    <div class="modal__actions-right">
+                        <button type="button" id="cancel-envio" class="btn btn--secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" form="envio-form" class="btn btn--primary">
+                            <i class="fas fa-save"></i> Guardar Configuración
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configuración de Recordatorios -->
+    <div id="recordatorios-modal" class="modal">
+        <div class="modal__content modal__content--horizontal">
+            <span class="modal__close" id="recordatorios-modal-close">&times;</span>
+            <h2 class="modal__title">
+                <i class="fas fa-clock"></i> Configuración de Recordatorios
+            </h2>
+            <div class="modal__body">
+                <p class="modal__description">
+                    Configura cuándo y cómo se envían los recordatorios automáticos:
+                </p>
+                
+                <form id="recordatorios-form" class="config-form-horizontal">
+                    <div class="config-form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-calendar-alt"></i> Programación
+                        </h4>
+                        
+                        <div class="form-row-compact">
+                            <div class="form-group-compact">
+                                <label class="form-label-compact">
+                                    <i class="fas fa-calendar-day"></i> Días de Anticipación
+                                </label>
+                                <select id="recordatorio-dias-input" class="form-control-compact" required>
+                                    <option value="1">1 día antes</option>
+                                    <option value="2">2 días antes</option>
+                                    <option value="3">3 días antes</option>
+                                    <option value="7">1 semana antes</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group-compact">
+                                <label class="form-label-compact">
+                                    <i class="fas fa-clock"></i> Horario de Envío
+                                </label>
+                                <select id="recordatorio-horario-input" class="form-control-compact" required>
+                                    <option value="08:00">08:00 AM</option>
+                                    <option value="09:00">09:00 AM</option>
+                                    <option value="10:00">10:00 AM</option>
+                                    <option value="11:00">11:00 AM</option>
+                                    <option value="12:00">12:00 PM</option>
+                                    <option value="15:00">03:00 PM</option>
+                                    <option value="18:00">06:00 PM</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group-compact">
+                            <label class="form-switch">
+                                <input type="checkbox" id="recordatorio-activo-input" checked>
+                                <span class="switch"></span>
+                                Recordatorios Activos
+                            </label>
+                            <small class="form-text">Activar o desactivar todos los recordatorios</small>
+                        </div>
+                    </div>
+                    
+                    <div class="config-form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-envelope"></i> Configuración del Email
+                        </h4>
+                        
+                        <div class="form-group-wide">
+                            <label class="form-label-compact">
+                                <i class="fas fa-subject"></i> Asunto del Email
+                            </label>
+                            <input type="text" id="recordatorio-asunto-input" class="form-control-wide" required 
+                                   maxlength="100" placeholder="Recordatorio: Curso mañana en Club Colmena">
+                        </div>
+                        
+                        <div class="form-group-wide">
+                            <label class="form-label-compact">
+                                <i class="fas fa-file-text"></i> Mensaje Principal
+                            </label>
+                            <textarea id="recordatorio-mensaje-input" class="form-control-wide" rows="4" required
+                                      placeholder="Te recordamos que mañana tienes tu curso programado. ¡Te esperamos!"></textarea>
+                        </div>
+                        
+                        <div class="form-row-compact">
+                            <div class="form-group-compact">
+                                <label class="form-switch">
+                                    <input type="checkbox" id="recordatorio-reenviar-input">
+                                    <span class="switch"></span>
+                                    Reenviar si no se lee
+                                </label>
+                                <small class="form-text">Reenvío automático si no abre el email</small>
+                            </div>
+                            
+                            <div class="form-group-compact">
+                                <label class="form-label-compact">
+                                    <i class="fas fa-redo"></i> Horas para Reenvío
+                                </label>
+                                <select id="recordatorio-horas-reenvio-input" class="form-control-compact">
+                                    <option value="2">2 horas</option>
+                                    <option value="4">4 horas</option>
+                                    <option value="6">6 horas</option>
+                                    <option value="12">12 horas</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="modal__actions">
+                    <button type="button" id="test-recordatorio" class="btn btn--outline">
+                        <i class="fas fa-paper-plane"></i> Enviar Prueba
+                    </button>
+                    <div class="modal__actions-right">
+                        <button type="button" id="cancel-recordatorios" class="btn btn--secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" form="recordatorios-form" class="btn btn--primary">
+                            <i class="fas fa-save"></i> Guardar Configuración
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDKs -->
     <script type="module" src="js/firebase-config.js"></script>
     <!-- Google Drive desactivado - usando sistema Base64 -->
@@ -1119,6 +1758,7 @@
     <script type="module" src="js/notas.js"></script>
     <script type="module" src="js/contabilidad.js"></script>
     <script type="module" src="js/admin.js"></script>
+    <script type="module" src="js/init-configuraciones.js"></script>
     <script type="module" src="js/app.js"></script>
 </body>
 </html>

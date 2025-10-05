@@ -2813,4 +2813,11 @@ class AdminManager {
 window.adminManager = new AdminManager();
 window.bankAccountManager = new BankAccountManager();
 
+// Importar módulo de configuraciones
+import('./configuracion.js').then(({ default: ConfiguracionManager }) => {
+    console.log('✅ Módulo de configuraciones cargado');
+}).catch(error => {
+    console.error('❌ Error cargando módulo de configuraciones:', error);
+});
+
 export default AdminManager;

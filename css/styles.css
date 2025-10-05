@@ -2418,3 +2418,604 @@ body {
     border-radius: 4px;
     border-left: 3px solid var(--primary-color);
 }
+
+/* =============================
+   ESTILOS PARA CONFIGURACIONES
+   ============================= */
+
+/* Sub-pestañas de Configuración */
+.config-subtabs {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+    border-bottom: 2px solid #f1f1f1;
+    padding-bottom: 10px;
+}
+
+.config-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    color: var(--text-light);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.config-tab-btn:hover {
+    background-color: var(--light-gray);
+    color: var(--primary-color);
+}
+
+.config-tab-btn.active {
+    color: var(--primary-color);
+    background-color: var(--light-gray);
+    border-bottom-color: var(--primary-color);
+}
+
+/* Contenido de pestañas de configuración */
+.config-tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.config-tab-content.active {
+    display: block;
+}
+
+/* Grid de secciones de configuración */
+.config-section-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.config-section-grid--emails {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+}
+
+.config-section {
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+}
+
+.config-section:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+/* Encabezados de sección */
+.config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.config-header h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-dark);
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.config-header h4 i {
+    color: var(--primary-color);
+    font-size: 20px;
+}
+
+/* Información de configuración */
+.config-display {
+    padding: 15px 0;
+}
+
+.config-info {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.config-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.config-info-item label {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.config-info-item span {
+    font-size: 15px;
+    color: var(--text-light);
+    padding: 8px 12px;
+    background-color: var(--light-gray);
+    border-radius: 6px;
+    border-left: 3px solid var(--primary-color);
+}
+
+/* Secciones de fila */
+.config-section-row {
+    margin-bottom: 20px;
+}
+
+.config-section-row h5 {
+    margin-bottom: 10px;
+    color: var(--text-dark);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* Lista de estados de configuración */
+.config-status-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.config-status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: var(--light-gray);
+    border-radius: 20px;
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+}
+
+.config-status-item.enabled {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+.config-status-item.disabled {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+.config-status-item i {
+    font-size: 12px;
+}
+
+/* Contenedores de tablas */
+.profesores-table-container,
+.scripts-table-container {
+    margin-top: 15px;
+    overflow-x: auto;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+/* Tablas de datos */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+}
+
+.data-table thead {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.data-table th {
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.data-table tbody tr {
+    transition: background-color 0.3s ease;
+}
+
+.data-table tbody tr:hover {
+    background-color: var(--light-gray);
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Estados en tablas */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-badge.active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-badge.inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status-badge.pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+/* Acciones en tablas */
+.table-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.table-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.table-action-btn.edit {
+    background-color: #007bff;
+    color: var(--white);
+}
+
+.table-action-btn.edit:hover {
+    background-color: #0056b3;
+}
+
+.table-action-btn.delete {
+    background-color: #dc3545;
+    color: var(--white);
+}
+
+.table-action-btn.delete:hover {
+    background-color: #c82333;
+}
+
+.table-action-btn.test {
+    background-color: #28a745;
+    color: var(--white);
+}
+
+.table-action-btn.test:hover {
+    background-color: #218838;
+}
+
+/* Responsive para configuraciones */
+@media (max-width: 768px) {
+    .config-subtabs {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .config-tab-btn {
+        justify-content: flex-start;
+        padding: 12px 15px;
+    }
+    
+    .config-section-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .config-section-grid--emails {
+        grid-template-columns: 1fr;
+    }
+    
+    .config-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .config-status-list {
+        flex-direction: column;
+    }
+    
+    .table-actions {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .profesores-table-container,
+    .scripts-table-container {
+        overflow-x: scroll;
+    }
+}
+
+/* =============================
+   ESTILOS PARA MODALES DE CONFIGURACIÓN
+   ============================= */
+
+/* Modal horizontal para configuraciones */
+.modal__content--horizontal {
+    width: 90vw;
+    max-width: 800px;
+    max-height: 85vh;
+}
+
+/* Formularios de configuración */
+.config-form-horizontal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin: 20px 0;
+}
+
+.config-form-section {
+    background: #f8f9fa;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+}
+
+.form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-dark);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 8px;
+}
+
+.form-section-title i {
+    color: var(--primary-color);
+}
+
+/* Campos de formulario compactos */
+.form-label-compact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    color: var(--text-dark);
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.form-label-compact i {
+    color: var(--primary-color);
+    width: 14px;
+}
+
+.form-control-compact,
+.form-control-wide {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.form-control-compact:focus,
+.form-control-wide:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.form-group-compact {
+    margin-bottom: 15px;
+}
+
+.form-group-wide {
+    margin-bottom: 15px;
+}
+
+.form-row-compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+/* Campos para toda la sección */
+.config-form-horizontal .form-group-wide {
+    grid-column: 1 / -1;
+}
+
+/* Checkboxes de notificaciones */
+.notification-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.notification-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.notification-checkbox:hover {
+    background: #f0f7ff;
+    border-color: var(--primary-color);
+}
+
+.notification-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+.notification-checkbox .checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-color);
+    border-radius: 3px;
+    background: var(--white);
+    position: relative;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.notification-checkbox input[type="checkbox"]:checked + .checkmark {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.notification-checkbox input[type="checkbox"]:checked + .checkmark::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid var(--white);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.notification-info {
+    flex: 1;
+}
+
+.notification-info strong {
+    display: block;
+    color: var(--text-dark);
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.notification-info small {
+    color: var(--text-light);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* Switch para configuraciones */
+.form-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.form-switch input[type="checkbox"] {
+    display: none;
+}
+
+.switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: #ccc;
+    border-radius: 12px;
+    transition: background 0.3s ease;
+}
+
+.switch::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: var(--white);
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s ease;
+}
+
+.form-switch input[type="checkbox"]:checked + .switch {
+    background: var(--primary-color);
+}
+
+.form-switch input[type="checkbox"]:checked + .switch::after {
+    transform: translateX(20px);
+}
+
+/* Text helpers */
+.form-text {
+    font-size: 12px;
+    color: var(--text-light);
+    margin-top: 4px;
+    display: block;
+}
+
+/* Acciones del modal */
+.modal__actions-right {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+}
+
+/* Responsive para modales de configuración */
+@media (max-width: 768px) {
+    .modal__content--horizontal {
+        width: 95vw;
+        max-height: 95vh;
+    }
+    
+    .config-form-horizontal {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .form-row-compact {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .modal__actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .modal__actions-right {
+        margin-left: 0;
+        justify-content: stretch;
+    }
+    
+    .modal__actions-right .btn {
+        flex: 1;
+    }
+}
