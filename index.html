@@ -950,66 +950,104 @@
 
     <!-- Modal para Crear/Editar Movimiento Contable -->
     <div id="movimiento-modal" class="modal">
-        <div class="modal__content">
+        <div class="modal__content modal__content--horizontal">
             <span class="modal__close" id="movimiento-modal-close">&times;</span>
-            <h2 class="modal__title" id="movimiento-modal-title">Nuevo Movimiento</h2>
-            
-            <form id="movimiento-form" class="form">
-                <div class="form__group">
-                    <label class="form__label">Tipo de movimiento</label>
-                    <select id="movimiento-tipo" class="select" required>
-                        <option value="">Seleccionar tipo...</option>
-                        <option value="ingreso">💰 Ingreso</option>
-                        <option value="gasto">💸 Gasto</option>
-                    </select>
-                </div>
-
-                <div class="form__group">
-                    <label class="form__label">Categoría</label>
-                    <select id="movimiento-categoria" class="select" required>
-                        <option value="">Seleccionar categoría...</option>
-                        <option value="curso">🎓 Curso</option>
-                        <option value="material">📦 Material</option>
-                        <option value="servicio">🛠️ Servicio</option>
-                        <option value="otro">📋 Otro</option>
-                    </select>
-                </div>
-
-                <div class="form__group">
-                    <label class="form__label">Descripción</label>
-                    <input type="text" id="movimiento-descripcion" class="input" required maxlength="255" 
-                           placeholder="Describe el concepto del movimiento...">
-                </div>
-
-                <div class="form-row">
-                    <div class="form__group">
-                        <label class="form__label">Monto</label>
-                        <input type="number" id="movimiento-monto" class="input" required min="0" step="0.01"
-                               placeholder="0.00">
-                        <small class="form__help">Ingresa el monto en pesos argentinos</small>
+            <h2 class="modal__title">
+                <i class="fas fa-calculator"></i>
+                <span id="movimiento-modal-title">Nuevo Movimiento Contable</span>
+            </h2>
+            <div class="modal__body">
+                <p class="modal__description">
+                    Registra un ingreso o gasto para llevar el control financiero del negocio:
+                </p>
+                
+                <form id="movimiento-form" class="movimiento-form-grid">
+                    <div class="movimiento-form-section movimiento-form-section--basic">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-info-circle"></i> Información Básica
+                        </h4>
+                        
+                        <div class="form-group-compact">
+                            <label class="form-label-compact">
+                                <i class="fas fa-tag"></i> Tipo
+                            </label>
+                            <select id="movimiento-tipo" class="form-control-compact" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="ingreso">💰 Ingreso</option>
+                                <option value="gasto">💸 Gasto</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group-compact">
+                            <label class="form-label-compact">
+                                <i class="fas fa-folder"></i> Categoría
+                            </label>
+                            <select id="movimiento-categoria" class="form-control-compact" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="curso">🎓 Curso</option>
+                                <option value="material">📦 Material</option>
+                                <option value="servicio">🛠️ Servicio</option>
+                                <option value="otro">📋 Otro</option>
+                            </select>
+                        </div>
                     </div>
-
-                    <div class="form__group">
-                        <label class="form__label">Fecha</label>
-                        <input type="date" id="movimiento-fecha" class="input" required>
+                    
+                    <div class="movimiento-form-section movimiento-form-section--details">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-edit"></i> Detalles
+                        </h4>
+                        
+                        <div class="form-group-compact">
+                            <label class="form-label-compact">
+                                <i class="fas fa-file-text"></i> Descripción
+                            </label>
+                            <input type="text" id="movimiento-descripcion" class="form-control-compact" required 
+                                   maxlength="255" placeholder="Concepto del movimiento...">
+                        </div>
+                        
+                        <div class="form-row-compact">
+                            <div class="form-group-compact">
+                                <label class="form-label-compact">
+                                    <i class="fas fa-dollar-sign"></i> Monto
+                                </label>
+                                <input type="number" id="movimiento-monto" class="form-control-compact" required 
+                                       min="0" step="0.01" placeholder="0.00">
+                            </div>
+                            
+                            <div class="form-group-compact">
+                                <label class="form-label-compact">
+                                    <i class="fas fa-calendar"></i> Fecha
+                                </label>
+                                <input type="date" id="movimiento-fecha" class="form-control-compact" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group-compact">
+                            <label class="form-label-compact">
+                                <i class="fas fa-sticky-note"></i> Notas (opcional)
+                            </label>
+                            <textarea id="movimiento-notas" class="form-control-compact" rows="2" 
+                                      placeholder="Información adicional..."></textarea>
+                        </div>
                     </div>
-                </div>
-
-                <div class="form__group">
-                    <label class="form__label">Notas adicionales</label>
-                    <textarea id="movimiento-notas" class="input" rows="3" 
-                              placeholder="Información adicional sobre el movimiento (opcional)..."></textarea>
-                </div>
-
+                </form>
+                
                 <div class="modal__actions">
-                    <button type="submit" class="btn btn--primary">
-                        <i class="fas fa-save"></i> <span id="movimiento-submit-text">Crear Movimiento</span>
+                    <button type="button" id="restore-movimiento-defaults" class="btn btn--outline">
+                        <i class="fas fa-undo"></i>
+                        Limpiar Campos
                     </button>
-                    <button type="button" class="btn btn--secondary" id="cancel-movimiento">
-                        <i class="fas fa-times"></i> Cancelar
-                    </button>
+                    <div class="modal__actions-right">
+                        <button type="button" id="cancel-movimiento" class="btn btn--secondary">
+                            Cancelar
+                        </button>
+                        <button type="submit" form="movimiento-form" class="btn btn--primary">
+                            <i class="fas fa-save"></i>
+                            <span id="movimiento-submit-text">Crear Movimiento</span>
+                        </button>
+                    </div>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 

@@ -66,6 +66,11 @@ export class ContabilidadManager {
             this.hideMovimientoModal();
         });
 
+        // Limpiar campos
+        document.getElementById('restore-movimiento-defaults')?.addEventListener('click', () => {
+            this.clearMovimientoForm();
+        });
+
         // Filtros
         document.getElementById('filter-tipo-movimiento')?.addEventListener('change', () => {
             this.applyFilters();
@@ -273,6 +278,14 @@ export class ContabilidadManager {
 
     hideMovimientoModal() {
         document.getElementById('movimiento-modal').classList.remove('active');
+    }
+
+    clearMovimientoForm() {
+        const form = document.getElementById('movimiento-form');
+        form.reset();
+        // Establecer fecha actual por defecto
+        document.getElementById('movimiento-fecha').value = 
+            new Date().toISOString().split('T')[0];
     }
 
     async handleSaveMovimiento(e) {
