@@ -1,6 +1,6 @@
 // Módulo de Contabilidad
+import { db } from './firebase-config.js';
 import { 
-    db, 
     collection, 
     addDoc, 
     getDocs, 
@@ -12,7 +12,7 @@ import {
     orderBy, 
     serverTimestamp,
     onSnapshot
-} from './firebase-config.js';
+} from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
 export class ContabilidadManager {
     constructor() {
