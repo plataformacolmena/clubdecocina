@@ -119,9 +119,9 @@ class ConfiguracionManager {
         }
 
         // Botones de acción - Scripts
-        const agregarScriptBtn = document.getElementById('agregar-script-btn');
-        if (agregarScriptBtn) {
-            agregarScriptBtn.addEventListener('click', () => this.mostrarModalScript());
+        const editarScriptBtn = document.getElementById('editar-script-btn');
+        if (editarScriptBtn) {
+            editarScriptBtn.addEventListener('click', () => this.mostrarModalScript());
         }
 
         // Botones de configuración de envío
@@ -235,21 +235,36 @@ class ConfiguracionManager {
         try {
             this.validateFirebaseReady('loadScriptsConfiguration');
             
-            console.log('🔗 Cargando Apps Scripts...');
-            const scriptsSnapshot = await getDocs(collection(db, 'apps_scripts'));
-            this.scriptsData = [];
+            console.log('� Cargando configuración de Apps Script...');
+            const scriptDoc = await getDoc(doc(db, 'configuraciones', 'apps_script'));
             
-            scriptsSnapshot.forEach(doc => {
-                this.scriptsData.push({
-                    id: doc.id,
-                    ...doc.data()
-                });
-            });
-            
-            console.log(`✅ ${this.scriptsData.length} Apps Scripts cargados`);
-            this.renderScriptsTable();
+            if (scriptDoc.exists()) {
+                this.scriptConfig = scriptDoc.data();
+                console.log('✅ Configuración de Apps Script cargada');
+            } else {
+                console.log('⚠️ No existe configuración de Apps Script, creando por defecto...');
+                this.scriptConfig = {
+                    nombre: 'Gmail API Universal',
+                    url: 'https://script.google.com/macros/s/TU_SCRIPT_ID_AQUI/exec',
+                    descripcion: 'Script único para todas las funciones de Gmail API',
+                    activo: false,
+                    usos: [
+                        'Notificaciones de inscripción',
+                        'Recordatorios de cursos', 
+                        'Confirmaciones de pago',
+                        'Cancelaciones y cambios',
+                        'Envío de recetas'
+                    ],
+                    configuracion: {
+                        emailRemitente: 'noreply@clubcolmena.com.ar',
+                        nombreRemitente: 'Club de Cocina Colmena'
+                    }
+                };
+                await this.saveScriptConfiguration(this.scriptConfig);
+            }
+            this.renderScriptDisplay();
         } catch (error) {
-            console.error('❌ Error al cargar scripts:', error);
+            console.error('❌ Error al cargar configuración de Apps Script:', error);
             throw error;
         }
     }
@@ -363,52 +378,30 @@ class ConfiguracionManager {
         });
     }
 
-    renderScriptsTable() {
-        const tbody = document.getElementById('scripts-table-body');
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
-        if (this.scriptsData.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="4" style="text-align: center; color: var(--text-light); padding: 20px;">
-                        No hay URLs de Apps Script configuradas
-                    </td>
-                </tr>
+    renderScriptDisplay() {
+        // Mostrar configuración única de Apps Script
+        document.getElementById('script-nombre-display').textContent = this.scriptConfig?.nombre || 'No configurado';
+        document.getElementById('script-url-display').textContent = this.scriptConfig?.url || 'No configurado';
+        document.getElementById('script-descripcion-display').textContent = this.scriptConfig?.descripcion || 'No configurado';
+        
+        const statusElement = document.getElementById('script-status-display');
+        if (statusElement) {
+            const isActive = this.scriptConfig?.activo;
+            statusElement.innerHTML = `
+                <span class="status-badge ${isActive ? 'active' : 'inactive'}">
+                    <i class="fas fa-${isActive ? 'check-circle' : 'times-circle'}"></i>
+                    ${isActive ? 'Activo' : 'Inactivo'}
+                </span>
             `;
-            return;
         }
-
-        this.scriptsData.forEach(script => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${script.nombre}</td>
-                <td title="${script.url}">
-                    ${script.url.length > 40 ? script.url.substring(0, 40) + '...' : script.url}
-                </td>
-                <td>
-                    <span class="status-badge ${script.activo ? 'active' : 'inactive'}">
-                        <i class="fas fa-${script.activo ? 'check-circle' : 'times-circle'}"></i>
-                        ${script.activo ? 'Activo' : 'Inactivo'}
-                    </span>
-                </td>
-                <td>
-                    <div class="table-actions">
-                        <button class="table-action-btn edit" onclick="configuracionManager.editarScript('${script.id}')" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="table-action-btn test" onclick="configuracionManager.testearScript('${script.id}')" title="Probar">
-                            <i class="fas fa-play"></i>
-                        </button>
-                        <button class="table-action-btn delete" onclick="configuracionManager.eliminarScript('${script.id}')" title="Eliminar">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
+        
+        // Mostrar usos del script
+        const usosElement = document.getElementById('script-usos-display');
+        if (usosElement && this.scriptConfig?.usos) {
+            usosElement.innerHTML = this.scriptConfig.usos.map(uso => 
+                `<span class="uso-tag">${uso}</span>`
+            ).join('');
+        }
     }
 
     renderEnvioDisplay() {
@@ -492,6 +485,30 @@ class ConfiguracionManager {
         }
     }
 
+    async saveScriptConfiguration(data) {
+        try {
+            this.validateFirebaseReady('saveScriptConfiguration');
+            
+            console.log('💾 Guardando configuración de Apps Script...');
+            
+            await setDoc(doc(db, 'configuraciones', 'apps_script'), {
+                ...data,
+                updated: new Date()
+            });
+            
+            this.scriptConfig = { ...data, updated: new Date() };
+            this.renderScriptDisplay();
+            
+            console.log('✅ Configuración de Apps Script guardada exitosamente');
+            this.showSuccess('Configuración de Apps Script actualizada');
+            
+        } catch (error) {
+            console.error('❌ Error al guardar configuración de Apps Script:', error);
+            this.showError('Error al guardar la configuración de Apps Script: ' + error.message);
+            throw error;
+        }
+    }
+
     async saveRecordatoriosConfiguration(data) {
         try {
             this.validateFirebaseReady('saveRecordatoriosConfiguration');
@@ -526,48 +543,61 @@ class ConfiguracionManager {
         const closeBtn = document.getElementById('sede-modal-close');
         const cancelBtn = document.getElementById('cancel-sede');
 
+        // Limpiar eventos anteriores para evitar duplicados
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        
         // Envío del formulario
         const submitHandler = async (e) => {
             e.preventDefault();
+            e.stopPropagation();
             
-            const nuevaSedeData = {
-                direccion: document.getElementById('sede-direccion-input').value.trim(),
-                email: document.getElementById('sede-email-input').value.trim(),
-                updated: new Date()
-            };
+            try {
+                const nuevaSedeData = {
+                    direccion: document.getElementById('sede-direccion-input').value.trim(),
+                    email: document.getElementById('sede-email-input').value.trim(),
+                    updated: new Date()
+                };
 
-            if (!nuevaSedeData.direccion || !nuevaSedeData.email) {
-                this.showError('Todos los campos son obligatorios');
-                return;
+                if (!nuevaSedeData.direccion || !nuevaSedeData.email) {
+                    this.showError('Todos los campos son obligatorios');
+                    return false;
+                }
+
+                await this.saveSedeConfiguration(nuevaSedeData);
+                modal.classList.remove('active');
+                this.showSuccess('Configuración de sede actualizada exitosamente');
+                
+                return false; // Prevenir cualquier propagación adicional
+                
+            } catch (error) {
+                console.error('Error al guardar sede:', error);
+                this.showError('Error al guardar la configuración');
+                return false;
             }
-
-            await this.saveSedeConfiguration(nuevaSedeData);
-            modal.classList.remove('active');
         };
 
         // Cerrar modal
-        const closeHandler = () => {
+        const closeHandler = (e) => {
+            e?.preventDefault();
+            e?.stopPropagation();
             modal.classList.remove('active');
         };
 
-        // Agregar eventos
-        form.addEventListener('submit', submitHandler);
-        closeBtn.addEventListener('click', closeHandler);
-        cancelBtn.addEventListener('click', closeHandler);
+        // Agregar eventos una sola vez
+        const actualForm = document.getElementById('sede-form');
+        actualForm.addEventListener('submit', submitHandler, { once: true });
+        closeBtn.addEventListener('click', closeHandler, { once: true });
+        cancelBtn.addEventListener('click', closeHandler, { once: true });
         
         // Click fuera del modal
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeHandler();
-        });
-
-        // Limpiar eventos al cerrar
-        const cleanup = () => {
-            form.removeEventListener('submit', submitHandler);
-            closeBtn.removeEventListener('click', closeHandler);
-            cancelBtn.removeEventListener('click', closeHandler);
-        };
-
-        modal.addEventListener('transitionend', cleanup, { once: true });
+            if (e.target === modal) {
+                e.preventDefault();
+                e.stopPropagation();
+                closeHandler(e);
+            }
+        }, { once: true });
     }
 
     mostrarModalProfesor(profesorId = null) {

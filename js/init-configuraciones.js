@@ -5,7 +5,8 @@ import {
     doc, 
     setDoc, 
     addDoc,
-    getDoc 
+    getDoc,
+    getDocs 
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
 class ConfiguracionesInitializer {
@@ -82,7 +83,15 @@ class ConfiguracionesInitializer {
 
     async initializeProfesores() {
         try {
-            // Crear algunos profesores de ejemplo
+            // Verificar si ya existen profesores
+            const profesoresSnapshot = await getDocs(collection(db, 'profesores'));
+            
+            if (!profesoresSnapshot.empty) {
+                console.log('✅ Profesores ya existentes, omitiendo inicialización');
+                return;
+            }
+            
+            // Crear algunos profesores de ejemplo solo si no existen
             const profesoresEjemplo = [
                 {
                     nombre: 'María González',
@@ -126,42 +135,40 @@ class ConfiguracionesInitializer {
 
     async initializeAppsScripts() {
         try {
-            // Crear URLs de Apps Script de ejemplo
-            const scriptsEjemplo = [
-                {
-                    nombre: 'Notificaciones Email',
-                    url: 'https://script.google.com/macros/s/ejemplo1234567890/exec',
-                    descripcion: 'Script para envío de emails automáticos',
+            // Verificar si ya existe la configuración de Apps Script
+            const scriptRef = doc(db, 'configuraciones', 'apps_script');
+            const scriptSnap = await getDoc(scriptRef);
+            
+            if (!scriptSnap.exists()) {
+                // Crear configuración única de Apps Script para Gmail API
+                const scriptConfig = {
+                    nombre: 'Gmail API Universal',
+                    url: 'https://script.google.com/macros/s/TU_SCRIPT_ID_AQUI/exec',
+                    descripcion: 'Script único para todas las funciones de Gmail API (notificaciones, recordatorios, confirmaciones)',
                     activo: true,
-                    tipo: 'notificaciones',
-                    created: new Date()
-                },
-                {
-                    nombre: 'Recordatorios Cursos',
-                    url: 'https://script.google.com/macros/s/ejemplo0987654321/exec',
-                    descripcion: 'Script para recordatorios automáticos de cursos',
-                    activo: true,
-                    tipo: 'recordatorios',
-                    created: new Date()
-                },
-                {
-                    nombre: 'Backup Datos',
-                    url: 'https://script.google.com/macros/s/ejemplo1122334455/exec',
-                    descripcion: 'Script para respaldo automático de datos',
-                    activo: false,
-                    tipo: 'backup',
-                    created: new Date()
-                }
-            ];
-
-            for (const script of scriptsEjemplo) {
-                await addDoc(collection(db, 'apps_scripts'), script);
+                    usos: [
+                        'Notificaciones de inscripción',
+                        'Recordatorios de cursos', 
+                        'Confirmaciones de pago',
+                        'Cancelaciones y cambios',
+                        'Envío de recetas'
+                    ],
+                    configuracion: {
+                        emailRemitente: 'noreply@clubcolmena.com.ar',
+                        nombreRemitente: 'Club de Cocina Colmena'
+                    },
+                    created: new Date(),
+                    updated: new Date()
+                };
+                
+                await setDoc(scriptRef, scriptConfig);
+                console.log('✅ Configuración única de Apps Script creada');
+            } else {
+                console.log('✅ Configuración de Apps Script ya existente, omitiendo inicialización');
             }
             
-            console.log('✅ Apps Scripts de ejemplo creados');
-            
         } catch (error) {
-            console.error('Error inicializando scripts:', error);
+            console.error('Error inicializando Apps Script:', error);
         }
     }
 

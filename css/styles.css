@@ -3019,3 +3019,48 @@ body {
         flex: 1;
     }
 }
+
+/* Estilos específicos para Apps Script */
+.config-display-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.config-display-item label {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.config-display-item span, 
+.config-display-item .url-display {
+    font-size: 14px;
+    color: var(--text-light);
+    padding: 8px 12px;
+    background-color: var(--light-gray);
+    border-radius: 6px;
+    border-left: 3px solid var(--primary-color);
+    word-break: break-all;
+}
+
+.usos-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+.uso-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    background-color: var(--accent-color);
+    color: var(--white);
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}

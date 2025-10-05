@@ -673,28 +673,41 @@
                     <!-- Configuración de Emails -->
                     <div id="config-configuracion-emails" class="config-tab-content">
                         <div class="config-section-grid config-section-grid--emails">
-                            <!-- Apps Script URLs -->
+                            <!-- Apps Script Único -->
                             <div class="config-section">
                                 <div class="config-header">
-                                    <h4><i class="fas fa-code"></i> URLs Apps Script</h4>
-                                    <button id="agregar-script-btn" class="btn btn--primary btn--small">
-                                        <i class="fas fa-plus"></i> Agregar URL
+                                    <h4><i class="fas fa-code"></i> Gmail API - Apps Script</h4>
+                                    <button id="editar-script-btn" class="btn btn--primary btn--small">
+                                        <i class="fas fa-edit"></i> Configurar
                                     </button>
                                 </div>
-                                <div class="scripts-table-container">
-                                    <table class="data-table" id="scripts-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Nombre</th>
-                                                <th>URL</th>
-                                                <th>Estado</th>
-                                                <th>Acciones</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="scripts-table-body">
-                                            <!-- Los scripts se cargarán dinámicamente -->
-                                        </tbody>
-                                    </table>
+                                <div class="config-display" id="script-display">
+                                    <div class="config-display-item">
+                                        <label>Nombre:</label>
+                                        <span id="script-nombre-display">No configurado</span>
+                                    </div>
+                                    <div class="config-display-item">
+                                        <label>URL:</label>
+                                        <span id="script-url-display" class="url-display">No configurado</span>
+                                    </div>
+                                    <div class="config-display-item">
+                                        <label>Estado:</label>
+                                        <span id="script-status-display">
+                                            <span class="status-badge inactive">
+                                                <i class="fas fa-times-circle"></i> Inactivo
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <div class="config-display-item">
+                                        <label>Usos:</label>
+                                        <div id="script-usos-display" class="usos-container">
+                                            <!-- Se cargarán dinámicamente -->
+                                        </div>
+                                    </div>
+                                    <div class="config-display-item">
+                                        <label>Descripción:</label>
+                                        <span id="script-descripcion-display">No configurado</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1758,7 +1771,7 @@
     <script type="module" src="js/notas.js"></script>
     <script type="module" src="js/contabilidad.js"></script>
     <script type="module" src="js/admin.js"></script>
-    <script type="module" src="js/init-configuraciones.js"></script>
+    <!-- init-configuraciones.js se carga desde app.js para evitar duplicación -->
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
