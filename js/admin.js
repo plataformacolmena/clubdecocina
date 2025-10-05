@@ -491,6 +491,9 @@ class AdminManager {
         // Gestor de columnas
         this.columnManager = new ColumnManager();
         
+        // Gestor de notas (se inicializará cuando sea necesario)
+        this.notasManager = null;
+        
         this.setupEventListeners();
     }
 
@@ -1024,6 +1027,9 @@ class AdminManager {
                 if (window.bankAccountManager) {
                     window.bankAccountManager.loadAccounts();
                 }
+                break;
+            case 'notas-admin':
+                this.initializeNotasManager();
                 break;
         }
     }
@@ -2756,6 +2762,20 @@ class AdminManager {
         } catch (error) {
             console.error('Error obteniendo logs para exportar:', error);
             throw error;
+        }
+    }
+
+    // ============================================
+    // GESTIÓN DE NOTAS
+    // ============================================
+    
+    initializeNotasManager() {
+        if (!this.notasManager && window.NotasManager) {
+            console.log('🔄 Inicializando gestor de notas...');
+            this.notasManager = new window.NotasManager();
+            console.log('✅ Gestor de notas inicializado');
+        } else if (!window.NotasManager) {
+            console.error('❌ NotasManager no está disponible');
         }
     }
 }

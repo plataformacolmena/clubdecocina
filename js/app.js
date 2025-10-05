@@ -4,6 +4,7 @@ import CursosManager from './cursos.js';
 import InscripcionesManager from './inscripciones.js';
 import RecetasManager from './recetas.js';
 import AdminManager from './admin.js';
+import NotasManager from './notas.js';
 
 class App {
     constructor() {
