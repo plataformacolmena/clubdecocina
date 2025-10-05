@@ -494,6 +494,9 @@ class AdminManager {
         // Gestor de notas (se inicializará cuando sea necesario)
         this.notasManager = null;
         
+        // Gestor de contabilidad (se inicializará cuando sea necesario)
+        this.contabilidadManager = null;
+        
         this.setupEventListeners();
     }
 
@@ -1027,10 +1030,26 @@ class AdminManager {
                 if (window.bankAccountManager) {
                     window.bankAccountManager.loadAccounts();
                 }
+                this.initializeContabilidadManager();
                 break;
             case 'notas-admin':
                 this.initializeNotasManager();
                 break;
+        }
+    }
+
+    initializeContabilidadManager() {
+        if (!this.contabilidadManager) {
+            console.log('🔄 Inicializando ContabilidadManager...');
+            
+            // Verificar que ContabilidadManager esté disponible
+            if (window.ContabilidadManager) {
+                this.contabilidadManager = new window.ContabilidadManager();
+                console.log('✅ ContabilidadManager inicializado');
+            } else {
+                console.error('❌ ContabilidadManager no está disponible');
+                setTimeout(() => this.initializeContabilidadManager(), 500);
+            }
         }
     }
 
@@ -1644,10 +1663,18 @@ class AdminManager {
         try {
             window.authManager.showLoading();
             
+            // Obtener datos de la inscripción antes de actualizarla
+            const inscripcion = this.inscripciones.find(i => i.id === inscripcionId);
+            
             await updateDoc(doc(db, 'inscripciones', inscripcionId), {
                 estado: 'confirmado',
                 fechaConfirmacion: new Date()
             });
+            
+            // Registrar ingreso automático en contabilidad
+            if (inscripcion && this.contabilidadManager) {
+                await this.contabilidadManager.registrarIngresoAutomatico(inscripcion);
+            }
             
             window.authManager.showMessage('Inscripción confirmada exitosamente', 'success');
             await this.loadAdminInscripciones();

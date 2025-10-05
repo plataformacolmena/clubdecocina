@@ -282,48 +282,182 @@
                 <div id="cuentas-admin" class="tab-content">
                     <div class="admin__header">
                         <h3>
-                            <i class="fas fa-university"></i> Gestión de Cuenta Bancaria
+                            <i class="fas fa-university"></i> Gestión Financiera
                         </h3>
-                        <p class="text-muted">Configurar datos bancarios que verán los alumnos para realizar pagos</p>
+                        <p class="text-muted">Administrar cuentas bancarias y contabilidad del servicio</p>
                     </div>
 
-                    <!-- Agregar/Editar Cuenta Bancaria -->
-                    <div class="admin__section">
-                        <h4><i class="fas fa-plus-circle"></i> Configurar Cuenta Bancaria</h4>
-                        <div class="form-group">
-                            <button id="nueva-cuenta-btn" class="btn btn--primary">
-                                <i class="fas fa-plus"></i> Nueva Cuenta Bancaria
-                            </button>
-                            <small class="form-text text-muted">
-                                Configure los datos bancarios que los alumnos verán al realizar pagos
-                            </small>
+                    <!-- Tabs dentro de Cuentas -->
+                    <div class="sub-tabs">
+                        <button class="sub-tab-btn active" data-subtab="cuentas-bancarias">
+                            <i class="fas fa-university"></i> Cuentas Bancarias
+                        </button>
+                        <button class="sub-tab-btn" data-subtab="contabilidad">
+                            <i class="fas fa-calculator"></i> Contabilidad
+                        </button>
+                    </div>
+
+                    <!-- Contenido Cuentas Bancarias -->
+                    <div id="cuentas-bancarias" class="sub-tab-content active">
+                        <!-- Agregar/Editar Cuenta Bancaria -->
+                        <div class="admin__section">
+                            <h4><i class="fas fa-plus-circle"></i> Configurar Cuenta Bancaria</h4>
+                            <div class="form-group">
+                                <button id="nueva-cuenta-btn" class="btn btn--primary">
+                                    <i class="fas fa-plus"></i> Nueva Cuenta Bancaria
+                                </button>
+                                <small class="form-text text-muted">
+                                    Configure los datos bancarios que los alumnos verán al realizar pagos
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Cuentas Bancarias -->
+                        <div class="admin__section">
+                            <h4><i class="fas fa-table"></i> Cuentas Configuradas</h4>
+                            <div class="table-container">
+                                <table class="admin-table" id="cuentas-table">
+                                    <thead>
+                                        <tr>
+                                            <th>CVU/CBU</th>
+                                            <th>Alias</th>
+                                            <th>CUIT</th>
+                                            <th>Titular</th>
+                                            <th>Estado</th>
+                                            <th>Fecha Creación</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cuentas-tbody">
+                                        <tr>
+                                            <td colspan="7" class="text-center">
+                                                <i class="fas fa-spinner fa-spin"></i> Cargando cuentas bancarias...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Lista de Cuentas Bancarias -->
-                    <div class="admin__section">
-                        <h4><i class="fas fa-table"></i> Cuentas Configuradas</h4>
-                        <div class="table-container">
-                            <table class="admin-table" id="cuentas-table">
-                                <thead>
-                                    <tr>
-                                        <th>CVU/CBU</th>
-                                        <th>Alias</th>
-                                        <th>CUIT</th>
-                                        <th>Titular</th>
-                                        <th>Estado</th>
-                                        <th>Fecha Creación</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="cuentas-tbody">
-                                    <tr>
-                                        <td colspan="7" class="text-center">
-                                            <i class="fas fa-spinner fa-spin"></i> Cargando cuentas bancarias...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    <!-- Contenido Contabilidad -->
+                    <div id="contabilidad" class="sub-tab-content">
+                        <!-- Dashboard Contable -->
+                        <div class="admin__section">
+                            <h4><i class="fas fa-chart-line"></i> Resumen Financiero</h4>
+                            <div class="stats-grid stats-grid--financial">
+                                <div class="stat-card stat-card--income">
+                                    <div class="stat-card__icon">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </div>
+                                    <div class="stat-card__content">
+                                        <h3 id="total-ingresos">$0</h3>
+                                        <p>Ingresos del Mes</p>
+                                    </div>
+                                </div>
+                                <div class="stat-card stat-card--expense">
+                                    <div class="stat-card__icon">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </div>
+                                    <div class="stat-card__content">
+                                        <h3 id="total-gastos">$0</h3>
+                                        <p>Gastos del Mes</p>
+                                    </div>
+                                </div>
+                                <div class="stat-card stat-card--balance">
+                                    <div class="stat-card__icon">
+                                        <i class="fas fa-balance-scale"></i>
+                                    </div>
+                                    <div class="stat-card__content">
+                                        <h3 id="balance-neto">$0</h3>
+                                        <p>Balance Neto</p>
+                                    </div>
+                                </div>
+                                <div class="stat-card stat-card--pending">
+                                    <div class="stat-card__icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="stat-card__content">
+                                        <h3 id="ingresos-pendientes">$0</h3>
+                                        <p>Ingresos Pendientes</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Registro de Movimientos -->
+                        <div class="admin__section">
+                            <div class="section-header">
+                                <h4><i class="fas fa-list"></i> Movimientos Contables</h4>
+                                <div class="section-actions">
+                                    <button id="nuevo-ingreso-btn" class="btn btn--primary">
+                                        <i class="fas fa-plus"></i> Nuevo Ingreso
+                                    </button>
+                                    <button id="nuevo-gasto-btn" class="btn btn--secondary">
+                                        <i class="fas fa-minus"></i> Nuevo Gasto
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Filtros de Movimientos -->
+                            <div class="filters-container">
+                                <div class="filter-group">
+                                    <select id="filter-tipo-movimiento" class="form-control">
+                                        <option value="">Todos los tipos</option>
+                                        <option value="ingreso">Ingresos</option>
+                                        <option value="gasto">Gastos</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <select id="filter-categoria-movimiento" class="form-control">
+                                        <option value="">Todas las categorías</option>
+                                        <option value="curso">Cursos</option>
+                                        <option value="material">Material</option>
+                                        <option value="servicio">Servicio</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <select id="filter-mes-movimiento" class="form-control">
+                                        <option value="">Todos los meses</option>
+                                        <option value="current">Mes actual</option>
+                                        <option value="previous">Mes anterior</option>
+                                    </select>
+                                </div>
+                                <button id="limpiar-filtros-movimientos" class="btn btn--outline">
+                                    <i class="fas fa-eraser"></i> Limpiar
+                                </button>
+                            </div>
+
+                            <!-- Tabla de Movimientos -->
+                            <div class="table-container">
+                                <table class="admin-table" id="movimientos-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="sortable" data-column="fecha">Fecha <i class="fas fa-sort"></i></th>
+                                            <th class="sortable" data-column="tipo">Tipo <i class="fas fa-sort"></i></th>
+                                            <th class="sortable" data-column="categoria">Categoría <i class="fas fa-sort"></i></th>
+                                            <th class="sortable" data-column="descripcion">Descripción</th>
+                                            <th class="sortable" data-column="monto">Monto <i class="fas fa-sort"></i></th>
+                                            <th>Origen</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="movimientos-table-body">
+                                        <tr>
+                                            <td colspan="7" class="text-center">
+                                                <i class="fas fa-spinner fa-spin"></i> Cargando movimientos...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div id="no-movimientos" class="empty-state" style="display: none;">
+                                <i class="fas fa-calculator"></i>
+                                <h3>No hay movimientos registrados</h3>
+                                <p>Comienza registrando tus primeros ingresos y gastos.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -814,6 +948,71 @@
         </div>
     </div>
 
+    <!-- Modal para Crear/Editar Movimiento Contable -->
+    <div id="movimiento-modal" class="modal">
+        <div class="modal__content">
+            <span class="modal__close" id="movimiento-modal-close">&times;</span>
+            <h2 class="modal__title" id="movimiento-modal-title">Nuevo Movimiento</h2>
+            
+            <form id="movimiento-form" class="form">
+                <div class="form__group">
+                    <label class="form__label">Tipo de movimiento</label>
+                    <select id="movimiento-tipo" class="select" required>
+                        <option value="">Seleccionar tipo...</option>
+                        <option value="ingreso">💰 Ingreso</option>
+                        <option value="gasto">💸 Gasto</option>
+                    </select>
+                </div>
+
+                <div class="form__group">
+                    <label class="form__label">Categoría</label>
+                    <select id="movimiento-categoria" class="select" required>
+                        <option value="">Seleccionar categoría...</option>
+                        <option value="curso">🎓 Curso</option>
+                        <option value="material">📦 Material</option>
+                        <option value="servicio">🛠️ Servicio</option>
+                        <option value="otro">📋 Otro</option>
+                    </select>
+                </div>
+
+                <div class="form__group">
+                    <label class="form__label">Descripción</label>
+                    <input type="text" id="movimiento-descripcion" class="input" required maxlength="255" 
+                           placeholder="Describe el concepto del movimiento...">
+                </div>
+
+                <div class="form-row">
+                    <div class="form__group">
+                        <label class="form__label">Monto</label>
+                        <input type="number" id="movimiento-monto" class="input" required min="0" step="0.01"
+                               placeholder="0.00">
+                        <small class="form__help">Ingresa el monto en pesos argentinos</small>
+                    </div>
+
+                    <div class="form__group">
+                        <label class="form__label">Fecha</label>
+                        <input type="date" id="movimiento-fecha" class="input" required>
+                    </div>
+                </div>
+
+                <div class="form__group">
+                    <label class="form__label">Notas adicionales</label>
+                    <textarea id="movimiento-notas" class="input" rows="3" 
+                              placeholder="Información adicional sobre el movimiento (opcional)..."></textarea>
+                </div>
+
+                <div class="modal__actions">
+                    <button type="submit" class="btn btn--primary">
+                        <i class="fas fa-save"></i> <span id="movimiento-submit-text">Crear Movimiento</span>
+                    </button>
+                    <button type="button" class="btn btn--secondary" id="cancel-movimiento">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal para Crear/Editar Notas -->
     <div id="nota-modal" class="modal">
         <div class="modal__content">
@@ -880,6 +1079,7 @@
     <script type="module" src="js/inscripciones.js"></script>
     <script type="module" src="js/recetas.js"></script>
     <script type="module" src="js/notas.js"></script>
+    <script type="module" src="js/contabilidad.js"></script>
     <script type="module" src="js/admin.js"></script>
     <script type="module" src="js/app.js"></script>
 </body>
