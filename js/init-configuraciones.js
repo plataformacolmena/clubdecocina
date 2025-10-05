@@ -6,7 +6,7 @@ import {
     setDoc, 
     addDoc,
     getDoc 
-} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+} from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
 class ConfiguracionesInitializer {
     constructor() {
