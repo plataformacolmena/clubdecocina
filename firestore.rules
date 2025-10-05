@@ -4,49 +4,92 @@ service cloud.firestore {
     // Reglas para usuarios
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      allow read: if request.auth != null && 
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
     }
     
-    // Reglas para administradores
+    // Reglas para administradores - PERMITIR ESCRITURA COMPLETA USANDO EMAIL
     match /admins/{adminId} {
       allow read: if request.auth != null;
+      // Permitir que un admin actualice su propio documento usando email como ID
+      allow write: if request.auth != null && request.auth.token.email == adminId;
+      // Permitir que otros admins escriban en documentos de admin
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
     }
     
-    // Reglas para cursos
+    // Reglas para cursos - ADMINISTRADORES CON PERMISOS COMPLETOS
     match /cursos/{cursoId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && 
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
     }
     
-    // Reglas para inscripciones (pueden contener datos base64 temporales)
+    // Reglas para inscripciones - ADMINISTRADORES CON PERMISOS COMPLETOS
     match /inscripciones/{inscripcionId} {
       allow read: if request.auth != null && 
         (resource.data.usuarioId == request.auth.uid || 
-         exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+         exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
       allow create: if request.auth != null && 
-        request.resource.data.usuarioId == request.auth.uid;
-      allow update: if request.auth != null && 
+        (request.resource.data.usuarioId == request.auth.uid ||
+         exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
+      allow update, delete: if request.auth != null && 
         (resource.data.usuarioId == request.auth.uid || 
-         exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+         exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
     }
     
-    // Reglas para recetas (pueden contener imágenes base64)
+    // Reglas para recetas - ADMINISTRADORES CON PERMISOS COMPLETOS
     match /recetas/{recetaId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && 
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
     }
     
-    // Reglas para comentarios de recetas
+    // Reglas para comentarios de recetas - ADMINISTRADORES CON PERMISOS COMPLETOS
     match /comentarios/{comentarioId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && 
-        request.resource.data.usuarioId == request.auth.uid;
-      allow update: if request.auth != null && 
+        (request.resource.data.usuarioId == request.auth.uid ||
+         exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
+      allow update, delete: if request.auth != null && 
         (resource.data.usuarioId == request.auth.uid || 
-         exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+         exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
+    }
+    
+    // Reglas para cuentas bancarias - SOLO ADMINISTRADORES
+    match /bankAccounts/{accountId} {
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+    
+    // Reglas para notas Kanban - SOLO ADMINISTRADORES
+    match /notes/{noteId} {
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+    
+    // Reglas para movimientos contables - SOLO ADMINISTRADORES
+    match /movimientos/{movimientoId} {
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+    
+    // Reglas para logs del sistema - SOLO ADMINISTRADORES
+    match /logs/{logId} {
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+    
+    // Reglas para logs de seguridad admin - SOLO ADMINISTRADORES
+    match /admin_security_logs/{logId} {
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+    
+    // Regla general para cualquier otra colección - SOLO ADMINISTRADORES
+    match /{document=**} {
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
     }
   }
 }
