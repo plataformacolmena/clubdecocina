@@ -20,19 +20,81 @@ class ConfiguracionManager {
         this.scriptsData = [];
         this.envioConfig = null;
         this.recordatoriosConfig = null;
+        this.isFirebaseReady = false;
+        this.initializationPromise = null;
         
         this.init();
     }
 
     async init() {
-        // Verificar autenticación
-        onAuthStateChanged(auth, (user) => {
+        // Crear promesa de inicialización para evitar múltiples intentos
+        if (this.initializationPromise) {
+            return this.initializationPromise;
+        }
+
+        this.initializationPromise = this.waitForFirebaseAndInit();
+        return this.initializationPromise;
+    }
+
+    async waitForFirebaseAndInit() {
+        console.log('🔄 Esperando inicialización de Firebase...');
+        
+        // Verificar que Firebase esté disponible
+        await this.waitForFirebase();
+        
+        console.log('✅ Firebase listo, configurando autenticación...');
+        
+        // Configurar autenticación
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
+                console.log('👤 Usuario autenticado:', user.email);
                 this.currentUser = user;
                 this.setupEventListeners();
-                this.loadAllConfigurations();
+                
+                // Delay adicional para asegurar que todo esté listo
+                await this.delay(500);
+                
+                await this.loadAllConfigurations();
+            } else {
+                console.log('❌ Usuario no autenticado');
             }
         });
+    }
+
+    async waitForFirebase() {
+        const maxAttempts = 20;
+        let attempts = 0;
+        
+        while (attempts < maxAttempts) {
+            try {
+                // Verificar que db esté disponible y sea una instancia válida
+                if (db && typeof db === 'object' && db.type === 'firestore') {
+                    console.log('✅ Firestore inicializado correctamente');
+                    this.isFirebaseReady = true;
+                    return true;
+                }
+                
+                // Si db existe pero no tiene el tipo correcto
+                if (db) {
+                    console.log('⚠️ db existe pero no es instancia válida:', typeof db, db);
+                }
+                
+                attempts++;
+                console.log(`⏳ Intento ${attempts}/${maxAttempts} - Esperando Firebase...`);
+                await this.delay(250);
+                
+            } catch (error) {
+                console.warn(`❌ Error verificando Firebase (intento ${attempts}):`, error.message);
+                attempts++;
+                await this.delay(250);
+            }
+        }
+        
+        throw new Error('❌ Firebase no se inicializó después de ' + maxAttempts + ' intentos');
+    }
+
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     setupEventListeners() {
@@ -91,6 +153,14 @@ class ConfiguracionManager {
 
     async loadAllConfigurations() {
         try {
+            // Verificar que Firebase esté listo antes de continuar
+            if (!this.isFirebaseReady) {
+                console.log('⚠️ Firebase no está listo, esperando...');
+                await this.waitForFirebase();
+            }
+
+            console.log('📋 Cargando todas las configuraciones...');
+            
             await Promise.all([
                 this.loadSedeConfiguration(),
                 this.loadProfesoresConfiguration(),
@@ -98,18 +168,26 @@ class ConfiguracionManager {
                 this.loadEnvioConfiguration(),
                 this.loadRecordatoriosConfiguration()
             ]);
+            
+            console.log('✅ Todas las configuraciones cargadas exitosamente');
         } catch (error) {
-            console.error('Error al cargar configuraciones:', error);
-            this.showError('Error al cargar las configuraciones del sistema');
+            console.error('❌ Error al cargar configuraciones:', error);
+            this.showError('Error al cargar las configuraciones del sistema: ' + error.message);
         }
     }
 
     async loadSedeConfiguration() {
         try {
+            this.validateFirebaseReady('loadSedeConfiguration');
+            
+            console.log('📍 Cargando configuración de sede...');
             const sedeDoc = await getDoc(doc(db, 'configuraciones', 'sede'));
+            
             if (sedeDoc.exists()) {
                 this.sedeData = sedeDoc.data();
+                console.log('✅ Configuración de sede cargada:', this.sedeData.direccion);
             } else {
+                console.log('⚠️ No existe configuración de sede, creando por defecto...');
                 // Configuración por defecto
                 this.sedeData = {
                     direccion: 'Dirección no configurada',
@@ -119,48 +197,75 @@ class ConfiguracionManager {
             }
             this.renderSedeDisplay();
         } catch (error) {
-            console.error('Error al cargar configuración de sede:', error);
+            console.error('❌ Error al cargar configuración de sede:', error);
+            throw error;
+        }
+    }
+
+    validateFirebaseReady(methodName) {
+        if (!this.isFirebaseReady || !db) {
+            throw new Error(`Firebase no está listo para ${methodName}. db=${!!db}, ready=${this.isFirebaseReady}`);
         }
     }
 
     async loadProfesoresConfiguration() {
         try {
+            this.validateFirebaseReady('loadProfesoresConfiguration');
+            
+            console.log('👨‍🏫 Cargando profesores...');
             const profesoresSnapshot = await getDocs(collection(db, 'profesores'));
             this.profesoresData = [];
+            
             profesoresSnapshot.forEach(doc => {
                 this.profesoresData.push({
                     id: doc.id,
                     ...doc.data()
                 });
             });
+            
+            console.log(`✅ ${this.profesoresData.length} profesores cargados`);
             this.renderProfesoresTable();
         } catch (error) {
-            console.error('Error al cargar profesores:', error);
+            console.error('❌ Error al cargar profesores:', error);
+            throw error;
         }
     }
 
     async loadScriptsConfiguration() {
         try {
+            this.validateFirebaseReady('loadScriptsConfiguration');
+            
+            console.log('🔗 Cargando Apps Scripts...');
             const scriptsSnapshot = await getDocs(collection(db, 'apps_scripts'));
             this.scriptsData = [];
+            
             scriptsSnapshot.forEach(doc => {
                 this.scriptsData.push({
                     id: doc.id,
                     ...doc.data()
                 });
             });
+            
+            console.log(`✅ ${this.scriptsData.length} Apps Scripts cargados`);
             this.renderScriptsTable();
         } catch (error) {
-            console.error('Error al cargar scripts:', error);
+            console.error('❌ Error al cargar scripts:', error);
+            throw error;
         }
     }
 
     async loadEnvioConfiguration() {
         try {
+            this.validateFirebaseReady('loadEnvioConfiguration');
+            
+            console.log('📬 Cargando configuración de envío...');
             const envioDoc = await getDoc(doc(db, 'configuraciones', 'envio'));
+            
             if (envioDoc.exists()) {
                 this.envioConfig = envioDoc.data();
+                console.log('✅ Configuración de envío cargada');
             } else {
+                console.log('⚠️ No existe configuración de envío, creando por defecto...');
                 this.envioConfig = {
                     notificacionesAdmin: {
                         nuevaInscripcion: true,
@@ -177,16 +282,23 @@ class ConfiguracionManager {
             }
             this.renderEnvioDisplay();
         } catch (error) {
-            console.error('Error al cargar configuración de envío:', error);
+            console.error('❌ Error al cargar configuración de envío:', error);
+            throw error;
         }
     }
 
     async loadRecordatoriosConfiguration() {
         try {
+            this.validateFirebaseReady('loadRecordatoriosConfiguration');
+            
+            console.log('⏰ Cargando configuración de recordatorios...');
             const recordatoriosDoc = await getDoc(doc(db, 'configuraciones', 'recordatorios'));
+            
             if (recordatoriosDoc.exists()) {
                 this.recordatoriosConfig = recordatoriosDoc.data();
+                console.log('✅ Configuración de recordatorios cargada');
             } else {
+                console.log('⚠️ No existe configuración de recordatorios, creando por defecto...');
                 this.recordatoriosConfig = {
                     diasAntes: 1,
                     horario: '11:00',
@@ -196,7 +308,8 @@ class ConfiguracionManager {
             }
             this.renderRecordatoriosDisplay();
         } catch (error) {
-            console.error('Error al cargar configuración de recordatorios:', error);
+            console.error('❌ Error al cargar configuración de recordatorios:', error);
+            throw error;
         }
     }
 
@@ -349,37 +462,49 @@ class ConfiguracionManager {
     // Métodos de guardado
     async saveSedeConfiguration(data) {
         try {
+            this.validateFirebaseReady('saveSedeConfiguration');
+            
+            console.log('💾 Guardando configuración de sede...');
             await setDoc(doc(db, 'configuraciones', 'sede'), data);
             this.sedeData = data;
             this.renderSedeDisplay();
+            console.log('✅ Configuración de sede guardada exitosamente');
             this.showSuccess('Configuración de sede guardada correctamente');
         } catch (error) {
-            console.error('Error al guardar configuración de sede:', error);
-            this.showError('Error al guardar la configuración de sede');
+            console.error('❌ Error al guardar configuración de sede:', error);
+            this.showError('Error al guardar la configuración de sede: ' + error.message);
         }
     }
 
     async saveEnvioConfiguration(data) {
         try {
+            this.validateFirebaseReady('saveEnvioConfiguration');
+            
+            console.log('💾 Guardando configuración de envío...');
             await setDoc(doc(db, 'configuraciones', 'envio'), data);
             this.envioConfig = data;
             this.renderEnvioDisplay();
+            console.log('✅ Configuración de envío guardada exitosamente');
             this.showSuccess('Configuración de envío guardada correctamente');
         } catch (error) {
-            console.error('Error al guardar configuración de envío:', error);
-            this.showError('Error al guardar la configuración de envío');
+            console.error('❌ Error al guardar configuración de envío:', error);
+            this.showError('Error al guardar la configuración de envío: ' + error.message);
         }
     }
 
     async saveRecordatoriosConfiguration(data) {
         try {
+            this.validateFirebaseReady('saveRecordatoriosConfiguration');
+            
+            console.log('💾 Guardando configuración de recordatorios...');
             await setDoc(doc(db, 'configuraciones', 'recordatorios'), data);
             this.recordatoriosConfig = data;
             this.renderRecordatoriosDisplay();
+            console.log('✅ Configuración de recordatorios guardada exitosamente');
             this.showSuccess('Configuración de recordatorios guardada correctamente');
         } catch (error) {
-            console.error('Error al guardar configuración de recordatorios:', error);
-            this.showError('Error al guardar la configuración de recordatorios');
+            console.error('❌ Error al guardar configuración de recordatorios:', error);
+            this.showError('Error al guardar la configuración de recordatorios: ' + error.message);
         }
     }
 
