@@ -2773,7 +2773,9 @@ class AdminManager {
         if (!this.notasManager && window.notasManager) {
             console.log('🔄 Inicializando gestor de notas...');
             this.notasManager = window.notasManager;
-            console.log('✅ Gestor de notas inicializado');
+            // Llamar init() para cargar las notas y configurar el Kanban
+            this.notasManager.init();
+            console.log('✅ Gestor de notas inicializado y cargado');
         } else if (!window.notasManager) {
             console.error('❌ NotasManager no está disponible');
         }
