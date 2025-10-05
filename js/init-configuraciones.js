@@ -1,12 +1,9 @@
-// init-configuraciones.js - Inicialización de datos para Configuraciones
+// init-configuraciones.js - Inicialización de configuraciones básicas (solo sede, envío y recordatorios)
 import { db } from './firebase-config.js';
 import { 
-    collection, 
     doc, 
     setDoc, 
-    addDoc,
-    getDoc,
-    getDocs 
+    getDoc
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
 class ConfiguracionesInitializer {
@@ -23,8 +20,6 @@ class ConfiguracionesInitializer {
             
             await Promise.all([
                 this.initializeSedeConfig(),
-                this.initializeProfesores(),
-                this.initializeAppsScripts(),
                 this.initializeEnvioConfig(),
                 this.initializeRecordatoriosConfig()
             ]);
@@ -81,96 +76,9 @@ class ConfiguracionesInitializer {
         }
     }
 
-    async initializeProfesores() {
-        try {
-            // Verificar si ya existen profesores
-            const profesoresSnapshot = await getDocs(collection(db, 'profesores'));
-            
-            if (!profesoresSnapshot.empty) {
-                console.log('✅ Profesores ya existentes, omitiendo inicialización');
-                return;
-            }
-            
-            // Crear algunos profesores de ejemplo solo si no existen
-            const profesoresEjemplo = [
-                {
-                    nombre: 'María González',
-                    email: 'maria.gonzalez@clubcolmena.com.ar',
-                    especialidad: 'Cocina Internacional',
-                    activo: true,
-                    experiencia: '10 años',
-                    descripcion: 'Chef especializada en cocina mediterránea y asiática',
-                    created: new Date()
-                },
-                {
-                    nombre: 'Carlos Rodríguez',
-                    email: 'carlos.rodriguez@clubcolmena.com.ar',
-                    especialidad: 'Pastelería y Repostería',
-                    activo: true,
-                    experiencia: '8 años',
-                    descripcion: 'Pastelero con especialización en técnicas francesas',
-                    created: new Date()
-                },
-                {
-                    nombre: 'Ana Martín',
-                    email: 'ana.martin@clubcolmena.com.ar',
-                    especialidad: 'Cocina Vegana',
-                    activo: false,
-                    experiencia: '5 años',
-                    descripcion: 'Especialista en alimentación plant-based y cocina saludable',
-                    created: new Date()
-                }
-            ];
 
-            for (const profesor of profesoresEjemplo) {
-                await addDoc(collection(db, 'profesores'), profesor);
-            }
-            
-            console.log('✅ Profesores de ejemplo creados');
-            
-        } catch (error) {
-            console.error('Error inicializando profesores:', error);
-        }
-    }
 
-    async initializeAppsScripts() {
-        try {
-            // Verificar si ya existe la configuración de Apps Script
-            const scriptRef = doc(db, 'configuraciones', 'apps_script');
-            const scriptSnap = await getDoc(scriptRef);
-            
-            if (!scriptSnap.exists()) {
-                // Crear configuración única de Apps Script para Gmail API
-                const scriptConfig = {
-                    nombre: 'Gmail API Universal',
-                    url: 'https://script.google.com/macros/s/TU_SCRIPT_ID_AQUI/exec',
-                    descripcion: 'Script único para todas las funciones de Gmail API (notificaciones, recordatorios, confirmaciones)',
-                    activo: true,
-                    usos: [
-                        'Notificaciones de inscripción',
-                        'Recordatorios de cursos', 
-                        'Confirmaciones de pago',
-                        'Cancelaciones y cambios',
-                        'Envío de recetas'
-                    ],
-                    configuracion: {
-                        emailRemitente: 'noreply@clubcolmena.com.ar',
-                        nombreRemitente: 'Club de Cocina Colmena'
-                    },
-                    created: new Date(),
-                    updated: new Date()
-                };
-                
-                await setDoc(scriptRef, scriptConfig);
-                console.log('✅ Configuración única de Apps Script creada');
-            } else {
-                console.log('✅ Configuración de Apps Script ya existente, omitiendo inicialización');
-            }
-            
-        } catch (error) {
-            console.error('Error inicializando Apps Script:', error);
-        }
-    }
+
 
     async initializeEnvioConfig() {
         try {
