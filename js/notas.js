@@ -41,7 +41,7 @@ class NotasManager {
         });
 
         // Cancelar modal
-        document.getElementById('cancelar-nota-btn')?.addEventListener('click', () => {
+        document.getElementById('cancel-nota')?.addEventListener('click', () => {
             this.hideNoteModal();
         });
 
@@ -51,7 +51,7 @@ class NotasManager {
         });
 
         // Limpiar completadas
-        document.getElementById('limpiar-completadas-btn')?.addEventListener('click', () => {
+        document.getElementById('limpiar-notas-btn')?.addEventListener('click', () => {
             this.clearCompletedNotes();
         });
 
@@ -85,9 +85,9 @@ class NotasManager {
     }
 
     renderKanbanBoard() {
-        const todoCards = document.getElementById('todo-cards');
-        const doingCards = document.getElementById('doing-cards');
-        const doneCards = document.getElementById('done-cards');
+        const todoCards = document.getElementById('kanban-todo');
+        const doingCards = document.getElementById('kanban-doing');
+        const doneCards = document.getElementById('kanban-done');
 
         if (!todoCards || !doingCards || !doneCards) return;
 
