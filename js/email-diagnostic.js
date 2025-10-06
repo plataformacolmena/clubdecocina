@@ -51,9 +51,12 @@ class EmailConfigDiagnostic {
         this.recommendations = [];
 
         try {
-            // Verificar que Firebase esté disponible
-            if (!window.db) {
-                throw new Error('Firebase no está inicializado');
+            // Si window.db no está disponible pero EmailService sí está inicializado,
+            // podemos usar las configuraciones que ya cargó EmailService
+            const canUseFirestore = window.db || (window.emailService && window.emailService.initialized);
+            
+            if (!canUseFirestore) {
+                throw new Error('Firebase no está disponible y EmailService no está inicializado');
             }
 
             // 1. Verificar configuración Apps Script
@@ -84,10 +87,37 @@ class EmailConfigDiagnostic {
         console.log('📧 Verificando configuración Apps Script...');
         
         try {
-            // Usar la instancia de db disponible
+            // Estrategia 1: Si EmailService ya tiene la configuración, usarla
+            if (window.emailService && window.emailService.scriptConfig) {
+                console.log('✅ Usando configuración Apps Script desde EmailService');
+                const config = window.emailService.scriptConfig;
+                this.results.appsScript = config;
+
+                console.log('✅ Configuración Apps Script encontrada:');
+                console.log('   📝 Nombre:', config.nombre || 'No definido');
+                console.log('   🔗 URL:', config.url || 'No definida');
+                console.log('   ✅ Activo:', config.activo || false);
+
+                // Validar configuración
+                if (!config.url || config.url.includes('TU_SCRIPT_ID_AQUI')) {
+                    this.problems.push('❌ URL de Apps Script no configurada (contiene placeholder)');
+                    this.recommendations.push('🔧 Configurar URL real del deployment en panel admin');
+                }
+
+                if (!config.activo) {
+                    this.problems.push('❌ Apps Script está DESACTIVADO');
+                    this.recommendations.push('🔧 Activar Apps Script desde panel de admin');
+                }
+                
+                return;
+            }
+            
+            // Estrategia 2: Acceso directo a Firestore si está disponible
             const dbInstance = window.db || db;
             if (!dbInstance) {
-                throw new Error('Firebase Firestore no disponible');
+                this.problems.push('❌ No se puede acceder a configuración Apps Script');
+                this.recommendations.push('🔧 Verificar inicialización de Firebase y EmailService');
+                return;
             }
             
             const scriptDoc = await getDoc(doc(dbInstance, 'configuraciones', 'apps_script'));
@@ -126,10 +156,45 @@ class EmailConfigDiagnostic {
         console.log('📮 Verificando configuración de envío...');
         
         try {
-            // Usar la instancia de db disponible
+            // Estrategia 1: Si EmailService ya tiene la configuración, usarla
+            if (window.emailService && window.emailService.envioConfig) {
+                console.log('✅ Usando configuración de envío desde EmailService');
+                const config = window.emailService.envioConfig;
+                this.results.envioConfig = config;
+
+                console.log('✅ Configuración de Envío encontrada:');
+                
+                // Admin notifications
+                const adminNotif = config.notificacionesAdmin || {};
+                console.log('👤 Notificaciones Admin:');
+                console.log('   📧 Nueva inscripción:', adminNotif.nuevaInscripcion ? '✅' : '❌');
+                console.log('   💰 Pago recibido:', adminNotif.pagoRecibido ? '✅' : '❌');
+                console.log('   ❌ Cancelación curso:', adminNotif.cancelacionCurso ? '✅' : '❌');
+                console.log('   ⏰ Recordatorio curso:', adminNotif.recordatorioCurso ? '✅' : '❌');
+
+                // Student notifications  
+                const alumnoNotif = config.notificacionesAlumno || {};
+                console.log('🎓 Notificaciones Alumno:');
+                console.log('   ✅ Confirmación inscripción:', alumnoNotif.confirmacionInscripcion ? '✅' : '❌');
+                console.log('   💰 Confirmación pago:', alumnoNotif.confirmacionPago ? '✅' : '❌');
+                console.log('   ⏰ Recordatorio curso:', alumnoNotif.recordatorioCurso ? '✅' : '❌');
+                console.log('   ❌ Cancelación admin:', alumnoNotif.cancelacionAdmin ? '✅' : '❌');
+
+                // Verificar configuraciones críticas
+                if (!adminNotif.nuevaInscripcion) {
+                    this.problems.push('⚠️ Notificación "nueva inscripción" deshabilitada para admin');
+                    this.recommendations.push('🔧 Activar desde "Configuración de Envío"');
+                }
+                
+                return;
+            }
+            
+            // Estrategia 2: Acceso directo a Firestore si está disponible
             const dbInstance = window.db || db;
             if (!dbInstance) {
-                throw new Error('Firebase Firestore no disponible');
+                this.problems.push('❌ No se puede acceder a configuración de envío');
+                this.recommendations.push('🔧 Verificar inicialización de Firebase y EmailService');
+                return;
             }
             
             const envioDoc = await getDoc(doc(dbInstance, 'configuraciones', 'envio'));
@@ -255,40 +320,63 @@ class EmailConfigDiagnostic {
         
         if (!window.emailService) {
             console.log('❌ EmailService no disponible');
-            return;
+            return { success: false, error: 'EmailService no disponible' };
         }
 
         try {
+            // Verificar si EmailService está inicializado
+            if (!window.emailService.initialized) {
+                console.log('⚠️ EmailService no inicializado, intentando inicializar...');
+                await window.emailService.initialize();
+            }
+            
+            // Verificar configuraciones
+            if (!window.emailService.scriptConfig) {
+                console.log('❌ No hay configuración de Apps Script');
+                return { success: false, error: 'Apps Script no configurado' };
+            }
+            
+            if (!window.emailService.scriptConfig.activo) {
+                console.log('❌ Apps Script está desactivado');
+                return { success: false, error: 'Apps Script desactivado' };
+            }
+
             // Simular datos de inscripción
             const testData = {
                 tipo: 'admin_test',
+                destinatario: 'test@example.com', // Email de prueba que no se envía realmente
                 alumno: { 
-                    nombre: 'Usuario Test',
+                    nombre: 'Usuario Test Diagnóstico',
                     email: 'test@example.com'
                 },
                 curso: {
-                    nombre: 'Curso de Prueba',
+                    nombre: 'Curso de Prueba - Diagnóstico',
                     fecha: new Date(),
                     precio: 1000
                 },
                 timestamp: new Date().toISOString(),
-                testMessage: 'Prueba de conectividad desde diagnóstico'
+                testMessage: 'Prueba de conectividad desde sistema de diagnóstico'
             };
 
             console.log('📤 Enviando email de prueba...');
+            console.log('📋 Configuración Apps Script URL:', window.emailService.scriptConfig.url);
+            
             const result = await window.emailService.sendEmail('admin_test', testData);
             
             if (result.success) {
-                console.log('✅ EMAIL DE PRUEBA ENVIADO EXITOSAMENTE');
+                console.log('✅ EMAIL DE PRUEBA PROCESADO EXITOSAMENTE');
                 console.log('🎉 El sistema de emails está funcionando correctamente');
+                console.log('📧 Resultado:', result);
             } else {
                 console.log('❌ Error enviando email de prueba:', result.reason || result.error);
+                console.log('🔍 Detalles del error:', result);
             }
 
             return result;
 
         } catch (error) {
             console.log('❌ Error durante prueba de email:', error.message);
+            console.log('🔍 Stack trace:', error);
             return { success: false, error: error.message };
         }
     }
