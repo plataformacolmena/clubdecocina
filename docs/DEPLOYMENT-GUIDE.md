@@ -10,7 +10,10 @@
 ### **2. Configurar el Proyecto**
 1. **Nombra el proyecto**: `Club-Cocina-Gmail-API`
 2. **Elimina** el código por defecto
-3. **Copia y pega** todo el contenido del archivo `gmail-apps-script.gs`
+3. **⚠️ IMPORTANTE**: Usa el archivo `gmail-apps-script-fixed.gs` (versión corregida)
+4. **Copia y pega** todo el contenido del archivo corregido
+
+> **Nota**: Si tienes errores como "setHeader is not a function", usa la versión `gmail-apps-script-fixed.gs` que soluciona problemas de compatibilidad con Google Apps Script.
 
 ### **3. Configurar Variables (IMPORTANTE)**
 Antes de desplegar, **edita estas líneas** en el script:
@@ -122,13 +125,59 @@ fetch('https://script.google.com/.../exec', {
 - [ ] Test de conexión exitoso
 - [ ] Test de envío de email (opcional)
 
-## 📞 **Soporte**
+## � **Errores Comunes y Soluciones**
+
+### **Error: "setHeader is not a function"**
+```
+TypeError: ContentService.createTextOutput(...).setMimeType(...).setHeader is not a function
+```
+
+**🔧 Solución:**
+- Usa el archivo `gmail-apps-script-fixed.gs` en lugar de `gmail-apps-script.gs`
+- El error ocurre por encadenamiento incorrecto de métodos en Apps Script
+- La versión "fixed" elimina el encadenamiento problemático
+
+### **Error: "Access to fetch blocked by CORS"**
+```
+Access to fetch blocked by CORS policy: No 'Access-Control-Allow-Origin' header
+```
+
+**🔧 Solución:**
+1. Verifica que el script esté desplegado como "Web App"
+2. Acceso debe ser "Cualquier persona"
+3. Usa la herramienta de test: `docs/test-apps-script-cors.html`
+4. Si persiste, haz un nuevo deployment
+
+### **Error: "Authorization required"**
+```
+You need authorization to perform that action
+```
+
+**🔧 Solución:**
+1. Ve a Apps Script → Autorizaciones
+2. Ejecuta la función `testEmail()` manualmente
+3. Autoriza permisos de Gmail cuando se solicite
+4. Redespliega después de autorizar
+
+### **Error: "Script function not found"**
+```
+Script function not found: doGet
+```
+
+**🔧 Solución:**
+- El código no se guardó correctamente
+- Pega de nuevo todo el código
+- Guarda (Ctrl+S) antes de desplegar
+
+## �📞 **Soporte**
 
 Si tienes problemas:
-1. **Verifica** que seguiste todos los pasos
-2. **Revisa** los logs en Apps Script (Ver → Registros)
-3. **Prueba** el URL directamente en el navegador
-4. **Redesplega** con nueva implementación si es necesario
+1. **Usa la versión corregida**: `gmail-apps-script-fixed.gs`
+2. **Verifica** que seguiste todos los pasos
+3. **Revisa** los logs en Apps Script (Ver → Registros)
+4. **Prueba** el URL directamente en el navegador
+5. **Consulta** CORS-TROUBLESHOOTING.md para errores de conexión
+6. **Redesplega** con nueva implementación si es necesario
 
 ---
 
