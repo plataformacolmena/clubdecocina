@@ -12,7 +12,8 @@ import {
     orderBy,
     where,
     limit,
-    serverTimestamp
+    serverTimestamp,
+    onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
 // Gestor de Cuentas Bancarias
@@ -497,6 +498,10 @@ class AdminManager {
         // Gestor de contabilidad (se inicializará cuando sea necesario)
         this.contabilidadManager = null;
         
+        // Listeners de Firestore
+        this.inscripcionesListener = null;
+        this.cursosListener = null;
+        
         this.setupEventListeners();
     }
 
@@ -510,6 +515,13 @@ class AdminManager {
             } else {
                 window.authManager.showMessage('No tienes permisos de administrador', 'error');
             }
+        });
+        
+        // Limpiar listeners al navegar fuera del admin
+        document.querySelectorAll('nav a:not([href="#admin"])')?.forEach(link => {
+            link.addEventListener('click', () => {
+                this.cleanupListeners();
+            });
         });
 
         // Tabs de administración
@@ -897,10 +909,12 @@ class AdminManager {
             // Migración inicial de datos bancarios si es necesario
             await this.migrateInitialBankAccount();
             
-            // Cargar datos en paralelo
+            // Configurar listeners para actualizaciones en tiempo real
+            this.setupInscripcionesListener();
+            
+            // Cargar datos estáticos en paralelo
             await Promise.all([
                 this.loadAdminCursos(),
-                this.loadAdminInscripciones(),
                 this.loadAdminRecetas()
             ]);
             
@@ -951,41 +965,119 @@ class AdminManager {
         });
     }
 
-    async loadAdminInscripciones() {
+    setupInscripcionesListener() {
         try {
-            // Cargar todas las inscripciones
+            // Limpiar listener anterior si existe
+            if (this.inscripcionesListener) {
+                this.inscripcionesListener();
+            }
+            
+            // Configurar listener para inscripciones
             const inscripcionesQuery = query(collection(db, 'inscripciones'), orderBy('fechaInscripcion', 'desc'));
-            const inscripcionesSnapshot = await getDocs(inscripcionesQuery);
-            
-            // Cargar todos los cursos para obtener fechas completas
-            const cursosQuery = query(collection(db, 'cursos'));
-            const cursosSnapshot = await getDocs(cursosQuery);
-            
-            // Crear mapa de cursos para búsqueda rápida
-            const cursosMap = {};
-            cursosSnapshot.forEach((doc) => {
-                cursosMap[doc.id] = { id: doc.id, ...doc.data() };
+            this.inscripcionesListener = onSnapshot(inscripcionesQuery, (snapshot) => {
+                console.log('📧 Actualizaciones en inscripciones detectadas');
+                this.handleInscripcionesUpdate(snapshot);
+            }, (error) => {
+                console.error('Error en listener de inscripciones:', error);
+                window.authManager.showMessage('Error escuchando cambios en inscripciones', 'error');
             });
             
-            this.inscripciones = [];
-            inscripcionesSnapshot.forEach((doc) => {
-                const inscripcionData = { id: doc.id, ...doc.data() };
-                
-                // Agregar datos completos del curso si existe
-                if (inscripcionData.cursoId && cursosMap[inscripcionData.cursoId]) {
-                    const curso = cursosMap[inscripcionData.cursoId];
-                    inscripcionData.cursoFecha = curso.fechaHora; // Corregido: usar fechaHora
-                    inscripcionData.cursoHorario = curso.horario;
-                    inscripcionData.cursoUbicacion = curso.ubicacion;
-                }
-                
-                this.inscripciones.push(inscripcionData);
+            // Configurar listener para cursos (para datos completos)
+            this.setupCursosListener();
+            
+        } catch (error) {
+            console.error('Error configurando listener de inscripciones:', error);
+            window.authManager.showMessage('Error configurando actualizaciones automáticas', 'error');
+        }
+    }
+
+    setupCursosListener() {
+        try {
+            // Limpiar listener anterior si existe
+            if (this.cursosListener) {
+                this.cursosListener();
+            }
+            
+            // Configurar listener para cursos
+            const cursosQuery = query(collection(db, 'cursos'));
+            this.cursosListener = onSnapshot(cursosQuery, (snapshot) => {
+                console.log('📚 Actualizaciones en cursos detectadas');
+                this.handleCursosUpdate(snapshot);
+            }, (error) => {
+                console.error('Error en listener de cursos:', error);
             });
             
         } catch (error) {
-            console.error('Error cargando inscripciones:', error);
-            window.authManager.showMessage('Error cargando inscripciones', 'error');
+            console.error('Error configurando listener de cursos:', error);
         }
+    }
+
+    handleInscripcionesUpdate(snapshot) {
+        this.inscripciones = [];
+        snapshot.forEach((doc) => {
+            const inscripcionData = { id: doc.id, ...doc.data() };
+            this.inscripciones.push(inscripcionData);
+        });
+        
+        // Enriquecer datos con información de cursos
+        this.enrichInscripcionesWithCursos();
+        
+        // Re-renderizar tabla
+        this.renderAdminInscripciones();
+        
+        console.log(`✅ Tabla de inscripciones actualizada: ${this.inscripciones.length} registros`);
+    }
+
+    handleCursosUpdate(snapshot) {
+        // Crear mapa actualizado de cursos
+        const cursosMap = {};
+        snapshot.forEach((doc) => {
+            cursosMap[doc.id] = { id: doc.id, ...doc.data() };
+        });
+        
+        this.cursosMap = cursosMap;
+        
+        // Re-enriquecer inscripciones con datos actualizados de cursos
+        this.enrichInscripcionesWithCursos();
+        
+        // Re-renderizar tabla
+        this.renderAdminInscripciones();
+        
+        console.log(`✅ Datos de cursos actualizados: ${Object.keys(cursosMap).length} cursos`);
+    }
+
+    enrichInscripcionesWithCursos() {
+        if (!this.cursosMap) return;
+        
+        this.inscripciones.forEach(inscripcion => {
+            if (inscripcion.cursoId && this.cursosMap[inscripcion.cursoId]) {
+                const curso = this.cursosMap[inscripcion.cursoId];
+                inscripcion.cursoFecha = curso.fechaHora;
+                inscripcion.cursoHorario = curso.horario;
+                inscripcion.cursoUbicacion = curso.ubicacion;
+            }
+        });
+    }
+
+    // Método de compatibilidad para mantener código existente
+    async loadAdminInscripciones() {
+        // Este método ahora solo inicializa el listener si no existe
+        if (!this.inscripcionesListener) {
+            this.setupInscripcionesListener();
+        }
+    }
+
+    // Método para limpiar listeners al salir del admin
+    cleanupListeners() {
+        if (this.inscripcionesListener) {
+            this.inscripcionesListener();
+            this.inscripcionesListener = null;
+        }
+        if (this.cursosListener) {
+            this.cursosListener();
+            this.cursosListener = null;
+        }
+        console.log('🧹 Listeners de admin limpiados');
     }
 
     async loadAdminRecetas() {
@@ -1691,8 +1783,7 @@ class AdminManager {
             }
             
             window.authManager.showMessage('Inscripción confirmada exitosamente', 'success');
-            await this.loadAdminInscripciones();
-            this.renderAdminInscripciones();
+            // Las actualizaciones se manejan automáticamente con onSnapshot
 
         } catch (error) {
             console.error('Error confirming inscripcion:', error);
@@ -1739,8 +1830,7 @@ class AdminManager {
             // TODO: Enviar email de notificación de cancelación
             
             window.authManager.showMessage('Inscripción cancelada exitosamente', 'success');
-            await this.loadAdminInscripciones();
-            this.renderAdminInscripciones();
+            // Las actualizaciones se manejan automáticamente con onSnapshot
 
         } catch (error) {
             console.error('Error canceling inscripcion:', error);
@@ -1759,8 +1849,7 @@ class AdminManager {
             await deleteDoc(doc(db, 'inscripciones', inscripcionId));
             
             window.authManager.showMessage('Inscripción eliminada exitosamente', 'success');
-            await this.loadAdminInscripciones();
-            this.renderAdminInscripciones();
+            // Las actualizaciones se manejan automáticamente con onSnapshot
 
         } catch (error) {
             console.error('Error deleting inscripcion:', error);
@@ -2356,7 +2445,7 @@ class AdminManager {
             }
 
             window.authManager.showMessage(`Estado cambiado a "${statusNames[newStatus]}"`, 'success');
-            await this.loadAdminInscripciones();
+            // Las actualizaciones se manejan automáticamente con onSnapshot
 
         } catch (error) {
             console.error('Error cambiando estado:', error);
@@ -2483,7 +2572,7 @@ class AdminManager {
 
             modal.remove();
             window.authManager.showMessage('Inscripción actualizada correctamente', 'success');
-            await this.loadAdminInscripciones();
+            // Las actualizaciones se manejan automáticamente con onSnapshot
 
         } catch (error) {
             console.error('Error guardando cambios:', error);
