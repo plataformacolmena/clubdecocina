@@ -7,7 +7,21 @@
  * sin hacer cambios, solo consultas de solo lectura.
  */
 
-import { db } from './firebase-config.js';
+// Importar Firebase - usar window.db si está disponible, sino importar
+let db;
+try {
+    // Intentar usar la instancia global primero
+    if (window.db) {
+        db = window.db;
+    } else {
+        // Fallback a importación directa
+        const firebaseConfig = await import('./firebase-config.js');
+        db = firebaseConfig.db;
+    }
+} catch (error) {
+    console.warn('⚠️ Error importando Firebase, se usará window.db:', error.message);
+}
+
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
 class EmailConfigDiagnostic {
@@ -25,7 +39,23 @@ class EmailConfigDiagnostic {
         console.log('🔍 INICIANDO DIAGNÓSTICO DE CONFIGURACIONES EMAIL...');
         console.log('===============================================');
 
+        // Reinicializar arrays de resultados
+        this.results = {
+            appsScript: null,
+            envioConfig: null,
+            emailService: null,
+            problems: [],
+            recommendations: []
+        };
+        this.problems = [];
+        this.recommendations = [];
+
         try {
+            // Verificar que Firebase esté disponible
+            if (!window.db) {
+                throw new Error('Firebase no está inicializado');
+            }
+
             // 1. Verificar configuración Apps Script
             await this.checkAppsScriptConfig();
             
@@ -40,6 +70,13 @@ class EmailConfigDiagnostic {
 
         } catch (error) {
             console.error('❌ Error durante el diagnóstico:', error);
+            
+            // Mostrar información de debugging
+            console.log('🔍 Estado del sistema:');
+            console.log('   Firebase (db):', !!window.db);
+            console.log('   AuthManager:', !!window.authManager);
+            console.log('   EmailService:', !!window.emailService);
+            console.log('   Usuario admin:', window.authManager?.isCurrentUserAdmin() || false);
         }
     }
 
@@ -47,7 +84,13 @@ class EmailConfigDiagnostic {
         console.log('📧 Verificando configuración Apps Script...');
         
         try {
-            const scriptDoc = await getDoc(doc(db, 'configuraciones', 'apps_script'));
+            // Usar la instancia de db disponible
+            const dbInstance = window.db || db;
+            if (!dbInstance) {
+                throw new Error('Firebase Firestore no disponible');
+            }
+            
+            const scriptDoc = await getDoc(doc(dbInstance, 'configuraciones', 'apps_script'));
             
             if (!scriptDoc.exists()) {
                 this.problems.push('❌ NO EXISTE configuración apps_script en Firestore');
@@ -83,7 +126,13 @@ class EmailConfigDiagnostic {
         console.log('📮 Verificando configuración de envío...');
         
         try {
-            const envioDoc = await getDoc(doc(db, 'configuraciones', 'envio'));
+            // Usar la instancia de db disponible
+            const dbInstance = window.db || db;
+            if (!dbInstance) {
+                throw new Error('Firebase Firestore no disponible');
+            }
+            
+            const envioDoc = await getDoc(doc(dbInstance, 'configuraciones', 'envio'));
             
             if (!envioDoc.exists()) {
                 this.problems.push('❌ NO EXISTE configuración envio en Firestore');
@@ -164,6 +213,14 @@ class EmailConfigDiagnostic {
         console.log('📋 REPORTE DE DIAGNÓSTICO');
         console.log('========================');
         
+        // Asegurar que problems está inicializado
+        if (!this.problems || !Array.isArray(this.problems)) {
+            this.problems = [];
+        }
+        if (!this.recommendations || !Array.isArray(this.recommendations)) {
+            this.recommendations = [];
+        }
+        
         if (this.problems.length === 0) {
             console.log('🎉 ¡TODAS las configuraciones están correctas!');
             console.log('✅ El sistema debería estar enviando emails automáticamente');
@@ -242,20 +299,67 @@ window.emailDiagnostic = new EmailConfigDiagnostic();
 
 // Auto-ejecutar diagnóstico cuando se carga la página (solo en admin)
 document.addEventListener('DOMContentLoaded', () => {
-    // Solo ejecutar si estamos en modo admin
-    setTimeout(async () => {
-        if (window.authManager && 
-            window.authManager.currentUser && 
-            window.authManager.isCurrentUserAdmin()) {
-            
-            console.log('🔍 Ejecutando diagnóstico automático...');
-            await window.emailDiagnostic.runDiagnostic();
-            
-            console.log('\n💡 COMANDOS DISPONIBLES EN CONSOLA:');
-            console.log('• await emailDiagnostic.runDiagnostic()    - Ejecutar diagnóstico completo');
-            console.log('• await emailDiagnostic.testEmailFlow()    - Probar envío de email');
+    // Función para verificar si todo está listo
+    const waitForInitialization = async () => {
+        let attempts = 0;
+        const maxAttempts = 60; // 30 segundos máximo
+        
+        while (attempts < maxAttempts) {
+            try {
+                // Verificar que todos los sistemas estén listos
+                if (window.authManager && 
+                    window.authManager.currentUser && 
+                    window.authManager.isCurrentUserAdmin() &&
+                    window.emailService &&
+                    window.db) { // Verificar que Firebase esté disponible
+                    
+                    console.log('🔍 Ejecutando diagnóstico automático...');
+                    await window.emailDiagnostic.runDiagnostic();
+                    
+                    console.log('\n💡 COMANDOS DISPONIBLES EN CONSOLA:');
+                    console.log('• await emailDiagnostic.runDiagnostic()    - Ejecutar diagnóstico completo');
+                    console.log('• await emailDiagnostic.testEmailFlow()    - Probar envío de email');
+                    return;
+                }
+                
+                // Esperar medio segundo antes del siguiente intento
+                await new Promise(resolve => setTimeout(resolve, 500));
+                attempts++;
+                
+            } catch (error) {
+                console.warn('⚠️ Error durante inicialización del diagnóstico:', error.message);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                attempts++;
+            }
         }
-    }, 2000);
+        
+        console.log('⚠️ Diagnóstico automático no ejecutado - sistema no completamente inicializado');
+        console.log('💡 Puedes ejecutarlo manualmente: await emailDiagnostic.runDiagnostic()');
+    };
+    
+    // Iniciar verificación después de un breve delay
+    setTimeout(waitForInitialization, 1000);
 });
 
-console.log('🔧 Diagnóstico de Email cargado. Usa: emailDiagnostic.runDiagnostic()');
+// Función de verificación manual de estado
+window.checkEmailSystemStatus = function() {
+    console.log('📊 ESTADO DEL SISTEMA DE EMAILS:');
+    console.log('================================');
+    console.log('Firebase (db):', !!window.db);
+    console.log('AuthManager:', !!window.authManager);
+    console.log('EmailService:', !!window.emailService);
+    console.log('Es Admin:', window.authManager?.isCurrentUserAdmin() || false);
+    console.log('User:', window.authManager?.currentUser?.email || 'No autenticado');
+    
+    if (window.emailService) {
+        console.log('EmailService inicializado:', window.emailService.initialized);
+        console.log('Script Config:', !!window.emailService.scriptConfig);
+        console.log('Envio Config:', !!window.emailService.envioConfig);
+    }
+    
+    console.log('\n� Para ejecutar diagnóstico: await emailDiagnostic.runDiagnostic()');
+};
+
+console.log('�🔧 Diagnóstico de Email cargado.');
+console.log('💡 Usa: checkEmailSystemStatus() para ver el estado');
+console.log('💡 Usa: await emailDiagnostic.runDiagnostic() para diagnóstico completo');
