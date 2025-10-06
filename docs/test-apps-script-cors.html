@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Apps Script - CORS Debugging</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c5f2d;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        input[type="url"]:focus {
+            border-color: #ff6b35;
+            outline: none;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-test {
+            background: #ff6b35;
+            color: white;
+        }
+        
+        .btn-test:hover {
+            background: #e55a2b;
+        }
+        
+        .btn-open {
+            background: #2c5f2d;
+            color: white;
+        }
+        
+        .btn-open:hover {
+            background: #1e4220;
+        }
+        
+        .btn-clear {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-clear:hover {
+            background: #5a6268;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 100px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .result.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .status-ok {
+            background: #28a745;
+            color: white;
+        }
+        
+        .status-error {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .status-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .help-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #ff6b35;
+        }
+        
+        .help-section h3 {
+            color: #ff6b35;
+            margin-top: 0;
+        }
+        
+        .help-section ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .help-section li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Apps Script - Debug CORS</h1>
+        
+        <div class="input-group">
+            <label for="script-url">URL del Google Apps Script:</label>
+            <input 
+                type="url" 
+                id="script-url" 
+                placeholder="https://script.google.com/macros/s/[ID]/exec"
+                value=""
+            >
+        </div>
+        
+        <div class="button-group">
+            <button class="btn-test" onclick="testScript()">🧪 Test Conexión</button>
+            <button class="btn-open" onclick="openInNewTab()">🌐 Abrir en Nueva Pestaña</button>
+            <button class="btn-clear" onclick="clearResults()">🧹 Limpiar</button>
+        </div>
+        
+        <div id="result" class="result" style="display: none;"></div>
+        
+        <div class="help-section">
+            <h3>📋 Instrucciones de Uso</h3>
+            <ul>
+                <li><strong>Paso 1:</strong> Pega la URL de tu Apps Script desplegado</li>
+                <li><strong>Paso 2:</strong> Haz click en "Test Conexión" para verificar CORS</li>
+                <li><strong>Paso 3:</strong> Si hay errores, usa "Abrir en Nueva Pestaña" para test manual</li>
+                <li><strong>Paso 4:</strong> Revisa los logs de la consola para detalles técnicos</li>
+            </ul>
+            
+            <h3>🎯 Respuesta Esperada</h3>
+            <p>Si el Apps Script está configurado correctamente, deberías ver:</p>
+            <ul>
+                <li>Status: "Gmail API Script funcionando correctamente"</li>
+                <li>Test: true</li>
+                <li>CORS: "Configurado correctamente"</li>
+                <li>Sin errores CORS en la consola</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Cargar URL guardada
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedUrl = localStorage.getItem('appsScriptUrl');
+            if (savedUrl) {
+                document.getElementById('script-url').value = savedUrl;
+            }
+        });
+
+        async function testScript() {
+            const urlInput = document.getElementById('script-url');
+            const resultDiv = document.getElementById('result');
+            const url = urlInput.value.trim();
+            
+            // Guardar URL
+            localStorage.setItem('appsScriptUrl', url);
+            
+            if (!url) {
+                showResult('⚠️ Por favor ingresa una URL', 'error');
+                return;
+            }
+            
+            if (!url.includes('script.google.com') || !url.includes('/exec')) {
+                showResult('❌ URL inválida: Debe ser una URL de Google Apps Script que termine en /exec', 'error');
+                return;
+            }
+            
+            showResult('🔄 Probando conexión...', 'info');
+            
+            try {
+                const testUrl = `${url}?test=true&timestamp=${Date.now()}`;
+                console.log('🔗 Testing URL:', testUrl);
+                
+                const startTime = Date.now();
+                const response = await fetch(testUrl, {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-cache',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                console.log('📡 Response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    responseTime: responseTime + 'ms'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('📊 Response data:', data);
+                    
+                    let resultMessage = `✅ CONEXIÓN EXITOSA (${responseTime}ms)\n\n`;
+                    resultMessage += `📊 Datos de respuesta:\n`;
+                    resultMessage += `${JSON.stringify(data, null, 2)}\n\n`;
+                    
+                    // Verificar campos esperados
+                    const checks = [];
+                    if (data.status) checks.push('✅ Status presente');
+                    if (data.version) checks.push('✅ Versión presente');
+                    if (data.test === true) checks.push('✅ Test flag correcto');
+                    if (data.timestamp) checks.push('✅ Timestamp presente');
+                    
+                    if (checks.length > 0) {
+                        resultMessage += `🔍 Verificaciones:\n${checks.join('\n')}\n\n`;
+                    }
+                    
+                    // Estado CORS
+                    const corsHeaders = response.headers.get('access-control-allow-origin');
+                    if (corsHeaders) {
+                        resultMessage += `✅ CORS: Headers presentes\n`;
+                        resultMessage += `   Access-Control-Allow-Origin: ${corsHeaders}\n`;
+                    } else {
+                        resultMessage += `⚠️ CORS: Headers no detectados (puede ser normal)\n`;
+                    }
+                    
+                    showResult(resultMessage, 'success');
+                    
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                
+                let errorMessage = `❌ ERROR DE CONEXIÓN\n\n`;
+                errorMessage += `Error: ${error.name}\n`;
+                errorMessage += `Mensaje: ${error.message}\n\n`;
+                
+                // Análisis del error
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    errorMessage += `🔍 Diagnóstico: Error CORS/Conexión\n`;
+                    errorMessage += `\n📋 Posibles causas:\n`;
+                    errorMessage += `• Apps Script no desplegado como Web App\n`;
+                    errorMessage += `• Permisos incorrectos (debe ser "Cualquier persona")\n`;
+                    errorMessage += `• Headers CORS faltantes en el código\n`;
+                    errorMessage += `• URL incorrecta o script pausado\n`;
+                    errorMessage += `\n🔧 Solución recomendada:\n`;
+                    errorMessage += `1. Redespliega el Apps Script\n`;
+                    errorMessage += `2. Configura acceso público\n`;
+                    errorMessage += `3. Verifica código CORS\n`;
+                } else if (error.message.includes('CORS')) {
+                    errorMessage += `🔍 Diagnóstico: Error CORS específico\n`;
+                    errorMessage += `Verifica headers Access-Control-Allow-Origin\n`;
+                } else {
+                    errorMessage += `🔍 Diagnóstico: Error desconocido\n`;
+                    errorMessage += `Intenta abrir la URL manualmente\n`;
+                }
+                
+                showResult(errorMessage, 'error');
+            }
+        }
+        
+        function openInNewTab() {
+            const url = document.getElementById('script-url').value.trim();
+            if (url) {
+                const testUrl = `${url}?test=true&timestamp=${Date.now()}`;
+                window.open(testUrl, '_blank');
+                showResult('🌐 URL abierta en nueva pestaña\nVerifica si responde correctamente', 'info');
+            } else {
+                showResult('⚠️ Ingresa una URL primero', 'error');
+            }
+        }
+        
+        function clearResults() {
+            document.getElementById('result').style.display = 'none';
+        }
+        
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.className = `result ${type}`;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

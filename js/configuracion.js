@@ -7,6 +7,7 @@ import {
     setDoc, 
     updateDoc, 
     deleteDoc,
+    addDoc,
     getDoc,
     onSnapshot 
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
@@ -949,39 +950,96 @@ class ConfiguracionManager {
 
     async testearScriptUrl(url) {
         try {
-            this.showInfo('Probando conexión con el Apps Script...');
+            this.showInfo('🔄 Probando conexión con el Apps Script...');
             
-            // Usar solo GET para evitar problemas de CORS preflight
+            // Validar formato de URL
+            if (!url || !url.includes('script.google.com') || !url.includes('/exec')) {
+                throw new Error('❌ URL inválida: Debe ser una URL de Google Apps Script que termine en /exec');
+            }
+            
             const testUrl = `${url}?test=true&timestamp=${Date.now()}`;
+            console.log('🔗 Testing URL:', testUrl);
             
+            // Realizar petición de prueba
             const response = await fetch(testUrl, {
                 method: 'GET',
                 mode: 'cors',
-                cache: 'no-cache'
+                cache: 'no-cache',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            console.log('📡 Respuesta recibida:', {
+                status: response.status,
+                statusText: response.statusText,
+                ok: response.ok,
+                headers: Object.fromEntries(response.headers.entries())
             });
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('Respuesta del Apps Script:', data);
+                console.log('📊 Datos de respuesta:', data);
                 
                 if (data.status && data.status.includes('funcionando')) {
-                    this.showSuccess('Apps Script funcionando correctamente');
+                    this.showSuccess(`✅ Apps Script funcionando correctamente<br>
+                        <small>Versión: ${data.version || 'N/A'}<br>
+                        Test: ${data.test ? 'Exitoso' : 'Parcial'}<br>
+                        CORS: ${data.cors || 'Configurado'}</small>`);
+                    return true;
                 } else {
-                    this.showSuccess('Apps Script respondió correctamente');
+                    this.showWarning(`⚠️ Apps Script respondió pero con datos inesperados:<br>
+                        <small>${JSON.stringify(data, null, 2)}</small>`);
+                    return false;
                 }
             } else {
-                this.showError(`Error en Apps Script: ${response.status} ${response.statusText}`);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-        } catch (error) {
-            console.error('Error testeando script:', error);
             
-            if (error.message.includes('CORS')) {
-                this.showError('Error CORS: Verifica que el Apps Script esté desplegado con acceso público');
-            } else if (error.message.includes('Failed to fetch')) {
-                this.showError('Error de conexión: Verifica la URL del Apps Script');
+        } catch (error) {
+            console.error('❌ Error testeando script:', error);
+            
+            // Análisis detallado del error
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                this.showError(`
+                    ❌ <strong>Error CORS/Conexión</strong><br>
+                    El Apps Script no es accesible desde este dominio.<br><br>
+                    
+                    <strong>🔧 Soluciones:</strong><br>
+                    1. Redespliega el Apps Script como "Web App"<br>
+                    2. Configura acceso como "Cualquier persona"<br>
+                    3. Verifica que la URL termine en /exec<br>
+                    4. Consulta la guía: <a href="docs/CORS-TROUBLESHOOTING.md" target="_blank">CORS Troubleshooting</a>
+                `);
+            } else if (error.message.includes('CORS')) {
+                this.showError(`
+                    ❌ <strong>Error CORS Específico</strong><br>
+                    ${error.message}<br><br>
+                    
+                    <strong>🔧 Acción requerida:</strong><br>
+                    Verifica headers CORS en el Apps Script
+                `);
+            } else if (error.message.includes('HTTP 302')) {
+                this.showError(`
+                    ❌ <strong>Error de Redirección</strong><br>
+                    El Apps Script está redirigiendo (posible problema de permisos)<br><br>
+                    
+                    <strong>🔧 Solución:</strong><br>
+                    Asegúrate que esté desplegado con permisos públicos
+                `);
+            } else if (error.message.includes('URL inválida')) {
+                this.showError(error.message);
             } else {
-                this.showError(`Error de conexión: ${error.message}`);
+                this.showError(`
+                    ❌ <strong>Error Desconocido</strong><br>
+                    ${error.message}<br><br>
+                    
+                    <strong>🔧 Siguiente paso:</strong><br>
+                    Verifica manualmente: <a href="${url}?test=true" target="_blank">Abrir URL de prueba</a>
+                `);
             }
+            
+            return false;
         }
     }
 

@@ -317,12 +317,51 @@ MIT License - Ver archivo LICENSE para más detalles.
 4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
 5. Crear Pull Request
 
-## 📞 Soporte
+## � Troubleshooting
+
+### Problemas Comunes
+
+#### Error CORS con Gmail Apps Script
+```
+Access to fetch blocked by CORS policy: No 'Access-Control-Allow-Origin' header
+```
+
+**Soluciones:**
+1. **Verificar deployment**: Apps Script debe estar desplegado como "Web App" con acceso "Cualquier persona"
+2. **Test manual**: Usar [`docs/test-apps-script-cors.html`](docs/test-apps-script-cors.html) para debug
+3. **Guía completa**: Consultar [`docs/CORS-TROUBLESHOOTING.md`](docs/CORS-TROUBLESHOOTING.md)
+
+#### Error "addDoc is not defined"
+```javascript
+// Verificar que las importaciones incluyan addDoc
+import { addDoc } from 'firebase/firestore';
+```
+
+#### Problemas de Autenticación
+- Verificar configuración OAuth en Firebase Console
+- Revisar dominios autorizados en Authentication > Settings
+
+### Herramientas de Debug
+
+- **Test CORS**: [`docs/test-apps-script-cors.html`](docs/test-apps-script-cors.html)
+- **Test Templates**: [`docs/test-email-templates.html`](docs/test-email-templates.html)
+- **Deployment Guide**: [`docs/DEPLOYMENT-GUIDE.md`](docs/DEPLOYMENT-GUIDE.md)
+
+## �📞 Soporte
 
 Para soporte o preguntas:
-- Crear issue en GitHub
-- Contactar al administrador del sistema
-- Revisar documentación de Firebase
+- **Issues técnicos**: Crear issue en GitHub con logs de consola
+- **Problemas CORS**: Seguir guía de troubleshooting
+- **Configuración Firebase**: Revisar documentación oficial
+- **Contacto directo**: Administrador del sistema
+
+### Información Útil para Soporte
+
+Al reportar problemas, incluir:
+- URL del Apps Script (si aplica)
+- Mensajes de error completos de la consola
+- Navegador y versión utilizada
+- Pasos para reproducir el problema
 
 ---
 
