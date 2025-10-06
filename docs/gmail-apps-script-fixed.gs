@@ -57,12 +57,14 @@ const CONFIG = {
  * Crear respuesta JSON con headers CORS
  */
 function createJSONResponse(data, status = 200) {
-  const output = ContentService.createTextOutput(JSON.stringify(data));
-  output.setMimeType(ContentService.MimeType.JSON);
-  
-  // Configurar headers CORS uno por uno
-  const response = HtmlService.createHtmlOutput('');
-  return output;
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeaders({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    });
 }
 
 /**
@@ -120,6 +122,10 @@ function doPost(e) {
         resultado = enviarEmailPersonalizado(datos);
         break;
         
+      case 'admin_test':
+        resultado = enviarEmailTest(datos);
+        break;
+        
       default:
         throw new Error(`Tipo de email no reconocido: ${tipoEmail}`);
     }
@@ -134,9 +140,7 @@ function doPost(e) {
       timestamp: new Date().toISOString()
     };
     
-    return ContentService
-      .createTextOutput(JSON.stringify(responseData))
-      .setMimeType(ContentService.MimeType.JSON);
+    return createJSONResponse(responseData);
       
   } catch (error) {
     console.error('Error en Gmail API Script:', error);
@@ -148,9 +152,7 @@ function doPost(e) {
       timestamp: new Date().toISOString()
     };
     
-    return ContentService
-      .createTextOutput(JSON.stringify(errorData))
-      .setMimeType(ContentService.MimeType.JSON);
+    return createJSONResponse(errorData);
   }
 }
 
@@ -160,7 +162,13 @@ function doPost(e) {
 function doOptions(e) {
   return ContentService
     .createTextOutput('')
-    .setMimeType(ContentService.MimeType.TEXT);
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeaders({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400'
+    });
 }
 
 /**
@@ -187,9 +195,7 @@ function doGet(e) {
       response.cors = 'Configurado correctamente';
     }
     
-    return ContentService
-      .createTextOutput(JSON.stringify(response))
-      .setMimeType(ContentService.MimeType.JSON);
+    return createJSONResponse(response);
       
   } catch (error) {
     console.error('Error en doGet:', error);
@@ -200,9 +206,7 @@ function doGet(e) {
       timestamp: new Date().toISOString()
     };
     
-    return ContentService
-      .createTextOutput(JSON.stringify(errorData))
-      .setMimeType(ContentService.MimeType.JSON);
+    return createJSONResponse(errorData);
   }
 }
 
@@ -572,6 +576,47 @@ function enviarEmailPersonalizado(datos) {
   return enviarEmail({
     to: datos.destinatario || datos.alumno?.email,
     subject: datos.asunto,
+    htmlBody: htmlBody
+  });
+}
+
+/**
+ * Email de prueba para testing del sistema
+ */
+function enviarEmailTest(datos) {
+  const htmlBody = `
+    ${getHeaderHTML()}
+    ${createHeader('Prueba de Sistema de Emails', 'Email de prueba desde el panel de configuración')}
+    
+    ${createContentSection(`
+      <div style="margin: 20px 0; color: #333; line-height: 1.6;">
+        <p><strong>✅ ¡El sistema de emails está funcionando correctamente!</strong></p>
+        <p>Este es un email de prueba enviado desde el sistema de configuraciones.</p>
+        
+        <h3>Detalles de la prueba:</h3>
+        <ul>
+          <li><strong>Timestamp:</strong> ${datos.timestamp || new Date().toISOString()}</li>
+          <li><strong>Mensaje:</strong> ${datos.testMessage || 'Prueba del sistema'}</li>
+          <li><strong>Apps Script:</strong> Funcionando correctamente</li>
+          <li><strong>CORS:</strong> Configurado apropiadamente</li>
+        </ul>
+        
+        <p style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-left: 4px solid ${CONFIG.emailConfig.colorPrimario};">
+          <strong>Nota:</strong> Si recibes este email, significa que la integración con Gmail está configurada correctamente y el sistema puede enviar notificaciones automáticas.
+        </p>
+      </div>
+      
+      <div style="text-align: center; margin-top: 30px;">
+        ${createButton('Volver al Panel', CONFIG.emailConfig.websiteUrl, 'primary')}
+      </div>
+    `)}
+    
+    ${getFooterHTML()}
+  `;
+  
+  return enviarEmail({
+    to: datos.destinatario || CONFIG.adminEmail,
+    subject: 'Prueba de Sistema - Club de Cocina',
     htmlBody: htmlBody
   });
 }
