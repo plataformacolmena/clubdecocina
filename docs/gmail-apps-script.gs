@@ -176,18 +176,45 @@ function doOptions(e) {
  * Manejar peticiones GET (para testing)
  */
 function doGet(e) {
-  return ContentService
-    .createTextOutput(JSON.stringify({
-      status: 'Gmail API Script funcionando',
+  try {
+    const params = e.parameter || {};
+    const isTest = params.test === 'true';
+    
+    const response = {
+      status: 'Gmail API Script funcionando correctamente',
       version: '1.0.0',
       timestamp: new Date().toISOString(),
+      test: isTest,
       endpoints: [
         'POST /exec - Enviar email',
-        'GET /exec - Status del script'
+        'GET /exec?test=true - Test de conexión'
       ]
-    }))
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeader('Access-Control-Allow-Origin', '*');
+    };
+    
+    if (isTest) {
+      response.message = 'Test de conexión exitoso';
+      response.cors = 'Configurado correctamente';
+    }
+    
+    return ContentService
+      .createTextOutput(JSON.stringify(response))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*')
+      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+      .setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      
+  } catch (error) {
+    console.error('Error en doGet:', error);
+    
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        status: 'Error en Gmail API Script',
+        error: error.toString(),
+        timestamp: new Date().toISOString()
+      }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*');
+  }
 }
 
 // ============================================================================

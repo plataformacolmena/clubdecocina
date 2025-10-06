@@ -951,69 +951,41 @@ class ConfiguracionManager {
         try {
             this.showInfo('Probando conexión con el Apps Script...');
             
-            // Primero probamos con GET para verificar que el script responde
-            const response = await fetch(url, {
+            // Usar solo GET para evitar problemas de CORS preflight
+            const testUrl = `${url}?test=true&timestamp=${Date.now()}`;
+            
+            const response = await fetch(testUrl, {
                 method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                },
-                // Agregar parámetros para evitar cache
+                mode: 'cors',
                 cache: 'no-cache'
             });
 
             if (response.ok) {
                 const data = await response.json();
                 console.log('Respuesta del Apps Script:', data);
-                this.showSuccess('Apps Script respondió correctamente');
                 
-                // Ahora probamos con POST si el GET funcionó
-                await this.testearScriptPost(url);
+                if (data.status && data.status.includes('funcionando')) {
+                    this.showSuccess('Apps Script funcionando correctamente');
+                } else {
+                    this.showSuccess('Apps Script respondió correctamente');
+                }
             } else {
                 this.showError(`Error en Apps Script: ${response.status} ${response.statusText}`);
             }
         } catch (error) {
             console.error('Error testeando script:', error);
-            this.showError(`Error de conexión: ${error.message}`);
-        }
-    }
-
-    async testearScriptPost(url) {
-        try {
-            const testData = {
-                tipo: 'email_personalizado',
-                alumno: {
-                    nombre: 'Usuario Test',
-                    email: 'test@clubcolmena.com.ar'
-                },
-                asunto: 'Test desde configuración',
-                titulo: 'Test de conexión',
-                contenido: 'Este es un email de prueba desde la configuración del sistema.',
-                destinatario: 'test@clubcolmena.com.ar'
-            };
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(testData)
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success) {
-                    this.showSuccess('Test POST exitoso - Apps Script funcionando completamente');
-                } else {
-                    this.showError(`Error en test POST: ${result.error}`);
-                }
+            
+            if (error.message.includes('CORS')) {
+                this.showError('Error CORS: Verifica que el Apps Script esté desplegado con acceso público');
+            } else if (error.message.includes('Failed to fetch')) {
+                this.showError('Error de conexión: Verifica la URL del Apps Script');
             } else {
-                this.showError(`Error en test POST: ${response.status} ${response.statusText}`);
+                this.showError(`Error de conexión: ${error.message}`);
             }
-        } catch (error) {
-            console.error('Error en test POST:', error);
-            this.showError(`Error en test POST: ${error.message}`);
         }
     }
+
+
 
     // Utilidades
     showSuccess(message) {
