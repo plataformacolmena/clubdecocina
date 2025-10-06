@@ -104,11 +104,12 @@ class EmailService {
             console.log(`📧 Enviando email tipo: ${tipo}`);
             console.log('📋 Datos del email:', JSON.stringify(payload, null, 2));
 
-            // Realizar petición al Apps Script
+            // Realizar petición al Apps Script (evitando preflight CORS)
+            // Usar text/plain para que sea "simple request" sin preflight
             const response = await fetch(this.scriptConfig.url, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'text/plain',
                 },
                 body: JSON.stringify(payload)
             });

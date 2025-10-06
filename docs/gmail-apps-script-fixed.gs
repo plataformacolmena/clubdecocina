@@ -14,8 +14,13 @@
  * 1. Crea un nuevo proyecto en Google Apps Script
  * 2. Pega este código
  * 3. Habilita Gmail API en la consola de Google Cloud
- * 4. Despliega como Web App con permisos públicos
+ * 4. Despliega como Web App con estas configuraciones:
+ *    - Ejecutar como: "Yo" (tu cuenta)
+ *    - Acceso: "Cualquier persona" (para CORS cross-origin)
  * 5. Copia la URL del deployment al sistema de configuraciones
+ * 
+ * IMPORTANTE: El Web App debe estar configurado con acceso público
+ * para que funcione CORS desde dominios externos como GitHub Pages
  * 
  * ============================================================================
  */
@@ -57,14 +62,12 @@ const CONFIG = {
  * Crear respuesta JSON con headers CORS
  */
 function createJSONResponse(data, status = 200) {
-  return ContentService
-    .createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeaders({
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-    });
+  const output = ContentService.createTextOutput(JSON.stringify(data));
+  output.setMimeType(ContentService.MimeType.JSON);
+  
+  // Apps Script maneja CORS automáticamente para Web Apps desplegados
+  // No necesitamos configurar headers manualmente
+  return output;
 }
 
 /**
@@ -160,15 +163,11 @@ function doPost(e) {
  * Manejar peticiones OPTIONS (preflight CORS)
  */
 function doOptions(e) {
+  // Apps Script maneja CORS automáticamente cuando se despliega como Web App
+  // Solo necesitamos devolver una respuesta vacía
   return ContentService
     .createTextOutput('')
-    .setMimeType(ContentService.MimeType.TEXT)
-    .setHeaders({
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Max-Age': '86400'
-    });
+    .setMimeType(ContentService.MimeType.TEXT);
 }
 
 /**
