@@ -1132,8 +1132,8 @@ class ConfiguracionManager {
 
     async getAdminConfig() {
         try {
-            const doc = await firebase.firestore().collection('configuracion').doc('admin').get();
-            return doc.exists ? doc.data() : null;
+            const adminDoc = await getDoc(doc(db, 'configuracion', 'admin'));
+            return adminDoc.exists() ? adminDoc.data() : null;
         } catch (error) {
             console.error('Error obteniendo configuración de admin:', error);
             return null;

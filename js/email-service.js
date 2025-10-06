@@ -7,8 +7,14 @@
  * Maneja todos los tipos de notificaciones automáticas del sistema
  */
 
-// Importar Firebase functions necesarias desde el contexto global
-const { doc, getDoc, db } = window;
+// Importar Firebase siguiendo el patrón establecido en el sistema
+import { db } from './firebase-config.js';
+import {
+    doc,
+    getDoc,
+    collection,
+    getDocs
+} from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
 class EmailService {
     constructor() {
