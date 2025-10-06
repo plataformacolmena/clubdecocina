@@ -334,13 +334,27 @@ class CursosManager {
                 comprobanteUrl: null
             };
 
-            await addDoc(collection(db, 'inscripciones'), inscripcionData);
+            const inscripcionRef = await addDoc(collection(db, 'inscripciones'), inscripcionData);
 
             // Actualizar contador de inscriptos en el curso
             const cursoRef = doc(db, 'cursos', cursoId);
             await updateDoc(cursoRef, {
                 inscriptos: inscriptosActuales + 1
             });
+
+            // Enviar notificación de nueva inscripción al admin
+            if (window.emailService) {
+                try {
+                    const emailResult = await window.emailService.procesarInscripcion(inscripcionRef.id, 'nueva');
+                    if (emailResult.success) {
+                        console.log('✅ Notificación de nueva inscripción enviada al admin');
+                    } else {
+                        console.log('⚠️ Notificación de nueva inscripción no enviada:', emailResult.reason);
+                    }
+                } catch (emailError) {
+                    console.error('Error enviando notificación de nueva inscripción:', emailError);
+                }
+            }
 
             window.authManager.showMessage('¡Inscripción exitosa!', 'success');
             

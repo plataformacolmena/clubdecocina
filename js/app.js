@@ -15,9 +15,19 @@ class App {
         this.initializeApp();
     }
 
-    initializeApp() {
+    async initializeApp() {
         // Los managers se inicializan automáticamente al importarse
         console.log('🎉 Club de Cocina - Aplicación iniciada');
+        
+        // Inicializar servicio de emails
+        if (window.emailService) {
+            try {
+                await window.emailService.initialize();
+                console.log('✅ Servicio de emails inicializado');
+            } catch (error) {
+                console.warn('⚠️ Error inicializando servicio de emails:', error.message);
+            }
+        }
         
         // Agregar estilos CSS adicionales dinámicamente
         this.addDynamicStyles();

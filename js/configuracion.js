@@ -387,10 +387,26 @@ class ConfiguracionManager {
         const statusElement = document.getElementById('script-status-display');
         if (statusElement) {
             const isActive = this.scriptConfig?.activo;
+            const isServiceReady = window.emailService?.initialized;
+            
+            let statusText = 'Inactivo';
+            let statusIcon = 'times-circle';
+            let statusClass = 'inactive';
+            
+            if (isActive && isServiceReady) {
+                statusText = 'Activo y Conectado';
+                statusIcon = 'check-circle';
+                statusClass = 'active';
+            } else if (isActive) {
+                statusText = 'Configurado';
+                statusIcon = 'clock';
+                statusClass = 'warning';
+            }
+            
             statusElement.innerHTML = `
-                <span class="status-badge ${isActive ? 'active' : 'inactive'}">
-                    <i class="fas fa-${isActive ? 'check-circle' : 'times-circle'}"></i>
-                    ${isActive ? 'Activo' : 'Inactivo'}
+                <span class="status-badge ${statusClass}">
+                    <i class="fas fa-${statusIcon}"></i>
+                    ${statusText}
                 </span>
             `;
         }
@@ -830,8 +846,35 @@ class ConfiguracionManager {
             modal.classList.remove('active');
         };
 
-        const testHandler = () => {
-            this.showInfo('Función de prueba de envío en desarrollo');
+        const testHandler = async () => {
+            try {
+                this.showInfo('🔄 Probando conexión con el sistema de emails...');
+                
+                if (!window.emailService) {
+                    throw new Error('Servicio de emails no inicializado');
+                }
+                
+                // Test de conexión
+                const testResult = await window.emailService.testConnection();
+                
+                if (testResult.success) {
+                    this.showSuccess(`✅ Sistema de emails funcionando correctamente<br>
+                        <strong>Versión:</strong> ${testResult.data.version || 'N/A'}<br>
+                        <strong>Estado:</strong> ${testResult.data.status || 'OK'}<br>
+                        <strong>Timestamp:</strong> ${new Date(testResult.data.timestamp).toLocaleString('es-AR')}`);
+                } else {
+                    throw new Error(testResult.error || 'Error desconocido en la conexión');
+                }
+                
+            } catch (error) {
+                console.error('Error en test de emails:', error);
+                this.showError(`❌ Error probando el sistema de emails:<br>
+                    <strong>Detalle:</strong> ${error.message}<br><br>
+                    <strong>Posibles causas:</strong><br>
+                    • Apps Script no configurado correctamente<br>
+                    • URL inválida o permisos incorrectos<br>
+                    • Servicio de emails no inicializado`);
+            }
         };
 
         const closeHandler = () => modal.classList.remove('active');
@@ -1034,6 +1077,93 @@ class ConfiguracionManager {
 
 
 
+    async testEmailService() {
+        const button = event.target;
+        const originalText = button.textContent;
+        const originalIcon = button.innerHTML;
+        
+        try {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+            
+            // Verificar que el servicio esté inicializado
+            if (!window.emailService?.initialized) {
+                throw new Error('Servicio de email no inicializado. Verifica la configuración del Apps Script.');
+            }
+            
+            // Verificar configuración de administrador
+            const adminConfig = await this.getAdminConfig();
+            if (!adminConfig?.email) {
+                throw new Error('Email del administrador no configurado');
+            }
+            
+            // Email de prueba al administrador
+            const testResult = await window.emailService.sendEmail({
+                tipo: 'admin_test',
+                destinatario: adminConfig.email,
+                datos: {
+                    timestamp: new Date().toLocaleString(),
+                    testMessage: 'Este es un email de prueba del sistema de inscripciones'
+                }
+            });
+            
+            if (testResult.success) {
+                this.showSuccess(
+                    `Email de prueba enviado correctamente a ${adminConfig.email}. 
+                    Revisa tu bandeja de entrada.`
+                );
+                
+                // Actualizar estadísticas si existen
+                if (window.emailService.stats) {
+                    this.updateEmailStats();
+                }
+            } else {
+                throw new Error(testResult.error || 'Error desconocido al enviar email');
+            }
+            
+        } catch (error) {
+            console.error('Error testing email service:', error);
+            this.showError(`Error al probar el servicio: ${error.message}`);
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalIcon;
+        }
+    }
+
+    async getAdminConfig() {
+        try {
+            const doc = await firebase.firestore().collection('configuracion').doc('admin').get();
+            return doc.exists ? doc.data() : null;
+        } catch (error) {
+            console.error('Error obteniendo configuración de admin:', error);
+            return null;
+        }
+    }
+
+    updateEmailStats() {
+        // Actualizar estadísticas de emails si hay un elemento para mostrarlas
+        const statsElement = document.getElementById('email-stats');
+        if (statsElement && window.emailService?.stats) {
+            const stats = window.emailService.stats;
+            statsElement.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Emails Enviados:</span>
+                        <span class="stat-value">${stats.sent || 0}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Errores:</span>
+                        <span class="stat-value error">${stats.errors || 0}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Último Envío:</span>
+                        <span class="stat-value">${stats.lastSent || 'Nunca'}</span>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
     // Utilidades
     showSuccess(message) {
         if (window.authManager && window.authManager.showMessage) {
@@ -1059,6 +1189,20 @@ class ConfiguracionManager {
         } else {
             console.log('INFO:', message);
             alert('ℹ️ ' + message);
+        }
+    }
+
+    showAlert(message, type = 'info') {
+        // Método auxiliar para compatibilidad con el EmailService
+        switch (type) {
+            case 'success':
+                this.showSuccess(message);
+                break;
+            case 'error':
+                this.showError(message);
+                break;
+            default:
+                this.showInfo(message);
         }
     }
 }

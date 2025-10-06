@@ -1675,6 +1675,20 @@ class AdminManager {
             if (inscripcion && this.contabilidadManager) {
                 await this.contabilidadManager.registrarIngresoAutomatico(inscripcion);
             }
+
+            // Enviar email de confirmación al alumno
+            if (window.emailService) {
+                try {
+                    const emailResult = await window.emailService.procesarInscripcion(inscripcionId, 'confirmar');
+                    if (emailResult.success) {
+                        console.log('✅ Email de confirmación enviado');
+                    } else {
+                        console.log('⚠️ Email no enviado:', emailResult.reason);
+                    }
+                } catch (emailError) {
+                    console.error('Error enviando email de confirmación:', emailError);
+                }
+            }
             
             window.authManager.showMessage('Inscripción confirmada exitosamente', 'success');
             await this.loadAdminInscripciones();
@@ -2316,6 +2330,30 @@ class AdminManager {
                 fechaActualizacion: new Date(),
                 actualizadoPor: auth.currentUser.email
             });
+
+            // Enviar emails según el nuevo estado
+            if (window.emailService) {
+                try {
+                    let emailResult = null;
+                    
+                    switch (newStatus) {
+                        case 'confirmado':
+                            emailResult = await window.emailService.procesarInscripcion(inscripcionId, 'confirmar');
+                            break;
+                        case 'cancelado':
+                            emailResult = await window.emailService.procesarInscripcion(inscripcionId, 'cancelar', 'Cancelado por administrador');
+                            break;
+                    }
+                    
+                    if (emailResult?.success) {
+                        console.log('✅ Email enviado por cambio de estado');
+                    } else if (emailResult) {
+                        console.log('⚠️ Email no enviado:', emailResult.reason);
+                    }
+                } catch (emailError) {
+                    console.error('Error enviando email por cambio de estado:', emailError);
+                }
+            }
 
             window.authManager.showMessage(`Estado cambiado a "${statusNames[newStatus]}"`, 'success');
             await this.loadAdminInscripciones();

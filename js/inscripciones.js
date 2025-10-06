@@ -298,6 +298,20 @@ class InscripcionesManager {
 
             console.log(`✅ Comprobante guardado en Firestore para inscripción: ${inscripcionId}`);
 
+            // Enviar notificación de pago recibido al admin
+            if (window.emailService) {
+                try {
+                    const emailResult = await window.emailService.procesarInscripcion(inscripcionId, 'pago_recibido');
+                    if (emailResult.success) {
+                        console.log('✅ Notificación de pago enviada al admin');
+                    } else {
+                        console.log('⚠️ Notificación de pago no enviada:', emailResult.reason);
+                    }
+                } catch (emailError) {
+                    console.error('Error enviando notificación de pago:', emailError);
+                }
+            }
+
             modal.remove();
             window.authManager.showMessage(
                 `Comprobante "${file.name}" subido correctamente (${(file.size / 1024).toFixed(1)}KB)`, 
@@ -596,7 +610,19 @@ class InscripcionesManager {
                 canceladoPor: 'usuario'
             });
             
-            // TODO: Enviar email de notificación de cancelación
+            // Notificar cancelación al admin si está habilitado
+            if (window.emailService) {
+                try {
+                    const emailResult = await window.emailService.procesarInscripcion(inscripcionId, 'cancelar', 'Cancelado por el usuario');
+                    if (emailResult.success) {
+                        console.log('✅ Notificación de cancelación enviada');
+                    } else {
+                        console.log('⚠️ Notificación de cancelación no enviada:', emailResult.reason);
+                    }
+                } catch (emailError) {
+                    console.error('Error enviando notificación de cancelación:', emailError);
+                }
+            }
             
             window.authManager.showMessage('Inscripción cancelada exitosamente', 'success');
             await this.loadInscripciones();
