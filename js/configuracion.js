@@ -18,7 +18,6 @@ class ConfiguracionManager {
         this.currentUser = null;
         this.sedeData = null;
         this.profesoresData = [];
-        this.scriptsData = [];
         this.envioConfig = null;
         this.recordatoriosConfig = null;
         this.isFirebaseReady = false;
@@ -701,10 +700,10 @@ class ConfiguracionManager {
         document.getElementById('script-activo-input').checked = script?.activo !== false;
 
         modal.classList.add('active');
-        this.setupScriptModalEvents(modal, scriptId);
+        this.setupScriptModalEvents(modal);
     }
 
-    setupScriptModalEvents(modal, scriptId) {
+    setupScriptModalEvents(modal) {
         const form = document.getElementById('script-form');
         const closeBtn = document.getElementById('script-modal-close');
         const cancelBtn = document.getElementById('cancel-script');
@@ -728,17 +727,29 @@ class ConfiguracionManager {
             }
 
             try {
-                if (scriptId) {
-                    await updateDoc(doc(db, 'apps_scripts', scriptId), scriptData);
-                    this.showSuccess('Script actualizado correctamente');
-                } else {
-                    scriptData.created = new Date();
-                    await addDoc(collection(db, 'apps_scripts'), scriptData);
-                    this.showSuccess('Script agregado correctamente');
-                }
+                // Guardar en sistema único (configuraciones/apps_script)
+                const configData = {
+                    nombre: scriptData.nombre,
+                    url: scriptData.url,
+                    descripcion: scriptData.descripcion,
+                    activo: scriptData.activo,
+                    usos: [
+                        'Notificaciones de inscripción',
+                        'Recordatorios de cursos', 
+                        'Confirmaciones de pago',
+                        'Cancelaciones y cambios',
+                        'Envío de recetas'
+                    ],
+                    configuracion: {
+                        emailRemitente: 'noreply@clubcolmena.com.ar',
+                        nombreRemitente: 'Club de Cocina Colmena'
+                    }
+                };
                 
-                await this.loadScriptsConfiguration();
+                await this.saveScriptConfiguration(configData);
+                await this.loadScriptsConfiguration(); // Recargar el panel
                 modal.classList.remove('active');
+                this.showSuccess('Configuración guardada correctamente');
                 
             } catch (error) {
                 console.error('Error guardando script:', error);
@@ -924,29 +935,7 @@ class ConfiguracionManager {
         }
     }
 
-    async editarScript(scriptId) {
-        this.mostrarModalScript(scriptId);
-    }
 
-    async eliminarScript(scriptId) {
-        if (!confirm('¿Estás seguro de que deseas eliminar este script?')) return;
-
-        try {
-            await deleteDoc(doc(db, 'apps_scripts', scriptId));
-            await this.loadScriptsConfiguration();
-            this.showSuccess('Script eliminado correctamente');
-        } catch (error) {
-            console.error('Error al eliminar script:', error);
-            this.showError('Error al eliminar el script');
-        }
-    }
-
-    async testearScript(scriptId) {
-        const script = this.scriptsData.find(s => s.id === scriptId);
-        if (!script) return;
-        
-        await this.testearScriptUrl(script.url);
-    }
 
     async testearScriptUrl(url) {
         try {
