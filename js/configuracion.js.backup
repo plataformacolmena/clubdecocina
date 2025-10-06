@@ -119,9 +119,9 @@ class ConfiguracionManager {
         }
 
         // Botones de acción - Scripts
-        const editarScriptBtn = document.getElementById('editar-script-btn');
-        if (editarScriptBtn) {
-            editarScriptBtn.addEventListener('click', () => this.mostrarModalScript());
+        const agregarScriptBtn = document.getElementById('agregar-script-btn');
+        if (agregarScriptBtn) {
+            agregarScriptBtn.addEventListener('click', () => this.mostrarModalScript());
         }
 
         // Botones de configuración de envío
@@ -402,6 +402,17 @@ class ConfiguracionManager {
                 `<span class="uso-tag">${uso}</span>`
             ).join('');
         }
+                        <button class="table-action-btn test" onclick="configuracionManager.testearScript('${script.id}')" title="Probar">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="table-action-btn delete" onclick="configuracionManager.eliminarScript('${script.id}')" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
     }
 
     renderEnvioDisplay() {
@@ -482,30 +493,6 @@ class ConfiguracionManager {
         } catch (error) {
             console.error('❌ Error al guardar configuración de envío:', error);
             this.showError('Error al guardar la configuración de envío: ' + error.message);
-        }
-    }
-
-    async saveScriptConfiguration(data) {
-        try {
-            this.validateFirebaseReady('saveScriptConfiguration');
-            
-            console.log('💾 Guardando configuración de Apps Script...');
-            
-            await setDoc(doc(db, 'configuraciones', 'apps_script'), {
-                ...data,
-                updated: new Date()
-            });
-            
-            this.scriptConfig = { ...data, updated: new Date() };
-            this.renderScriptDisplay();
-            
-            console.log('✅ Configuración de Apps Script guardada exitosamente');
-            this.showSuccess('Configuración de Apps Script actualizada');
-            
-        } catch (error) {
-            console.error('❌ Error al guardar configuración de Apps Script:', error);
-            this.showError('Error al guardar la configuración de Apps Script: ' + error.message);
-            throw error;
         }
     }
 
@@ -951,67 +938,26 @@ class ConfiguracionManager {
         try {
             this.showInfo('Probando conexión con el Apps Script...');
             
-            // Primero probamos con GET para verificar que el script responde
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                },
-                // Agregar parámetros para evitar cache
-                cache: 'no-cache'
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Respuesta del Apps Script:', data);
-                this.showSuccess('Apps Script respondió correctamente');
-                
-                // Ahora probamos con POST si el GET funcionó
-                await this.testearScriptPost(url);
-            } else {
-                this.showError(`Error en Apps Script: ${response.status} ${response.statusText}`);
-            }
-        } catch (error) {
-            console.error('Error testeando script:', error);
-            this.showError(`Error de conexión: ${error.message}`);
-        }
-    }
-
-    async testearScriptPost(url) {
-        try {
-            const testData = {
-                tipo: 'email_personalizado',
-                alumno: {
-                    nombre: 'Usuario Test',
-                    email: 'test@clubcolmena.com.ar'
-                },
-                asunto: 'Test desde configuración',
-                titulo: 'Test de conexión',
-                contenido: 'Este es un email de prueba desde la configuración del sistema.',
-                destinatario: 'test@clubcolmena.com.ar'
-            };
-
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(testData)
+                body: JSON.stringify({
+                    test: true,
+                    timestamp: new Date().toISOString(),
+                    source: 'club-colmena-config'
+                })
             });
 
             if (response.ok) {
-                const result = await response.json();
-                if (result.success) {
-                    this.showSuccess('Test POST exitoso - Apps Script funcionando completamente');
-                } else {
-                    this.showError(`Error en test POST: ${result.error}`);
-                }
+                this.showSuccess('✅ Apps Script respondió correctamente');
             } else {
-                this.showError(`Error en test POST: ${response.status} ${response.statusText}`);
+                this.showError(`❌ Error en Apps Script: ${response.status} ${response.statusText}`);
             }
         } catch (error) {
-            console.error('Error en test POST:', error);
-            this.showError(`Error en test POST: ${error.message}`);
+            console.error('Error testeando script:', error);
+            this.showError(`❌ Error de conexión: ${error.message}`);
         }
     }
 
