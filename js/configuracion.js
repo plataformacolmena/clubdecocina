@@ -472,9 +472,12 @@ class ConfiguracionManager {
             nuevaInscripcion: 'Nueva Inscripción',
             cancelacionCurso: 'Cancelación de Curso',
             pagoRecibido: 'Pago Recibido',
+            inscripcion: 'Inscripción',
             confirmacionInscripcion: 'Confirmación de Inscripción',
             recordatorioCurso: 'Recordatorio de Curso',
-            confirmacionPago: 'Confirmación de Pago'
+            confirmacionPago: 'Confirmación de Pago',
+            cancelacionAdmin: 'Cancelación por Admin',
+            nuevoUsuario: 'Nuevo Usuario'
         };
         return labels[key] || key;
     }
@@ -818,6 +821,7 @@ class ConfiguracionManager {
 
             // Rellenar checkboxes de notificaciones alumno
             const alumnoNotifs = this.envioConfig.notificacionesAlumno || {};
+            document.getElementById('notif-alumno-inscripcion').checked = alumnoNotifs.inscripcion || false;
             document.getElementById('notif-alumno-confirmacion-inscripcion').checked = alumnoNotifs.confirmacionInscripcion || false;
             document.getElementById('notif-alumno-recordatorio-curso').checked = alumnoNotifs.recordatorioCurso || false;
             document.getElementById('notif-alumno-confirmacion-pago').checked = alumnoNotifs.confirmacionPago || false;
@@ -845,6 +849,7 @@ class ConfiguracionManager {
                     nuevoUsuario: document.getElementById('notif-admin-nuevo-usuario').checked
                 },
                 notificacionesAlumno: {
+                    inscripcion: document.getElementById('notif-alumno-inscripcion').checked,
                     confirmacionInscripcion: document.getElementById('notif-alumno-confirmacion-inscripcion').checked,
                     recordatorioCurso: document.getElementById('notif-alumno-recordatorio-curso').checked,
                     confirmacionPago: document.getElementById('notif-alumno-confirmacion-pago').checked,

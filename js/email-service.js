@@ -254,6 +254,32 @@ class EmailService {
     }
 
     /**
+     * Email de inscripción al alumno (inmediato)
+     */
+    async enviarEmailInscripcion(inscripcion, curso, sede = null) {
+        if (!this.isNotificationEnabled('inscripcion', 'alumno')) {
+            console.log('📧 Email de inscripción deshabilitado');
+            return { success: false, reason: 'Notificación deshabilitada' };
+        }
+
+        const datos = {
+            alumno: {
+                nombre: inscripcion.usuarioNombre,
+                email: inscripcion.usuarioEmail
+            },
+            curso: {
+                nombre: curso.nombre,
+                fecha: curso.fechaHora,
+                horario: curso.horario || 'Por confirmar',
+                precio: curso.precio
+            },
+            sede: sede
+        };
+
+        return await this.sendEmail('inscripcion', datos);
+    }
+
+    /**
      * Confirmación de inscripción al alumno
      */
     async enviarConfirmacionInscripcion(inscripcion, curso, sede = null) {
@@ -454,7 +480,18 @@ class EmailService {
                     return await this.enviarCancelacionAdmin(inscripcion, curso, motivo);
 
                 case 'nueva':
-                    return await this.notificarNuevaInscripcion(inscripcion, curso, sede);
+                    // Enviar notificación al admin
+                    const adminResult = await this.notificarNuevaInscripcion(inscripcion, curso, sede);
+                    
+                    // Enviar email de inscripción al alumno
+                    const alumnoResult = await this.enviarEmailInscripcion(inscripcion, curso, sede);
+                    
+                    // Retornar resultado combinado
+                    return {
+                        success: adminResult.success || alumnoResult.success,
+                        adminEmail: adminResult,
+                        alumnoEmail: alumnoResult
+                    };
 
                 default:
                     throw new Error(`Acción no reconocida: ${accion}`);

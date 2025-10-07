@@ -95,6 +95,7 @@ class ConfiguracionesInitializer {
                         nuevoUsuario: true
                     },
                     notificacionesAlumno: {
+                        inscripcion: true,
                         confirmacionInscripcion: true,
                         recordatorioCurso: true,
                         confirmacionPago: true,
