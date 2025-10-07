@@ -3064,3 +3064,217 @@ body {
     font-size: 12px;
     font-weight: 500;
 }
+
+/* ============================================
+   ESTILOS PARA TAB ESTADO DE CURSOS
+   ============================================ */
+
+/* Barra de progreso para ocupación */
+.progress-bar-container {
+    width: 100%;
+    margin-top: 4px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background-color: var(--bg-light);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-color) 0%, var(--primary-color) 100%);
+    transition: width 0.3s ease;
+}
+
+/* Badges para contadores */
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 20px;
+}
+
+.badge--success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.badge--warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.badge--danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.badge--info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+/* Estados de cursos mejorados */
+.estado-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: capitalize;
+    text-align: center;
+}
+
+.estado-badge--success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.estado-badge--warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.estado-badge--danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.estado-badge--secondary {
+    background-color: #e9ecef;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+/* Contenido de celdas */
+.cell-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cell-content strong {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.cell-content small {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+.d-block {
+    display: block !important;
+}
+
+/* Botones de acción mejorados */
+.action-buttons {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+}
+
+.action-buttons .btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    min-width: auto;
+}
+
+.action-buttons .btn i {
+    font-size: 12px;
+}
+
+/* Tabla específica de estado de cursos */
+#estado-cursos-table {
+    font-size: 13px;
+}
+
+#estado-cursos-table th {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#estado-cursos-table td {
+    vertical-align: middle;
+    padding: 12px 8px;
+}
+
+/* Ancho específico de columnas para estado de cursos */
+#estado-cursos-table th:nth-child(1),
+#estado-cursos-table td:nth-child(1) { width: 200px; } /* Curso */
+
+#estado-cursos-table th:nth-child(2),
+#estado-cursos-table td:nth-child(2) { width: 140px; } /* Fecha/Hora */
+
+#estado-cursos-table th:nth-child(3),
+#estado-cursos-table td:nth-child(3) { width: 100px; } /* Inscriptos */
+
+#estado-cursos-table th:nth-child(4),
+#estado-cursos-table td:nth-child(4) { width: 80px; } /* Ocupación */
+
+#estado-cursos-table th:nth-child(5),
+#estado-cursos-table td:nth-child(5) { width: 120px; } /* Estado */
+
+#estado-cursos-table th:nth-child(6),
+#estado-cursos-table td:nth-child(6) { width: 80px; } /* Confirmados */
+
+#estado-cursos-table th:nth-child(7),
+#estado-cursos-table td:nth-child(7) { width: 80px; } /* Pendientes */
+
+#estado-cursos-table th:nth-child(8),
+#estado-cursos-table td:nth-child(8) { width: 140px; } /* Recaudación */
+
+#estado-cursos-table th:nth-child(9),
+#estado-cursos-table td:nth-child(9) { width: 100px; } /* Acciones */
+
+/* Responsivo para tab estado de cursos */
+@media (max-width: 768px) {
+    .progress-bar-container {
+        display: none;
+    }
+    
+    .badge {
+        font-size: 10px;
+        padding: 1px 6px;
+    }
+    
+    .estado-badge {
+        font-size: 10px;
+        padding: 2px 8px;
+    }
+    
+    #estado-cursos-table {
+        font-size: 11px;
+    }
+    
+    #estado-cursos-table th,
+    #estado-cursos-table td {
+        padding: 8px 4px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .action-buttons .btn {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+}

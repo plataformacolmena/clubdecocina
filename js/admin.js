@@ -502,6 +502,13 @@ class AdminManager {
         this.inscripcionesListener = null;
         this.cursosListener = null;
         
+        // Configuración de tabla de estado de cursos
+        this.filteredEstadoCursos = [];
+        this.estadoCursosCurrentPage = 1;
+        this.estadoCursosItemsPerPage = 15;
+        this.estadoCursosSortColumn = 'fechaHora';
+        this.estadoCursosSortDirection = 'asc';
+        
         this.setupEventListeners();
     }
 
@@ -546,6 +553,9 @@ class AdminManager {
         // Configurar tabla de inscripciones
         this.setupInscripcionesTable();
         
+        // Configurar tabla de estado de cursos
+        this.setupEstadoCursosTable();
+        
         // Configurar listeners para logs
         this.setupLogsEventListeners();
         
@@ -578,6 +588,8 @@ class AdminManager {
                     this.loadSystemLogs();
                 } else if (targetTab === 'administradores-admin') {
                     this.loadAdministratorsTab();
+                } else if (targetTab === 'estado-cursos-admin') {
+                    this.loadEstadoCursosTab();
                 }
             });
         });
@@ -1028,6 +1040,12 @@ class AdminManager {
         // Actualizar filtros para mantener sincronización
         this.updateAdminFilters();
         
+        // Actualizar tab de Estado de Cursos si está activo
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab && activeTab.id === 'estado-cursos-admin') {
+            this.renderEstadoCursos();
+        }
+        
         console.log(`✅ Tabla de inscripciones actualizada: ${this.inscripciones.length} registros`);
     }
 
@@ -1048,6 +1066,12 @@ class AdminManager {
         
         // Actualizar filtros para mantener sincronización
         this.updateAdminFilters();
+        
+        // Actualizar tab de Estado de Cursos si está activo
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab && activeTab.id === 'estado-cursos-admin') {
+            this.renderEstadoCursos();
+        }
         
         console.log(`✅ Datos de cursos actualizados: ${Object.keys(cursosMap).length} cursos`);
     }
@@ -2956,6 +2980,473 @@ class AdminManager {
         } else if (!window.notasManager) {
             console.error('❌ NotasManager no está disponible');
         }
+    }
+
+    // ============================================
+    // GESTIÓN DE ESTADO DE CURSOS
+    // ============================================
+    
+    loadEstadoCursosTab() {
+        console.log('📊 Cargando tab Estado de Cursos');
+        this.renderEstadoCursos();
+    }
+    
+    setupEstadoCursosTable() {
+        // Filtros
+        document.getElementById('filter-curso-nombre')?.addEventListener('input', () => {
+            this.applyEstadoCursosFilters();
+        });
+        
+        document.getElementById('filter-estado-curso')?.addEventListener('change', () => {
+            this.applyEstadoCursosFilters();
+        });
+        
+        document.getElementById('filter-fecha-estado')?.addEventListener('change', () => {
+            this.applyEstadoCursosFilters();
+        });
+        
+        // Botones
+        document.getElementById('clear-estado-filters-btn')?.addEventListener('click', () => {
+            this.clearEstadoCursosFilters();
+        });
+        
+        document.getElementById('export-estado-cursos-btn')?.addEventListener('click', () => {
+            this.exportEstadoCursosCSV();
+        });
+        
+        // Paginación
+        document.getElementById('prev-estado-page')?.addEventListener('click', () => {
+            if (this.estadoCursosCurrentPage > 1) {
+                this.estadoCursosCurrentPage--;
+                this.renderEstadoCursosTable();
+            }
+        });
+        
+        document.getElementById('next-estado-page')?.addEventListener('click', () => {
+            const totalPages = Math.ceil(this.filteredEstadoCursos.length / this.estadoCursosItemsPerPage);
+            if (this.estadoCursosCurrentPage < totalPages) {
+                this.estadoCursosCurrentPage++;
+                this.renderEstadoCursosTable();
+            }
+        });
+        
+        // Sorting
+        document.querySelectorAll('#estado-cursos-table .sortable').forEach(th => {
+            th.addEventListener('click', (e) => {
+                const column = e.currentTarget.dataset.column;
+                this.sortEstadoCursos(column);
+            });
+        });
+    }
+    
+    calculateCursoStats() {
+        if (!this.cursos || !this.inscripciones) return [];
+        
+        return this.cursos.map(curso => {
+            const inscripcionesCurso = this.inscripciones.filter(i => i.cursoId === curso.id);
+            const confirmadas = inscripcionesCurso.filter(i => i.estado === 'confirmado').length;
+            const pendientes = inscripcionesCurso.filter(i => i.estado === 'pendiente').length;
+            const pagadas = inscripcionesCurso.filter(i => i.estado === 'pagado').length;
+            
+            const recaudacionConfirmada = inscripcionesCurso
+                .filter(i => ['pagado', 'confirmado'].includes(i.estado))
+                .reduce((sum, i) => sum + (i.costo || 0), 0);
+                
+            const recaudacionPotencial = inscripcionesCurso
+                .reduce((sum, i) => sum + (i.costo || 0), 0);
+            
+            const capacidadMaxima = curso.capacidadMaxima || 999;
+            const inscriptosActuales = curso.inscriptos || 0;
+            const porcentajeOcupacion = capacidadMaxima > 0 ? 
+                ((inscriptosActuales / capacidadMaxima) * 100).toFixed(1) : '0.0';
+            
+            const fechaCurso = new Date(curso.fechaHora.seconds * 1000);
+            const ahora = new Date();
+            
+            let estadoCurso = 'disponible';
+            if (fechaCurso < ahora) {
+                estadoCurso = 'finalizado';
+            } else if (inscriptosActuales >= capacidadMaxima) {
+                estadoCurso = 'lleno';
+            } else if (porcentajeOcupacion >= 80) {
+                estadoCurso = 'proximo';
+            }
+            
+            return {
+                ...curso,
+                inscripcionesCurso,
+                totalInscriptos: inscripcionesCurso.length,
+                inscriptosConfirmados: confirmadas,
+                inscriptosPendientes: pendientes,
+                inscriptosPagados: pagadas,
+                recaudacionConfirmada,
+                recaudacionPotencial,
+                porcentajeOcupacion: parseFloat(porcentajeOcupacion),
+                estadoCurso,
+                fechaCurso
+            };
+        });
+    }
+    
+    renderEstadoCursos() {
+        this.filteredEstadoCursos = this.calculateCursoStats();
+        this.applyEstadoCursosFilters();
+        this.updateEstadoCursosStats();
+        this.renderEstadoCursosTable();
+    }
+    
+    updateEstadoCursosStats() {
+        const cursosConStats = this.filteredEstadoCursos;
+        
+        const totalActivos = cursosConStats.filter(c => c.estadoCurso !== 'finalizado').length;
+        const ocupacionPromedio = cursosConStats.length > 0 ?
+            (cursosConStats.reduce((sum, c) => sum + c.porcentajeOcupacion, 0) / cursosConStats.length).toFixed(1) :
+            0;
+        const recaudacionTotal = cursosConStats.reduce((sum, c) => sum + c.recaudacionConfirmada, 0);
+        const cursosLlenos = cursosConStats.filter(c => c.estadoCurso === 'lleno').length;
+        
+        document.getElementById('total-cursos-activos').textContent = totalActivos;
+        document.getElementById('ocupacion-promedio').textContent = ocupacionPromedio + '%';
+        document.getElementById('recaudacion-total').textContent = '$' + recaudacionTotal.toLocaleString();
+        document.getElementById('cursos-llenos').textContent = cursosLlenos;
+    }
+    
+    applyEstadoCursosFilters() {
+        let filtered = [...this.calculateCursoStats()];
+        
+        // Filtro por nombre
+        const nombreFilter = document.getElementById('filter-curso-nombre')?.value.toLowerCase();
+        if (nombreFilter) {
+            filtered = filtered.filter(curso =>
+                curso.nombre.toLowerCase().includes(nombreFilter)
+            );
+        }
+        
+        // Filtro por estado
+        const estadoFilter = document.getElementById('filter-estado-curso')?.value;
+        if (estadoFilter) {
+            filtered = filtered.filter(curso => curso.estadoCurso === estadoFilter);
+        }
+        
+        // Filtro por fecha
+        const fechaFilter = document.getElementById('filter-fecha-estado')?.value;
+        if (fechaFilter) {
+            const ahora = new Date();
+            const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+            
+            filtered = filtered.filter(curso => {
+                const fechaCurso = curso.fechaCurso;
+                
+                switch (fechaFilter) {
+                    case 'hoy':
+                        return fechaCurso >= hoy && fechaCurso < new Date(hoy.getTime() + 24 * 60 * 60 * 1000);
+                    case 'esta-semana':
+                        const inicioSemana = new Date(hoy);
+                        inicioSemana.setDate(hoy.getDate() - hoy.getDay());
+                        const finSemana = new Date(inicioSemana.getTime() + 7 * 24 * 60 * 60 * 1000);
+                        return fechaCurso >= inicioSemana && fechaCurso < finSemana;
+                    case 'proximo-mes':
+                        const inicioProximoMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 1);
+                        const finProximoMes = new Date(ahora.getFullYear(), ahora.getMonth() + 2, 0);
+                        return fechaCurso >= inicioProximoMes && fechaCurso <= finProximoMes;
+                    case 'pasados':
+                        return fechaCurso < hoy;
+                    default:
+                        return true;
+                }
+            });
+        }
+        
+        this.filteredEstadoCursos = filtered;
+        this.estadoCursosCurrentPage = 1;
+        this.updateEstadoCursosStats();
+        this.renderEstadoCursosTable();
+    }
+    
+    sortEstadoCursos(column) {
+        if (this.estadoCursosSortColumn === column) {
+            this.estadoCursosSortDirection = this.estadoCursosSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.estadoCursosSortColumn = column;
+            this.estadoCursosSortDirection = 'asc';
+        }
+        
+        this.filteredEstadoCursos.sort((a, b) => {
+            let valueA, valueB;
+            
+            switch (column) {
+                case 'nombre':
+                    valueA = a.nombre;
+                    valueB = b.nombre;
+                    break;
+                case 'fechaHora':
+                    valueA = a.fechaCurso;
+                    valueB = b.fechaCurso;
+                    break;
+                case 'inscriptos':
+                    valueA = a.totalInscriptos;
+                    valueB = b.totalInscriptos;
+                    break;
+                case 'ocupacion':
+                    valueA = a.porcentajeOcupacion;
+                    valueB = b.porcentajeOcupacion;
+                    break;
+                case 'estado':
+                    valueA = a.estadoCurso;
+                    valueB = b.estadoCurso;
+                    break;
+                case 'confirmados':
+                    valueA = a.inscriptosConfirmados;
+                    valueB = b.inscriptosConfirmados;
+                    break;
+                case 'pendientes':
+                    valueA = a.inscriptosPendientes;
+                    valueB = b.inscriptosPendientes;
+                    break;
+                case 'recaudacion':
+                    valueA = a.recaudacionConfirmada;
+                    valueB = b.recaudacionConfirmada;
+                    break;
+                default:
+                    return 0;
+            }
+            
+            if (valueA < valueB) return this.estadoCursosSortDirection === 'asc' ? -1 : 1;
+            if (valueA > valueB) return this.estadoCursosSortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+        
+        this.renderEstadoCursosTable();
+    }
+    
+    renderEstadoCursosTable() {
+        const tbody = document.getElementById('estado-cursos-table-body');
+        if (!tbody) return;
+        
+        if (this.filteredEstadoCursos.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center">
+                        <div class="no-content">
+                            <i class="fas fa-search"></i>
+                            <p>No se encontraron cursos</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        const startIndex = (this.estadoCursosCurrentPage - 1) * this.estadoCursosItemsPerPage;
+        const endIndex = Math.min(startIndex + this.estadoCursosItemsPerPage, this.filteredEstadoCursos.length);
+        const cursosToShow = this.filteredEstadoCursos.slice(startIndex, endIndex);
+        
+        tbody.innerHTML = cursosToShow.map(curso => this.createEstadoCursoTableRow(curso)).join('');
+        this.updateEstadoCursosPagination();
+    }
+    
+    createEstadoCursoTableRow(curso) {
+        const fechaFormatted = curso.fechaCurso.toLocaleString('es-AR');
+        const capacidadMaxima = curso.capacidadMaxima || '∞';
+        
+        const estadoClass = {
+            'disponible': 'success',
+            'proximo': 'warning', 
+            'lleno': 'danger',
+            'finalizado': 'secondary'
+        }[curso.estadoCurso] || 'secondary';
+        
+        const estadoText = {
+            'disponible': 'Disponible',
+            'proximo': 'Próximo a llenarse',
+            'lleno': 'Completo',
+            'finalizado': 'Finalizado'
+        }[curso.estadoCurso] || 'Desconocido';
+        
+        return `
+            <tr data-curso-id="${curso.id}">
+                <td>
+                    <div class="cell-content">
+                        <strong>${curso.nombre}</strong>
+                        <small class="text-muted d-block">${curso.descripcion || ''}</small>
+                    </div>
+                </td>
+                <td>
+                    <div class="cell-content">
+                        ${fechaFormatted}
+                    </div>
+                </td>
+                <td>
+                    <div class="cell-content">
+                        <strong>${curso.totalInscriptos}/${capacidadMaxima}</strong>
+                    </div>
+                </td>
+                <td>
+                    <div class="cell-content">
+                        <strong>${curso.porcentajeOcupacion}%</strong>
+                    </div>
+                </td>
+                <td>
+                    <span class="estado-badge estado-badge--${estadoClass}">
+                        ${estadoText}
+                    </span>
+                </td>
+                <td>
+                    <div class="cell-content">
+                        <span class="badge badge--success">${curso.inscriptosConfirmados}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="cell-content">
+                        <span class="badge badge--warning">${curso.inscriptosPendientes}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="cell-content">
+                        <strong>$${curso.recaudacionConfirmada.toLocaleString()}</strong>
+                        <small class="text-muted d-block">
+                            Potencial: $${curso.recaudacionPotencial.toLocaleString()}
+                        </small>
+                    </div>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn--outline btn--small" onclick="adminManager.viewCursoDetails('${curso.id}')" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn--outline btn--small" onclick="adminManager.viewInscripcionesByCurso('${curso.id}')" title="Ver inscripciones">
+                            <i class="fas fa-users"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+    
+    updateEstadoCursosPagination() {
+        const pagination = document.getElementById('estado-cursos-pagination');
+        const prevBtn = document.getElementById('prev-estado-page');
+        const nextBtn = document.getElementById('next-estado-page');
+        const pageInfo = document.getElementById('estado-page-info');
+        
+        if (!pagination) return;
+        
+        const totalPages = Math.ceil(this.filteredEstadoCursos.length / this.estadoCursosItemsPerPage);
+        
+        if (totalPages <= 1) {
+            pagination.style.display = 'none';
+            return;
+        }
+        
+        pagination.style.display = 'flex';
+        pageInfo.textContent = `Página ${this.estadoCursosCurrentPage} de ${totalPages}`;
+        
+        prevBtn.disabled = this.estadoCursosCurrentPage === 1;
+        nextBtn.disabled = this.estadoCursosCurrentPage === totalPages;
+    }
+    
+    clearEstadoCursosFilters() {
+        document.getElementById('filter-curso-nombre').value = '';
+        document.getElementById('filter-estado-curso').value = '';
+        document.getElementById('filter-fecha-estado').value = '';
+        
+        this.applyEstadoCursosFilters();
+    }
+    
+    exportEstadoCursosCSV() {
+        const cursosConStats = this.filteredEstadoCursos;
+        
+        if (cursosConStats.length === 0) {
+            window.authManager.showMessage('No hay datos para exportar', 'warning');
+            return;
+        }
+        
+        const headers = [
+            'Curso', 'Fecha/Hora', 'Inscriptos', 'Capacidad Máxima', 'Ocupación (%)',
+            'Estado', 'Confirmados', 'Pendientes', 'Pagados', 'Recaudación Confirmada'
+        ];
+        
+        const rows = cursosConStats.map(curso => [
+            curso.nombre,
+            curso.fechaCurso.toLocaleString('es-AR'),
+            curso.totalInscriptos,
+            curso.capacidadMaxima || 'Sin límite',
+            curso.porcentajeOcupacion + '%',
+            curso.estadoCurso,
+            curso.inscriptosConfirmados,
+            curso.inscriptosPendientes,
+            curso.inscriptosPagados,
+            '$' + curso.recaudacionConfirmada.toLocaleString()
+        ]);
+        
+        const csvContent = [headers, ...rows]
+            .map(row => row.map(cell => `"${cell}"`).join(','))
+            .join('\\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `estado-cursos-${new Date().toISOString().slice(0, 10)}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        window.authManager.showMessage('Estado de cursos exportado exitosamente', 'success');
+    }
+    
+    viewCursoDetails(cursoId) {
+        const curso = this.cursos.find(c => c.id === cursoId);
+        if (!curso) return;
+        
+        const stats = this.calculateCursoStats().find(c => c.id === cursoId);
+        const fechaCurso = new Date(curso.fechaHora.seconds * 1000).toLocaleString('es-AR');
+        
+        const details = `📚 ${curso.nombre}
+
+📅 ${fechaCurso}
+📍 ${curso.ubicacion || 'No especificada'}
+💰 $${curso.costo.toLocaleString()}
+👥 ${curso.capacidadMaxima || 'Sin límite'} personas
+
+📊 ESTADÍSTICAS
+• Estado: ${stats.estadoCurso}
+• Ocupación: ${stats.porcentajeOcupacion}%
+• Inscripciones: ${stats.totalInscriptos}
+• Confirmados: ${stats.inscriptosConfirmados}
+• Pendientes: ${stats.inscriptosPendientes}
+
+💰 RECAUDACIÓN
+• Confirmada: $${stats.recaudacionConfirmada.toLocaleString()}
+• Potencial: $${stats.recaudacionPotencial.toLocaleString()}`;
+        
+        alert(details);
+    }
+    
+    viewInscripcionesByCurso(cursoId) {
+        const curso = this.cursos.find(c => c.id === cursoId);
+        if (!curso) return;
+        
+        // Cambiar al tab de inscripciones
+        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        document.querySelector('[data-tab="inscripciones-admin"]').classList.add('active');
+        document.getElementById('inscripciones-admin').classList.add('active');
+        
+        // Aplicar filtro por curso
+        setTimeout(() => {
+            const filtroSelect = document.getElementById('filter-curso-admin');
+            if (filtroSelect) {
+                filtroSelect.value = curso.nombre;
+                this.applyInscripcionFilters();
+            }
+        }, 100);
+        
+        window.authManager.showMessage(`Mostrando inscripciones para: ${curso.nombre}`, 'info');
     }
 }
 

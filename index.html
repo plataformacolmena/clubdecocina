@@ -121,6 +121,9 @@
                 <h2 class="section__title">Panel de Administración</h2>
                 <div class="admin__tabs">
                     <button class="tab-btn active" data-tab="cursos-admin">Gestión de Cursos</button>
+                    <button class="tab-btn" data-tab="estado-cursos-admin">
+                        <i class="fas fa-chart-bar"></i> Estado de Cursos
+                    </button>
                     <button class="tab-btn" data-tab="inscripciones-admin">Inscripciones</button>
                     <button class="tab-btn" data-tab="recetas-admin">Recetas</button>
                     <button class="tab-btn" data-tab="cuentas-admin">
@@ -149,6 +152,118 @@
                     </div>
                     <div id="admin-cursos-grid" class="admin__grid">
                         <!-- Los cursos se cargarán dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Estado de Cursos -->
+                <div id="estado-cursos-admin" class="tab-content">
+                    <div class="admin__header">
+                        <h3>
+                            <i class="fas fa-chart-bar"></i> Estado General de Cursos
+                        </h3>
+                        <div class="admin__stats">
+                            <div class="stat-card">
+                                <span class="stat-number" id="total-cursos-activos">0</span>
+                                <span class="stat-label">Cursos Activos</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-number" id="ocupacion-promedio">0%</span>
+                                <span class="stat-label">Ocupación Promedio</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-number" id="recaudacion-total">$0</span>
+                                <span class="stat-label">Recaudación Total</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-number" id="cursos-llenos">0</span>
+                                <span class="stat-label">Cursos Completos</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="filters-section">
+                        <div class="filters-row">
+                            <div class="filter-group">
+                                <label>Buscar curso:</label>
+                                <input type="text" id="filter-curso-nombre" class="input" placeholder="Nombre del curso...">
+                            </div>
+                            <div class="filter-group">
+                                <label>Estado del curso:</label>
+                                <select id="filter-estado-curso" class="select">
+                                    <option value="">Todos los estados</option>
+                                    <option value="disponible">Disponible</option>
+                                    <option value="lleno">Completo</option>
+                                    <option value="proximo">Próximo a llenarse</option>
+                                    <option value="finalizado">Finalizado</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Fecha del curso:</label>
+                                <select id="filter-fecha-estado" class="select">
+                                    <option value="">Todas las fechas</option>
+                                    <option value="hoy">Hoy</option>
+                                    <option value="esta-semana">Esta semana</option>
+                                    <option value="proximo-mes">Próximo mes</option>
+                                    <option value="pasados">Pasados</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <button id="clear-estado-filters-btn" class="btn btn--outline">
+                                    <i class="fas fa-eraser"></i> Limpiar Filtros
+                                </button>
+                                <button id="export-estado-cursos-btn" class="btn btn--secondary">
+                                    <i class="fas fa-download"></i> Exportar CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="estado-cursos-table" class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" data-column="nombre">
+                                        Curso <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" data-column="fechaHora">
+                                        Fecha/Hora <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" data-column="inscriptos">
+                                        Inscriptos <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" data-column="ocupacion">
+                                        Ocupación <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" data-column="estado">
+                                        Estado <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" data-column="confirmados">
+                                        Confirmados <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" data-column="pendientes">
+                                        Pendientes <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" data-column="recaudacion">
+                                        Recaudación <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="estado-cursos-table-body">
+                                <!-- Las filas se generarán dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginación -->
+                    <div id="estado-cursos-pagination" class="pagination" style="display: none;">
+                        <button id="prev-estado-page" class="btn btn--outline">
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </button>
+                        <span id="estado-page-info">Página 1 de 1</span>
+                        <button id="next-estado-page" class="btn btn--outline">
+                            Siguiente <i class="fas fa-chevron-right"></i>
+                        </button>
                     </div>
                 </div>
 
