@@ -1025,6 +1025,9 @@ class AdminManager {
         // Re-renderizar tabla
         this.renderAdminInscripciones();
         
+        // Actualizar filtros para mantener sincronización
+        this.updateAdminFilters();
+        
         console.log(`✅ Tabla de inscripciones actualizada: ${this.inscripciones.length} registros`);
     }
 
@@ -1043,6 +1046,9 @@ class AdminManager {
         // Re-renderizar tabla
         this.renderAdminInscripciones();
         
+        // Actualizar filtros para mantener sincronización
+        this.updateAdminFilters();
+        
         console.log(`✅ Datos de cursos actualizados: ${Object.keys(cursosMap).length} cursos`);
     }
 
@@ -1052,6 +1058,7 @@ class AdminManager {
         this.inscripciones.forEach(inscripcion => {
             if (inscripcion.cursoId && this.cursosMap[inscripcion.cursoId]) {
                 const curso = this.cursosMap[inscripcion.cursoId];
+                inscripcion.cursoNombre = curso.nombre; // ✅ Agregado para filtros
                 inscripcion.cursoFecha = curso.fechaHora;
                 inscripcion.cursoHorario = curso.horario;
                 inscripcion.cursoUbicacion = curso.ubicacion;
@@ -2218,9 +2225,18 @@ class AdminManager {
     updateAdminFilters() {
         // Actualizar filtro de cursos en inscripciones
         const filterCurso = document.getElementById('filter-curso-admin');
-        if (filterCurso) {
-            const cursosNombres = [...new Set(this.inscripciones.map(i => i.cursoNombre))];
+        if (filterCurso && this.inscripciones) {
+            // Obtener nombres únicos de cursos, filtrando valores válidos
+            const cursosNombres = [...new Set(
+                this.inscripciones
+                    .map(i => i.cursoNombre)
+                    .filter(nombre => nombre && nombre.trim())
+            )].sort();
             
+            // Guardar valor seleccionado actual
+            const currentValue = filterCurso.value;
+            
+            // Reconstruir opciones
             filterCurso.innerHTML = '<option value="">Todos los cursos</option>';
             cursosNombres.forEach(nombre => {
                 const option = document.createElement('option');
@@ -2228,6 +2244,13 @@ class AdminManager {
                 option.textContent = nombre;
                 filterCurso.appendChild(option);
             });
+            
+            // Restaurar valor seleccionado si aún existe
+            if (currentValue && cursosNombres.includes(currentValue)) {
+                filterCurso.value = currentValue;
+            }
+            
+            console.log(`🔄 Filtros actualizados: ${cursosNombres.length} cursos disponibles`);
         }
     }
 
