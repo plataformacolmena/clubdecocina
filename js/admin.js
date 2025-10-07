@@ -2034,45 +2034,9 @@ class AdminManager {
                         </select>
                     </div>
                     <div class="form__group">
-                        <label class="form__label">Descripción</label>
-                        <textarea id="receta-descripcion" class="input" rows="3">${receta?.descripcion || ''}</textarea>
-                    </div>
-                    <div class="form-row">
-                        <div class="form__group">
-                            <label class="form__label">Tiempo de preparación</label>
-                            <input type="text" id="receta-tiempo" class="input" 
-                                   value="${receta?.tiempoPreparacion || ''}" placeholder="ej: 30 minutos">
-                        </div>
-                        <div class="form__group">
-                            <label class="form__label">Porciones</label>
-                            <input type="text" id="receta-porciones" class="input" 
-                                   value="${receta?.porciones || ''}" placeholder="ej: 4 porciones">
-                        </div>
-                        <div class="form__group">
-                            <label class="form__label">Dificultad</label>
-                            <select id="receta-dificultad" class="select">
-                                <option value="Fácil" ${receta?.dificultad === 'Fácil' ? 'selected' : ''}>Fácil</option>
-                                <option value="Media" ${receta?.dificultad === 'Media' ? 'selected' : ''}>Media</option>
-                                <option value="Difícil" ${receta?.dificultad === 'Difícil' ? 'selected' : ''}>Difícil</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form__group">
-                        <label class="form__label">Ingredientes (uno por línea)</label>
-                        <textarea id="receta-ingredientes" class="input" rows="6">${receta?.ingredientes || ''}</textarea>
-                    </div>
-                    <div class="form__group">
-                        <label class="form__label">Instrucciones (una por línea)</label>
-                        <textarea id="receta-instrucciones" class="input" rows="8">${receta?.instrucciones || ''}</textarea>
-                    </div>
-                    <div class="form__group">
-                        <label class="form__label">Tips adicionales</label>
-                        <textarea id="receta-tips" class="input" rows="3">${receta?.tips || ''}</textarea>
-                    </div>
-                    <div class="form__group">
-                        <label class="form__label">Imagen de la receta</label>
-                        <input type="file" id="receta-imagen" class="input" accept="image/*">
-                        ${receta?.imagenUrl ? `<p class="file-note">Imagen actual disponible. Selecciona una nueva para reemplazar.</p>` : ''}
+                        <label class="form__label">Archivo PDF de la receta</label>
+                        <input type="file" id="receta-pdf" class="input" accept=".pdf">
+                        ${receta?.pdfUrl ? `<p class="file-note">PDF actual disponible. Selecciona uno nuevo para reemplazar.</p>` : ''}
                     </div>
                     <div class="modal__actions">
                         <button type="submit" class="btn btn--primary">
@@ -2105,24 +2069,17 @@ class AdminManager {
         try {
             window.authManager.showLoading();
             
-            let imagenUrl = null;
-            const imagenFile = modal.querySelector('#receta-imagen').files[0];
+            let pdfUrl = null;
+            const pdfFile = modal.querySelector('#receta-pdf').files[0];
             
-            if (imagenFile) {
-                imagenUrl = await this.uploadRecetaImage(imagenFile);
+            if (pdfFile) {
+                pdfUrl = await this.uploadRecetaPDF(pdfFile);
             }
             
             const recetaData = {
                 nombre: modal.querySelector('#receta-nombre').value,
                 cursoNombre: modal.querySelector('#receta-curso').value,
-                descripcion: modal.querySelector('#receta-descripcion').value,
-                tiempoPreparacion: modal.querySelector('#receta-tiempo').value,
-                porciones: modal.querySelector('#receta-porciones').value,
-                dificultad: modal.querySelector('#receta-dificultad').value,
-                ingredientes: modal.querySelector('#receta-ingredientes').value,
-                instrucciones: modal.querySelector('#receta-instrucciones').value,
-                tips: modal.querySelector('#receta-tips').value,
-                imagenUrl: imagenUrl,
+                pdfUrl: pdfUrl,
                 fechaCreacion: new Date(),
                 likes: []
             };
@@ -2149,18 +2106,12 @@ class AdminManager {
             const recetaData = {
                 nombre: modal.querySelector('#receta-nombre').value,
                 cursoNombre: modal.querySelector('#receta-curso').value,
-                descripcion: modal.querySelector('#receta-descripcion').value,
-                tiempoPreparacion: modal.querySelector('#receta-tiempo').value,
-                porciones: modal.querySelector('#receta-porciones').value,
-                dificultad: modal.querySelector('#receta-dificultad').value,
-                ingredientes: modal.querySelector('#receta-ingredientes').value,
-                instrucciones: modal.querySelector('#receta-instrucciones').value,
-                tips: modal.querySelector('#receta-tips').value
+                fechaModificacion: new Date()
             };
 
-            const imagenFile = modal.querySelector('#receta-imagen').files[0];
-            if (imagenFile) {
-                recetaData.imagenUrl = await this.uploadRecetaImage(imagenFile);
+            const pdfFile = modal.querySelector('#receta-pdf').files[0];
+            if (pdfFile) {
+                recetaData.pdfUrl = await this.uploadRecetaPDF(pdfFile);
             }
 
             await updateDoc(doc(db, 'recetas', recetaId), recetaData);
@@ -2178,20 +2129,20 @@ class AdminManager {
         }
     }
 
-    async uploadRecetaImage(file) {
+    async uploadRecetaPDF(file) {
         try {
-            console.log(`📸 Subiendo imagen de receta: ${file.name}`);
+            console.log(`� Subiendo PDF de receta: ${file.name}`);
             
-            // Sistema Base64 para imágenes de recetas - Compatible con Firebase Spark
+            // Sistema Base64 para PDFs de recetas - Compatible con Firebase Spark
             
             // Validaciones
-            if (file.size > 800 * 1024) { // 800KB límite para recetas
-                throw new Error('Imagen muy grande. Máximo 800KB para imágenes de recetas.');
+            if (file.size > 2 * 1024 * 1024) { // 2MB límite para PDFs
+                throw new Error('PDF muy grande. Máximo 2MB para archivos PDF de recetas.');
             }
 
-            // Validar que sea una imagen
-            if (!file.type.startsWith('image/')) {
-                throw new Error('Solo se permiten archivos de imagen para las recetas.');
+            // Validar que sea un PDF
+            if (file.type !== 'application/pdf') {
+                throw new Error('Solo se permiten archivos PDF para las recetas.');
             }
 
             return new Promise((resolve, reject) => {
@@ -2200,25 +2151,25 @@ class AdminManager {
                     try {
                         const base64Data = e.target.result;
                         
-                        console.log(`✅ Imagen de receta convertida: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`);
+                        console.log(`✅ PDF de receta convertido: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`);
                         
                         // Para recetas, retornamos directamente la data URL
                         resolve(base64Data);
                     } catch (error) {
-                        console.error('❌ Error procesando imagen:', error);
-                        reject(new Error('Error al procesar la imagen'));
+                        console.error('❌ Error procesando PDF:', error);
+                        reject(new Error('Error al procesar el PDF'));
                     }
                 };
                 
                 reader.onerror = function(error) {
-                    console.error('❌ Error leyendo imagen:', error);
-                    reject(new Error('Error al leer la imagen'));
+                    console.error('❌ Error leyendo PDF:', error);
+                    reject(new Error('Error al leer el PDF'));
                 };
                 
                 reader.readAsDataURL(file);
             });
         } catch (error) {
-            console.error('Error uploading receta image:', error);
+            console.error('Error uploading receta PDF:', error);
             throw error;
         }
     }
