@@ -1319,11 +1319,10 @@ class ConfiguracionManager {
     getTipoBadgeColor(tipo) {
         const colors = {
             'inscripcion': 'success',
-            'nueva_inscripcion': 'primary',
             'confirmacion': 'info', 
             'cancelacion': 'danger',
             'recordatorio': 'warning',
-            'pago': 'success',
+            'pago': 'primary',
             'receta': 'secondary'
         };
         return colors[tipo] || 'secondary';
@@ -1335,7 +1334,6 @@ class ConfiguracionManager {
     getTipoDisplayName(tipo) {
         const names = {
             'inscripcion': 'Inscripción',
-            'nueva_inscripcion': 'Nueva Inscripción',
             'confirmacion': 'Confirmación',
             'cancelacion': 'Cancelación', 
             'recordatorio': 'Recordatorio',

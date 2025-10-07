@@ -151,36 +151,27 @@ class EmailService {
                 return { success: false, reason: 'Apps Script desactivado' };
             }
 
-            // Buscar plantilla personalizada
-            const plantillaPersonalizada = await this.getPlantillaByTipo(tipo);
+            // Buscar plantilla obligatoria
+            const plantilla = await this.getPlantillaByTipo(tipo);
             
-            let payload;
-            
-            if (plantillaPersonalizada) {
-                // Usar plantilla personalizada
-                const asuntoFinal = this.reemplazarVariables(plantillaPersonalizada.asunto, datos);
-                const contenidoFinal = this.reemplazarVariables(plantillaPersonalizada.plantilla, datos);
-                
-                payload = {
-                    tipo: 'personalizado',
-                    asunto: asuntoFinal,
-                    contenido: contenidoFinal,
-                    destinatario: datos.alumno?.email || datos.usuarioEmail || datos.destinatario,
-                    ...datos,
-                    timestamp: new Date().toISOString()
-                };
-                
-                console.log(`📧 Usando plantilla personalizada para: ${tipo}`);
-            } else {
-                // Usar plantilla por defecto del Apps Script
-                payload = {
-                    tipo: tipo,
-                    ...datos,
-                    timestamp: new Date().toISOString()
-                };
-                
-                console.log(`📧 Usando plantilla por defecto para: ${tipo}`);
+            if (!plantilla) {
+                console.log(`❌ Plantilla no generada para tipo: ${tipo}`);
+                return { success: false, reason: 'Plantilla no generada' };
             }
+            
+            // Procesar plantilla con variables
+            const asuntoFinal = this.reemplazarVariables(plantilla.asunto, datos);
+            const contenidoFinal = this.reemplazarVariables(plantilla.plantilla, datos);
+            
+            const payload = {
+                tipo: 'email_personalizado', // Tipo fijo para Apps Script
+                asunto: asuntoFinal,
+                contenido: contenidoFinal,
+                destinatario: datos.alumno?.email || datos.usuarioEmail || datos.destinatario,
+                timestamp: new Date().toISOString()
+            };
+            
+            console.log(`📧 Enviando email con plantilla: ${tipo}`);
 
             console.log(`📧 Enviando email tipo: ${tipo}`);
             console.log('📋 Datos del email:', JSON.stringify(payload, null, 2));
@@ -222,36 +213,7 @@ class EmailService {
      * NOTIFICACIONES ESPECÍFICAS DEL SISTEMA
      */
 
-    /**
-     * Notificar nueva inscripción al admin
-     */
-    async notificarNuevaInscripcion(inscripcion, curso, sede = null) {
-        if (!this.isNotificationEnabled('nuevaInscripcion', 'admin')) {
-            console.log('📧 Notificación de nueva inscripción deshabilitada');
-            return { success: false, reason: 'Notificación deshabilitada' };
-        }
 
-        const datos = {
-            alumno: {
-                nombre: inscripcion.usuarioNombre,
-                email: inscripcion.usuarioEmail,
-                telefono: inscripcion.telefono || null
-            },
-            curso: {
-                nombre: curso.nombre,
-                fecha: curso.fechaHora,
-                horario: curso.horario || 'Por confirmar',
-                precio: inscripcion.costo
-            },
-            pago: {
-                estado: inscripcion.estado,
-                metodo: inscripcion.metodoPago
-            },
-            sede: sede
-        };
-
-        return await this.sendEmail('nueva_inscripcion', datos);
-    }
 
     /**
      * Email de inscripción al alumno (inmediato)
@@ -480,18 +442,8 @@ class EmailService {
                     return await this.enviarCancelacionAdmin(inscripcion, curso, motivo);
 
                 case 'nueva':
-                    // Enviar notificación al admin
-                    const adminResult = await this.notificarNuevaInscripcion(inscripcion, curso, sede);
-                    
-                    // Enviar email de inscripción al alumno
-                    const alumnoResult = await this.enviarEmailInscripcion(inscripcion, curso, sede);
-                    
-                    // Retornar resultado combinado
-                    return {
-                        success: adminResult.success || alumnoResult.success,
-                        adminEmail: adminResult,
-                        alumnoEmail: alumnoResult
-                    };
+                    // Usar una sola plantilla 'inscripcion' para todos
+                    return await this.enviarEmailInscripcion(inscripcion, curso, sede);
 
                 default:
                     throw new Error(`Acción no reconocida: ${accion}`);
