@@ -20,20 +20,6 @@ class CursosManager {
     }
 
     setupEventListeners() {
-        // Filtros de búsqueda
-        document.getElementById('search-cursos')?.addEventListener('input', async (e) => {
-            await this.filterCursos(e.target.value);
-        });
-        
-        document.getElementById('filter-fecha')?.addEventListener('change', async (e) => {
-            await this.filterByFecha(e.target.value);
-        });
-
-        // Filtro de estado del curso
-        document.getElementById('filter-estado-curso')?.addEventListener('change', async (e) => {
-            await this.filterByEstadoCurso(e.target.value);
-        });
-
         // Navegación a cursos
         document.querySelector('a[href="#cursos"]')?.addEventListener('click', (e) => {
             e.preventDefault();
@@ -212,85 +198,6 @@ class CursosManager {
                 </div>
             </div>
         `;
-    }
-
-    async filterCursos(searchTerm) {
-        const filtered = this.cursos.filter(curso =>
-            curso.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            curso.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        await this.renderCursos(filtered);
-    }
-
-    async filterByFecha(fechaFilter) {
-        if (!fechaFilter) {
-            await this.renderCursos();
-            return;
-        }
-
-        const filtered = this.cursos.filter(curso => {
-            const cursoDate = new Date(curso.fechaHora.seconds * 1000);
-            const filterDate = new Date(fechaFilter);
-            
-            return cursoDate.toDateString() === filterDate.toDateString();
-        });
-        
-        await this.renderCursos(filtered);
-    }
-
-    async filterByEstadoCurso(estadoFilter) {
-        if (!estadoFilter) {
-            await this.renderCursos();
-            return;
-        }
-
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-
-        const filtered = this.cursos.filter(curso => {
-            const cursoDate = new Date(curso.fechaHora.seconds * 1000);
-            const cursoDay = new Date(cursoDate.getFullYear(), cursoDate.getMonth(), cursoDate.getDate());
-            
-            switch (estadoFilter) {
-                case 'proximo':
-                    return cursoDay >= tomorrow;
-                case 'activo':
-                    return cursoDay.getTime() === today.getTime();
-                case 'terminado':
-                    return cursoDay < today;
-                default:
-                    return true;
-            }
-        });
-        
-        await this.renderCursos(filtered);
-    }
-
-    updateFechaFilter() {
-        const fechaFilter = document.getElementById('filter-fecha');
-        if (!fechaFilter) return;
-
-        // Obtener fechas únicas de los cursos
-        const fechas = [...new Set(this.cursos.map(curso => {
-            const date = new Date(curso.fechaHora.seconds * 1000);
-            return date.toISOString().split('T')[0];
-        }))].sort();
-
-        // Limpiar y agregar opciones
-        fechaFilter.innerHTML = '<option value="">Todas las fechas</option>';
-        fechas.forEach(fecha => {
-            const option = document.createElement('option');
-            option.value = fecha;
-            option.textContent = new Date(fecha).toLocaleDateString('es-AR', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            fechaFilter.appendChild(option);
-        });
     }
 
     async inscribirseACurso(cursoId) {
