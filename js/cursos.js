@@ -54,7 +54,6 @@ class CursosManager {
             });
             
             this.renderCursos();
-            this.updateFechaFilter();
             
         } catch (error) {
             console.error('Error loading cursos:', error);
