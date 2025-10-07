@@ -20,6 +20,7 @@ class ConfiguracionManager {
         this.profesoresData = [];
         this.envioConfig = null;
         this.recordatoriosConfig = null;
+        this.plantillasEmail = [];
         this.isFirebaseReady = false;
         this.initializationPromise = null;
         
@@ -135,6 +136,15 @@ class ConfiguracionManager {
         if (editarRecordatoriosBtn) {
             editarRecordatoriosBtn.addEventListener('click', () => this.mostrarModalRecordatorios());
         }
+
+        // Botones de plantillas de email
+        const agregarPlantillaBtn = document.getElementById('agregar-plantilla-btn');
+        if (agregarPlantillaBtn) {
+            agregarPlantillaBtn.addEventListener('click', () => this.abrirModalPlantilla());
+        }
+
+        // Event listeners del modal de plantillas
+        this.setupPlantillaModalEvents();
     }
 
     switchConfigTab(tabId) {
@@ -166,7 +176,8 @@ class ConfiguracionManager {
                 this.loadProfesoresConfiguration(),
                 this.loadScriptsConfiguration(),
                 this.loadEnvioConfiguration(),
-                this.loadRecordatoriosConfiguration()
+                this.loadRecordatoriosConfiguration(),
+                this.loadPlantillasEmail()
             ]);
             
             console.log('✅ Todas las configuraciones cargadas exitosamente');
@@ -1204,6 +1215,407 @@ class ConfiguracionManager {
             default:
                 this.showInfo(message);
         }
+    }
+
+    // ============================================================================
+    // GESTIÓN DE PLANTILLAS DE EMAIL
+    // ============================================================================
+
+    /**
+     * Cargar plantillas de email desde Firebase
+     */
+    async loadPlantillasEmail() {
+        try {
+            console.log('📧 Cargando plantillas de email...');
+            
+            const plantillasRef = collection(db, 'plantillas_email');
+            const snapshot = await getDocs(plantillasRef);
+            
+            this.plantillasEmail = [];
+            snapshot.forEach((doc) => {
+                this.plantillasEmail.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+
+            console.log(`✅ ${this.plantillasEmail.length} plantillas cargadas`);
+            this.displayPlantillasTable();
+            
+        } catch (error) {
+            console.error('❌ Error cargando plantillas de email:', error);
+            this.showError('Error cargando plantillas de email: ' + error.message);
+        }
+    }
+
+    /**
+     * Mostrar plantillas en la tabla
+     */
+    displayPlantillasTable() {
+        const tbody = document.getElementById('plantillas-table-body');
+        if (!tbody) return;
+
+        if (this.plantillasEmail.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-muted" style="padding: 40px;">
+                        <i class="fas fa-file-alt fa-2x"></i><br><br>
+                        No hay plantillas configuradas<br>
+                        <small>Haz clic en "Agregar Plantilla" para crear la primera</small>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = this.plantillasEmail.map(plantilla => {
+            const fecha = plantilla.fechaCreacion?.toDate?.() || new Date();
+            const fechaStr = fecha.toLocaleDateString('es-ES');
+            
+            return `
+                <tr>
+                    <td>
+                        <span class="badge badge--${this.getTipoBadgeColor(plantilla.tipo)}">
+                            ${this.getTipoDisplayName(plantilla.tipo)}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="max-width: 200px;">
+                            <div class="text-truncate">${plantilla.asunto}</div>
+                            <small class="text-muted">${plantilla.asunto.length > 30 ? '...' : ''}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge ${plantilla.activa ? 'active' : 'inactive'}">
+                            <i class="fas fa-${plantilla.activa ? 'check-circle' : 'times-circle'}"></i>
+                            ${plantilla.activa ? 'Activa' : 'Inactiva'}
+                        </span>
+                    </td>
+                    <td>${fechaStr}</td>
+                    <td>
+                        <button class="btn btn--small btn--outline" onclick="configuracionManager.editarPlantilla('${plantilla.id}')" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn--small btn--outline" onclick="configuracionManager.togglePlantillaStatus('${plantilla.id}')" title="${plantilla.activa ? 'Desactivar' : 'Activar'}">
+                            <i class="fas fa-${plantilla.activa ? 'eye-slash' : 'eye'}"></i>
+                        </button>
+                        <button class="btn btn--small btn--danger" onclick="configuracionManager.eliminarPlantilla('${plantilla.id}')" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    /**
+     * Obtener color del badge según tipo
+     */
+    getTipoBadgeColor(tipo) {
+        const colors = {
+            'inscripcion': 'success',
+            'confirmacion': 'primary', 
+            'cancelacion': 'danger',
+            'recordatorio': 'warning',
+            'pago': 'info',
+            'receta': 'secondary'
+        };
+        return colors[tipo] || 'secondary';
+    }
+
+    /**
+     * Obtener nombre display del tipo
+     */
+    getTipoDisplayName(tipo) {
+        const names = {
+            'inscripcion': 'Inscripción',
+            'confirmacion': 'Confirmación',
+            'cancelacion': 'Cancelación', 
+            'recordatorio': 'Recordatorio',
+            'pago': 'Conf. Pago',
+            'receta': 'Receta'
+        };
+        return names[tipo] || tipo;
+    }
+
+    /**
+     * Abrir modal para nueva plantilla
+     */
+    abrirModalPlantilla() {
+        // Limpiar formulario
+        document.getElementById('plantilla-form').reset();
+        document.getElementById('plantilla-modal-title').innerHTML = '<i class="fas fa-file-alt"></i> Nueva Plantilla de Email';
+        
+        // Mostrar modal
+        document.getElementById('modal-plantilla-email').style.display = 'flex';
+        
+        // Configurar para nueva plantilla
+        this.plantillaEditando = null;
+    }
+
+    /**
+     * Editar plantilla existente
+     */
+    async editarPlantilla(plantillaId) {
+        const plantilla = this.plantillasEmail.find(p => p.id === plantillaId);
+        if (!plantilla) {
+            this.showError('Plantilla no encontrada');
+            return;
+        }
+
+        // Llenar formulario
+        document.getElementById('plantilla-tipo-input').value = plantilla.tipo;
+        document.getElementById('plantilla-asunto-input').value = plantilla.asunto;
+        document.getElementById('plantilla-contenido-input').value = plantilla.plantilla;
+        document.getElementById('plantilla-activa-input').checked = plantilla.activa;
+
+        // Cambiar título del modal
+        document.getElementById('plantilla-modal-title').innerHTML = '<i class="fas fa-edit"></i> Editar Plantilla de Email';
+        
+        // Mostrar modal
+        document.getElementById('modal-plantilla-email').style.display = 'flex';
+        
+        // Guardar ID para edición
+        this.plantillaEditando = plantillaId;
+    }
+
+    /**
+     * Guardar plantilla (nueva o editada)
+     */
+    async guardarPlantilla() {
+        try {
+            const tipo = document.getElementById('plantilla-tipo-input').value;
+            const asunto = document.getElementById('plantilla-asunto-input').value.trim();
+            const contenido = document.getElementById('plantilla-contenido-input').value.trim();
+            const activa = document.getElementById('plantilla-activa-input').checked;
+
+            // Validaciones
+            if (!tipo || !asunto || !contenido) {
+                this.showError('Todos los campos son obligatorios');
+                return;
+            }
+
+            // Verificar si ya existe una plantilla activa del mismo tipo (solo para nuevas)
+            if (!this.plantillaEditando) {
+                const existeActiva = this.plantillasEmail.some(p => p.tipo === tipo && p.activa);
+                if (existeActiva && activa) {
+                    const confirmar = confirm('Ya existe una plantilla activa para este tipo. ¿Desea desactivar la anterior y activar esta nueva?');
+                    if (!confirmar) return;
+                    
+                    // Desactivar plantilla anterior del mismo tipo
+                    await this.desactivarPlantillasPorTipo(tipo);
+                }
+            }
+
+            const plantillaData = {
+                tipo,
+                asunto,
+                plantilla: contenido,
+                activa,
+                fechaActualizacion: new Date()
+            };
+
+            if (this.plantillaEditando) {
+                // Actualizar plantilla existente
+                const plantillaRef = doc(db, 'plantillas_email', this.plantillaEditando);
+                await updateDoc(plantillaRef, plantillaData);
+                this.showSuccess('Plantilla actualizada correctamente');
+            } else {
+                // Crear nueva plantilla
+                plantillaData.fechaCreacion = new Date();
+                await addDoc(collection(db, 'plantillas_email'), plantillaData);
+                this.showSuccess('Plantilla creada correctamente');
+            }
+
+            // Cerrar modal y recargar
+            this.cerrarModalPlantilla();
+            await this.loadPlantillasEmail();
+
+        } catch (error) {
+            console.error('❌ Error guardando plantilla:', error);
+            this.showError('Error guardando plantilla: ' + error.message);
+        }
+    }
+
+    /**
+     * Desactivar plantillas del mismo tipo
+     */
+    async desactivarPlantillasPorTipo(tipo) {
+        const plantillasDelTipo = this.plantillasEmail.filter(p => p.tipo === tipo && p.activa);
+        
+        for (const plantilla of plantillasDelTipo) {
+            const plantillaRef = doc(db, 'plantillas_email', plantilla.id);
+            await updateDoc(plantillaRef, { activa: false });
+        }
+    }
+
+    /**
+     * Cambiar estado activo/inactivo de plantilla
+     */
+    async togglePlantillaStatus(plantillaId) {
+        try {
+            const plantilla = this.plantillasEmail.find(p => p.id === plantillaId);
+            if (!plantilla) return;
+
+            const nuevoEstado = !plantilla.activa;
+            
+            // Si se está activando, verificar si hay otra activa del mismo tipo
+            if (nuevoEstado) {
+                const existeActiva = this.plantillasEmail.some(p => p.tipo === plantilla.tipo && p.activa && p.id !== plantillaId);
+                if (existeActiva) {
+                    const confirmar = confirm('Ya existe una plantilla activa para este tipo. ¿Desea desactivar la anterior?');
+                    if (!confirmar) return;
+                    
+                    await this.desactivarPlantillasPorTipo(plantilla.tipo);
+                }
+            }
+
+            const plantillaRef = doc(db, 'plantillas_email', plantillaId);
+            await updateDoc(plantillaRef, { 
+                activa: nuevoEstado,
+                fechaActualizacion: new Date()
+            });
+
+            this.showSuccess(`Plantilla ${nuevoEstado ? 'activada' : 'desactivada'} correctamente`);
+            await this.loadPlantillasEmail();
+
+        } catch (error) {
+            console.error('❌ Error cambiando estado de plantilla:', error);
+            this.showError('Error cambiando estado: ' + error.message);
+        }
+    }
+
+    /**
+     * Eliminar plantilla
+     */
+    async eliminarPlantilla(plantillaId) {
+        if (!confirm('¿Está seguro de eliminar esta plantilla? Esta acción no se puede deshacer.')) {
+            return;
+        }
+
+        try {
+            await deleteDoc(doc(db, 'plantillas_email', plantillaId));
+            this.showSuccess('Plantilla eliminada correctamente');
+            await this.loadPlantillasEmail();
+
+        } catch (error) {
+            console.error('❌ Error eliminando plantilla:', error);
+            this.showError('Error eliminando plantilla: ' + error.message);
+        }
+    }
+
+    /**
+     * Cerrar modal de plantilla
+     */
+    cerrarModalPlantilla() {
+        document.getElementById('modal-plantilla-email').style.display = 'none';
+        this.plantillaEditando = null;
+    }
+
+    /**
+     * Vista previa de plantilla
+     */
+    previsualizarPlantilla() {
+        const asunto = document.getElementById('plantilla-asunto-input').value;
+        const contenido = document.getElementById('plantilla-contenido-input').value;
+        
+        if (!asunto || !contenido) {
+            this.showError('Complete el asunto y contenido para ver la vista previa');
+            return;
+        }
+
+        // Datos de ejemplo para la vista previa
+        const datosEjemplo = {
+            nombreAlumno: 'María García',
+            nombreCurso: 'Cocina Italiana Básica',
+            fechaCurso: '15/02/2024',
+            horarioCurso: '18:00 - 20:00',
+            precioCurso: '$2500',
+            direccionSede: 'Av. Corrientes 1234, CABA'
+        };
+
+        // Reemplazar variables
+        let asuntoPreview = asunto;
+        let contenidoPreview = contenido;
+        
+        Object.keys(datosEjemplo).forEach(key => {
+            const variable = `{{${key}}}`;
+            asuntoPreview = asuntoPreview.replace(new RegExp(variable, 'g'), datosEjemplo[key]);
+            contenidoPreview = contenidoPreview.replace(new RegExp(variable, 'g'), datosEjemplo[key]);
+        });
+
+        // Abrir ventana de vista previa
+        const ventanaPreview = window.open('', '_blank', 'width=800,height=600,scrollbars=yes');
+        ventanaPreview.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Vista Previa - ${asuntoPreview}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    .preview-header { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+                    .preview-subject { font-weight: bold; font-size: 18px; color: #333; }
+                    .preview-note { color: #666; font-size: 14px; margin-top: 10px; }
+                </style>
+            </head>
+            <body>
+                <div class="preview-header">
+                    <div class="preview-subject">Asunto: ${asuntoPreview}</div>
+                    <div class="preview-note">Esta es una vista previa con datos de ejemplo</div>
+                </div>
+                <div class="preview-content">
+                    ${contenidoPreview}
+                </div>
+            </body>
+            </html>
+        `);
+        ventanaPreview.document.close();
+    }
+
+    /**
+     * Configurar event listeners del modal de plantillas
+     */
+    setupPlantillaModalEvents() {
+        const modal = document.getElementById('modal-plantilla-email');
+        const form = document.getElementById('plantilla-form');
+        const closeBtn = document.getElementById('close-plantilla-modal');
+        const cancelBtn = document.getElementById('cancel-plantilla');
+        const previewBtn = document.getElementById('preview-plantilla');
+
+        if (!modal || !form) return;
+
+        // Submit del formulario
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.guardarPlantilla();
+        });
+
+        // Botones de cerrar
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.cerrarModalPlantilla());
+        }
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => this.cerrarModalPlantilla());
+        }
+
+        // Vista previa
+        if (previewBtn) {
+            previewBtn.addEventListener('click', () => this.previsualizarPlantilla());
+        }
+
+        // Cerrar al hacer clic fuera del modal
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.cerrarModalPlantilla();
+            }
+        });
+
+        // Tecla ESC para cerrar
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                this.cerrarModalPlantilla();
+            }
+        });
     }
 }
 

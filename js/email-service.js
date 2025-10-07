@@ -13,7 +13,9 @@ import {
     doc,
     getDoc,
     collection,
-    getDocs
+    getDocs,
+    query,
+    where
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
 class EmailService {
@@ -79,6 +81,61 @@ class EmailService {
     }
 
     /**
+     * Buscar plantilla personalizada por tipo
+     */
+    async getPlantillaByTipo(tipo) {
+        try {
+            const plantillasRef = collection(db, 'plantillas_email');
+            const q = query(
+                plantillasRef, 
+                where('tipo', '==', tipo),
+                where('activa', '==', true)
+            );
+            const snapshot = await getDocs(q);
+            
+            if (!snapshot.empty) {
+                const plantilla = snapshot.docs[0].data();
+                console.log(`📧 Plantilla personalizada encontrada para tipo: ${tipo}`);
+                return plantilla;
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('Error buscando plantilla:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Reemplazar variables en texto
+     */
+    reemplazarVariables(texto, datos) {
+        if (!texto || !datos) return texto;
+
+        let resultado = texto;
+        
+        // Variables disponibles
+        const variables = {
+            nombreAlumno: datos.alumno?.nombre || datos.usuarioNombre || 'Estimado/a',
+            emailAlumno: datos.alumno?.email || datos.usuarioEmail || '',
+            nombreCurso: datos.curso?.nombre || '',
+            fechaCurso: datos.curso?.fecha ? 
+                (typeof datos.curso.fecha === 'string' ? datos.curso.fecha : new Date(datos.curso.fecha).toLocaleDateString('es-ES')) : '',
+            horarioCurso: datos.curso?.horario || '',
+            precioCurso: datos.curso?.precio ? `$${datos.curso.precio}` : '',
+            direccionSede: datos.sede?.direccion || ''
+        };
+
+        // Reemplazar cada variable
+        Object.keys(variables).forEach(key => {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            resultado = resultado.replace(regex, variables[key]);
+        });
+
+        return resultado;
+    }
+
+    /**
      * Enviar email usando Apps Script
      */
     async sendEmail(tipo, datos) {
@@ -94,12 +151,36 @@ class EmailService {
                 return { success: false, reason: 'Apps Script desactivado' };
             }
 
-            // Preparar datos para el Apps Script
-            const payload = {
-                tipo: tipo,
-                ...datos,
-                timestamp: new Date().toISOString()
-            };
+            // Buscar plantilla personalizada
+            const plantillaPersonalizada = await this.getPlantillaByTipo(tipo);
+            
+            let payload;
+            
+            if (plantillaPersonalizada) {
+                // Usar plantilla personalizada
+                const asuntoFinal = this.reemplazarVariables(plantillaPersonalizada.asunto, datos);
+                const contenidoFinal = this.reemplazarVariables(plantillaPersonalizada.plantilla, datos);
+                
+                payload = {
+                    tipo: 'personalizado',
+                    asunto: asuntoFinal,
+                    contenido: contenidoFinal,
+                    destinatario: datos.alumno?.email || datos.usuarioEmail || datos.destinatario,
+                    ...datos,
+                    timestamp: new Date().toISOString()
+                };
+                
+                console.log(`📧 Usando plantilla personalizada para: ${tipo}`);
+            } else {
+                // Usar plantilla por defecto del Apps Script
+                payload = {
+                    tipo: tipo,
+                    ...datos,
+                    timestamp: new Date().toISOString()
+                };
+                
+                console.log(`📧 Usando plantilla por defecto para: ${tipo}`);
+            }
 
             console.log(`📧 Enviando email tipo: ${tipo}`);
             console.log('📋 Datos del email:', JSON.stringify(payload, null, 2));

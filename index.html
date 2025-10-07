@@ -883,6 +883,34 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Plantillas de Emails -->
+                            <div class="config-section">
+                                <div class="config-header">
+                                    <h4><i class="fas fa-file-alt"></i> Plantillas de Emails</h4>
+                                    <button id="agregar-plantilla-btn" class="btn btn--primary btn--small">
+                                        <i class="fas fa-plus"></i> Agregar Plantilla
+                                    </button>
+                                </div>
+                                <div class="config-display" id="plantillas-display">
+                                    <div class="plantillas-table-container">
+                                        <table class="data-table" id="plantillas-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Tipo</th>
+                                                    <th>Asunto</th>
+                                                    <th>Estado</th>
+                                                    <th>Fecha</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="plantillas-table-body">
+                                                <!-- Las plantillas se cargarán dinámicamente -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1876,6 +1904,85 @@
                         </button>
                         <button type="submit" form="recordatorios-form" class="btn btn--primary">
                             <i class="fas fa-save"></i> Guardar Configuración
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Plantilla Email -->
+    <div id="modal-plantilla-email" class="modal">
+        <div class="modal__content">
+            <div class="modal__header">
+                <h3 id="plantilla-modal-title">
+                    <i class="fas fa-file-alt"></i> Nueva Plantilla de Email
+                </h3>
+                <button class="modal__close" id="close-plantilla-modal">&times;</button>
+            </div>
+            <div class="modal__body">
+                <form id="plantilla-form" class="config-form">
+                    <div class="config-form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-cog"></i> Configuración de la Plantilla
+                        </h4>
+                        
+                        <div class="form-row-compact">
+                            <div class="form-group-compact">
+                                <label class="form-label-compact">
+                                    <i class="fas fa-tag"></i> Tipo de Plantilla
+                                </label>
+                                <select id="plantilla-tipo-input" class="form-control-compact" required>
+                                    <option value="">Seleccionar tipo...</option>
+                                    <option value="inscripcion">Inscripción</option>
+                                    <option value="confirmacion">Confirmación</option>
+                                    <option value="cancelacion">Cancelación</option>
+                                    <option value="recordatorio">Recordatorio</option>
+                                    <option value="pago">Confirmación de Pago</option>
+                                    <option value="receta">Nueva Receta</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group-compact">
+                                <label class="form-switch">
+                                    <input type="checkbox" id="plantilla-activa-input" checked>
+                                    <span class="switch"></span>
+                                    Plantilla Activa
+                                </label>
+                                <small class="form-text">Solo plantillas activas se usan para envío</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group-wide">
+                            <label class="form-label-compact">
+                                <i class="fas fa-subject"></i> Asunto del Email
+                            </label>
+                            <input type="text" id="plantilla-asunto-input" class="form-control-wide" required 
+                                   maxlength="150" placeholder="Ej: Bienvenido {{nombreAlumno}} - Curso {{nombreCurso}}">
+                            <small class="form-text">Variables disponibles: {{nombreAlumno}}, {{nombreCurso}}, {{fechaCurso}}, {{horarioCurso}}, {{precioCurso}}, {{direccionSede}}</small>
+                        </div>
+                        
+                        <div class="form-group-wide">
+                            <label class="form-label-compact">
+                                <i class="fas fa-code"></i> Plantilla HTML
+                            </label>
+                            <textarea id="plantilla-contenido-input" class="form-control-wide" rows="10" required
+                                      placeholder="Ingrese el HTML de la plantilla. Puede usar las mismas variables del asunto."></textarea>
+                            <small class="form-text">Use HTML válido. Las variables se reemplazarán automáticamente.</small>
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="modal__actions">
+                    <button type="button" id="preview-plantilla" class="btn btn--outline">
+                        <i class="fas fa-eye"></i> Vista Previa
+                    </button>
+                    <div class="modal__actions-right">
+                        <button type="button" id="cancel-plantilla" class="btn btn--secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" form="plantilla-form" class="btn btn--primary">
+                            <i class="fas fa-save"></i> Guardar Plantilla
                         </button>
                     </div>
                 </div>

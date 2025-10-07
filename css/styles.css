@@ -1210,6 +1210,26 @@ body {
     color: var(--secondary-color);
 }
 
+.badge--success {
+    background: rgba(76, 175, 80, 0.1);
+    color: #4CAF50;
+}
+
+.badge--danger {
+    background: rgba(244, 67, 54, 0.1);
+    color: #f44336;
+}
+
+.badge--warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: #FF8F00;
+}
+
+.badge--info {
+    background: rgba(33, 150, 243, 0.1);
+    color: #2196F3;
+}
+
 /* Colores de texto */
 .text-success {
     color: #4CAF50 !important;
@@ -3294,4 +3314,53 @@ body {
         font-size: 10px;
         padding: 2px 6px;
     }
+}
+
+/* ============================================================================
+   PLANTILLAS DE EMAIL
+   ============================================================================ */
+
+.plantillas-table-container {
+    margin-top: 15px;
+    overflow-x: auto;
+}
+
+.plantillas-table-container .data-table th:first-child {
+    width: 120px;
+}
+
+.plantillas-table-container .data-table th:nth-child(2) {
+    width: auto;
+    min-width: 200px;
+}
+
+.plantillas-table-container .data-table th:nth-child(3) {
+    width: 100px;
+}
+
+.plantillas-table-container .data-table th:nth-child(4) {
+    width: 120px;
+}
+
+.plantillas-table-container .data-table th:last-child {
+    width: 150px;
+}
+
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Modal de plantillas */
+#modal-plantilla-email .form-control-wide {
+    width: 100%;
+}
+
+#modal-plantilla-email textarea {
+    resize: vertical;
+    min-height: 120px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.4;
 }
