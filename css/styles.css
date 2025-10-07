@@ -1144,6 +1144,22 @@ body {
     background: linear-gradient(135deg, #FF9800, #e68900);
 }
 
+.stat-card--active .stat-card__icon {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+}
+
+.stat-card--occupancy .stat-card__icon {
+    background: linear-gradient(135deg, #2196F3, #0b7dda);
+}
+
+.stat-card--revenue .stat-card__icon {
+    background: linear-gradient(135deg, #FF9800, #e68900);
+}
+
+.stat-card--complete .stat-card__icon {
+    background: linear-gradient(135deg, #9C27B0, #7b1fa2);
+}
+
 .stat-card__content h3 {
     font-size: 1.8rem;
     font-weight: 700;
@@ -1532,19 +1548,21 @@ body {
     flex: 1;
 }
 
+/* Compatibilidad con el diseño anterior - ahora usa stat-card */
 .stat-number {
     display: block;
-    font-size: 32px;
+    font-size: 1.8rem;
     font-weight: 700;
-    color: var(--primary-color);
+    color: #2d3748;
     line-height: 1;
+    margin-bottom: 0.25rem;
 }
 
 .stat-label {
     display: block;
-    font-size: 14px;
+    font-size: 0.9rem;
     color: var(--text-light);
-    margin-top: 8px;
+    margin: 0;
 }
 
 .filters-section {
@@ -1865,24 +1883,32 @@ body {
     margin-bottom: 30px;
 }
 
+/* Alias para compatibilidad - Las stats-card ahora usan el diseño de stat-card */
 .stats-card {
     background: var(--white);
-    padding: 20px;
+    padding: 1.5rem;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
-    text-align: center;
-    border-left: 4px solid var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
 }
 
 .stats-card h3 {
-    font-size: 2rem;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
     color: #2d3748;
-    margin-bottom: 5px;
 }
 
 .stats-card p {
-    color: var(--text-light);
     font-size: 0.9rem;
+    color: var(--text-light);
     margin: 0;
 }
 
@@ -2090,16 +2116,7 @@ body {
     box-shadow: var(--shadow);
 }
 
-.stat-number {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 5px;
-}
-
-.stat-label {
-    font-size: 0.9rem;
-    opacity: 0.9;
-}
+/* Estilos movidos arriba para unificar */
 
 .security-controls {
     display: flex;
