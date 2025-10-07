@@ -1913,15 +1913,13 @@
 
     <!-- Modal Plantilla Email -->
     <div id="modal-plantilla-email" class="modal">
-        <div class="modal__content">
-            <div class="modal__header">
-                <h3 id="plantilla-modal-title">
-                    <i class="fas fa-file-alt"></i> Nueva Plantilla de Email
-                </h3>
-                <button class="modal__close" id="close-plantilla-modal">&times;</button>
-            </div>
+        <div class="modal__content modal__content--horizontal">
+            <span class="modal__close" id="close-plantilla-modal">&times;</span>
+            <h2 class="modal__title">
+                <i class="fas fa-file-alt"></i> <span id="plantilla-modal-title">Nueva Plantilla de Email</span>
+            </h2>
             <div class="modal__body">
-                <form id="plantilla-form" class="config-form">
+                <form id="plantilla-form" class="config-form-horizontal">
                     <div class="config-form-section">
                         <h4 class="form-section-title">
                             <i class="fas fa-cog"></i> Configuración de la Plantilla
@@ -1961,12 +1959,18 @@
                                    maxlength="150" placeholder="Ej: Bienvenido {{nombreAlumno}} - Curso {{nombreCurso}}">
                             <small class="form-text">Variables disponibles: {{nombreAlumno}}, {{nombreCurso}}, {{fechaCurso}}, {{horarioCurso}}, {{precioCurso}}, {{direccionSede}}</small>
                         </div>
+                    </div>
+                    
+                    <div class="config-form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-code"></i> Contenido HTML
+                        </h4>
                         
                         <div class="form-group-wide">
                             <label class="form-label-compact">
-                                <i class="fas fa-code"></i> Plantilla HTML
+                                <i class="fas fa-file-code"></i> Plantilla HTML
                             </label>
-                            <textarea id="plantilla-contenido-input" class="form-control-wide" rows="10" required
+                            <textarea id="plantilla-contenido-input" class="form-control-wide" rows="12" required
                                       placeholder="Ingrese el HTML de la plantilla. Puede usar las mismas variables del asunto."></textarea>
                             <small class="form-text">Use HTML válido. Las variables se reemplazarán automáticamente.</small>
                         </div>

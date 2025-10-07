@@ -1344,7 +1344,7 @@ class ConfiguracionManager {
     abrirModalPlantilla() {
         // Limpiar formulario
         document.getElementById('plantilla-form').reset();
-        document.getElementById('plantilla-modal-title').innerHTML = '<i class="fas fa-file-alt"></i> Nueva Plantilla de Email';
+        document.getElementById('plantilla-modal-title').textContent = 'Nueva Plantilla de Email';
         
         // Mostrar modal
         document.getElementById('modal-plantilla-email').style.display = 'flex';
@@ -1370,7 +1370,7 @@ class ConfiguracionManager {
         document.getElementById('plantilla-activa-input').checked = plantilla.activa;
 
         // Cambiar título del modal
-        document.getElementById('plantilla-modal-title').innerHTML = '<i class="fas fa-edit"></i> Editar Plantilla de Email';
+        document.getElementById('plantilla-modal-title').textContent = 'Editar Plantilla de Email';
         
         // Mostrar modal
         document.getElementById('modal-plantilla-email').style.display = 'flex';
