@@ -47,6 +47,9 @@ class App {
                 
                 this.showSection(sectionId);
                 this.updateActiveNavigation(sectionId);
+                
+                // Cerrar menú móvil automáticamente después de navegar
+                this.closeMobileMenu();
             });
         });
 
@@ -75,6 +78,14 @@ class App {
                 const navMenu = document.querySelector('.nav__menu');
                 navMenu.classList.toggle('nav__menu--active');
             });
+        }
+    }
+
+    closeMobileMenu() {
+        // Cerrar menú móvil si está abierto (solo afecta móvil)
+        const navMenu = document.querySelector('.nav__menu');
+        if (navMenu && navMenu.classList.contains('nav__menu--active')) {
+            navMenu.classList.remove('nav__menu--active');
         }
     }
 
