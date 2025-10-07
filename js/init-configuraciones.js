@@ -86,22 +86,16 @@ class ConfiguracionesInitializer {
             const envioSnap = await getDoc(envioRef);
             
             if (!envioSnap.exists()) {
+                const notificacionesUnificadas = {
+                    nuevaInscripcion: true,
+                    cancelacionCurso: true,
+                    pagoRecibido: true,
+                    confirmacionInscripcion: true
+                };
+
                 const envioData = {
-                    notificacionesAdmin: {
-                        nuevaInscripcion: true,
-                        cancelacionCurso: true,
-                        pagoRecibido: true,
-                        recordatorioCurso: false,
-                        nuevoUsuario: true
-                    },
-                    notificacionesAlumno: {
-                        inscripcion: true,
-                        confirmacionInscripcion: true,
-                        recordatorioCurso: true,
-                        confirmacionPago: true,
-                        cancelacionAdmin: true,
-                        nuevaReceta: false
-                    },
+                    notificacionesAdmin: notificacionesUnificadas,
+                    notificacionesAlumno: notificacionesUnificadas,
                     configuracionGeneral: {
                         emailRemitente: 'noreply@clubcolmena.com.ar',
                         nombreRemitente: 'Club de Cocina Colmena',

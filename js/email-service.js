@@ -138,7 +138,7 @@ class EmailService {
     /**
      * Enviar email usando Apps Script
      */
-    async sendEmail(tipo, datos) {
+    async sendEmail(tipo, datos, emailDestino = null) {
         try {
             // Verificar inicialización
             if (!this.initialized) {
@@ -167,7 +167,7 @@ class EmailService {
                 tipo: 'email_personalizado', // Tipo fijo para Apps Script
                 asunto: asuntoFinal,
                 contenido: contenidoFinal,
-                destinatario: datos.alumno?.email || datos.usuarioEmail || datos.destinatario,
+                destinatario: emailDestino || datos.alumno?.email || datos.usuarioEmail || datos.destinatario,
                 timestamp: new Date().toISOString()
             };
             
@@ -216,18 +216,14 @@ class EmailService {
 
 
     /**
-     * Email de inscripción al alumno (inmediato)
+     * Email de nueva inscripción (admin y alumno)
      */
     async enviarEmailInscripcion(inscripcion, curso, sede = null) {
-        if (!this.isNotificationEnabled('inscripcion', 'alumno')) {
-            console.log('📧 Email de inscripción deshabilitado');
-            return { success: false, reason: 'Notificación deshabilitada' };
-        }
-
         const datos = {
             alumno: {
                 nombre: inscripcion.usuarioNombre,
-                email: inscripcion.usuarioEmail
+                email: inscripcion.usuarioEmail,
+                telefono: inscripcion.telefono || 'No proporcionado'
             },
             curso: {
                 nombre: curso.nombre,
@@ -235,52 +231,96 @@ class EmailService {
                 horario: curso.horario || 'Por confirmar',
                 precio: curso.precio
             },
-            sede: sede
+            sede: sede,
+            estado: inscripcion.estado,
+            metodoPago: inscripcion.metodoPago || 'No especificado'
         };
 
-        return await this.sendEmail('inscripcion', datos);
+        const results = [];
+
+        // Enviar al alumno si está habilitado
+        if (this.isNotificationEnabled('nuevaInscripcion', 'alumno')) {
+            console.log('📧 Enviando nueva inscripción al alumno...');
+            const alumnoResult = await this.sendEmail('nuevaInscripcion', datos, inscripcion.usuarioEmail);
+            results.push({ tipo: 'alumno', ...alumnoResult });
+        } else {
+            console.log('📧 Email de nueva inscripción al alumno deshabilitado');
+            results.push({ tipo: 'alumno', success: false, reason: 'Notificación deshabilitada' });
+        }
+
+        // Enviar al admin si está habilitado
+        if (this.isNotificationEnabled('nuevaInscripcion', 'admin')) {
+            console.log('📧 Enviando nueva inscripción al admin...');
+            const adminResult = await this.sendEmail('nuevaInscripcion', datos, 'admin@colmenacocina.com');
+            results.push({ tipo: 'admin', ...adminResult });
+        } else {
+            console.log('📧 Email de nueva inscripción al admin deshabilitado');
+            results.push({ tipo: 'admin', success: false, reason: 'Notificación deshabilitada' });
+        }
+
+        return {
+            success: results.some(r => r.success),
+            results: results
+        };
     }
 
     /**
-     * Confirmación de inscripción al alumno
+     * Confirmación de inscripción (admin y alumno)
      */
     async enviarConfirmacionInscripcion(inscripcion, curso, sede = null) {
-        if (!this.isNotificationEnabled('confirmacionInscripcion', 'alumno')) {
-            console.log('📧 Confirmación de inscripción deshabilitada');
-            return { success: false, reason: 'Notificación deshabilitada' };
-        }
-
         const datos = {
             alumno: {
                 nombre: inscripcion.usuarioNombre,
-                email: inscripcion.usuarioEmail
+                email: inscripcion.usuarioEmail,
+                telefono: inscripcion.telefono || 'No proporcionado'
             },
             curso: {
                 nombre: curso.nombre,
                 fecha: curso.fechaHora,
                 horario: curso.horario || 'Por confirmar',
-                precio: inscripcion.costo,
-                instructor: curso.instructor || 'Por confirmar'
+                precio: curso.precio
             },
-            sede: sede
+            sede: sede,
+            estado: inscripcion.estado
         };
 
-        return await this.sendEmail('confirmacion', datos);
+        const results = [];
+
+        // Enviar al alumno si está habilitado
+        if (this.isNotificationEnabled('confirmacionInscripcion', 'alumno')) {
+            console.log('📧 Enviando confirmación de inscripción al alumno...');
+            const alumnoResult = await this.sendEmail('confirmacionInscripcion', datos, inscripcion.usuarioEmail);
+            results.push({ tipo: 'alumno', ...alumnoResult });
+        } else {
+            console.log('📧 Confirmación de inscripción al alumno deshabilitada');
+            results.push({ tipo: 'alumno', success: false, reason: 'Notificación deshabilitada' });
+        }
+
+        // Enviar al admin si está habilitado
+        if (this.isNotificationEnabled('confirmacionInscripcion', 'admin')) {
+            console.log('📧 Enviando confirmación de inscripción al admin...');
+            const adminResult = await this.sendEmail('confirmacionInscripcion', datos, 'admin@colmenacocina.com');
+            results.push({ tipo: 'admin', ...adminResult });
+        } else {
+            console.log('📧 Confirmación de inscripción al admin deshabilitada');
+            results.push({ tipo: 'admin', success: false, reason: 'Notificación deshabilitada' });
+        }
+
+        return {
+            success: results.some(r => r.success),
+            results: results
+        };
     }
 
     /**
-     * Notificar pago recibido al admin
+     * Notificar pago recibido (admin y alumno)
      */
     async notificarPagoRecibido(inscripcion, curso) {
-        if (!this.isNotificationEnabled('pagoRecibido', 'admin')) {
-            console.log('📧 Notificación de pago recibido deshabilitada');
-            return { success: false, reason: 'Notificación deshabilitada' };
-        }
-
         const datos = {
             alumno: {
                 nombre: inscripcion.usuarioNombre,
-                email: inscripcion.usuarioEmail
+                email: inscripcion.usuarioEmail,
+                telefono: inscripcion.telefono || 'No proporcionado'
             },
             curso: {
                 nombre: curso.nombre,
@@ -290,12 +330,37 @@ class EmailService {
             pago: {
                 estado: 'pagado',
                 metodo: inscripcion.metodoPago,
-                fecha: new Date(),
+                fecha: new Date().toLocaleDateString('es-ES'),
                 monto: inscripcion.costo
             }
         };
 
-        return await this.sendEmail('nueva_inscripcion', datos);
+        const results = [];
+
+        // Enviar al alumno si está habilitado
+        if (this.isNotificationEnabled('pagoRecibido', 'alumno')) {
+            console.log('📧 Enviando notificación de pago al alumno...');
+            const alumnoResult = await this.sendEmail('pagoRecibido', datos, inscripcion.usuarioEmail);
+            results.push({ tipo: 'alumno', ...alumnoResult });
+        } else {
+            console.log('📧 Notificación de pago al alumno deshabilitada');
+            results.push({ tipo: 'alumno', success: false, reason: 'Notificación deshabilitada' });
+        }
+
+        // Enviar al admin si está habilitado
+        if (this.isNotificationEnabled('pagoRecibido', 'admin')) {
+            console.log('📧 Enviando notificación de pago al admin...');
+            const adminResult = await this.sendEmail('pagoRecibido', datos, 'admin@colmenacocina.com');
+            results.push({ tipo: 'admin', ...adminResult });
+        } else {
+            console.log('📧 Notificación de pago al admin deshabilitada');
+            results.push({ tipo: 'admin', success: false, reason: 'Notificación deshabilitada' });
+        }
+
+        return {
+            success: results.some(r => r.success),
+            results: results
+        };
     }
 
     /**
@@ -328,29 +393,57 @@ class EmailService {
     }
 
     /**
-     * Notificar cancelación por admin al alumno
+     * Notificar cancelación de curso (admin y alumno)
      */
-    async enviarCancelacionAdmin(inscripcion, curso, motivo = null) {
-        if (!this.isNotificationEnabled('cancelacionAdmin', 'alumno')) {
-            console.log('📧 Notificación de cancelación deshabilitada');
-            return { success: false, reason: 'Notificación deshabilitada' };
-        }
-
+    async notificarCancelacionCurso(inscripcion, curso, motivo = null, canceladoPor = 'admin') {
         const datos = {
             alumno: {
                 nombre: inscripcion.usuarioNombre,
-                email: inscripcion.usuarioEmail
+                email: inscripcion.usuarioEmail,
+                telefono: inscripcion.telefono || 'No proporcionado'
             },
             curso: {
                 nombre: curso.nombre,
-                fecha: curso.fechaHora
+                fecha: curso.fechaHora,
+                horario: curso.horario || 'Por confirmar',
+                precio: curso.precio
             },
             cancelacion: {
-                motivo: motivo || 'Cancelación administrativa'
+                motivo: motivo || 'Cancelación de curso',
+                canceladoPor: canceladoPor,
+                fecha: new Date().toLocaleDateString('es-ES')
             }
         };
 
-        return await this.sendEmail('cancelacion', datos);
+        const results = [];
+
+        // Enviar al alumno si está habilitado
+        if (this.isNotificationEnabled('cancelacionCurso', 'alumno')) {
+            console.log('📧 Enviando cancelación de curso al alumno...');
+            const alumnoResult = await this.sendEmail('cancelacionCurso', datos, inscripcion.usuarioEmail);
+            results.push({ tipo: 'alumno', ...alumnoResult });
+        } else {
+            console.log('📧 Cancelación de curso al alumno deshabilitada');
+            results.push({ tipo: 'alumno', success: false, reason: 'Notificación deshabilitada' });
+        }
+
+        // Enviar al admin si está habilitado (solo si el alumno canceló)
+        if (canceladoPor === 'alumno' && this.isNotificationEnabled('cancelacionCurso', 'admin')) {
+            console.log('📧 Enviando cancelación de curso al admin...');
+            const adminResult = await this.sendEmail('cancelacionCurso', datos, 'admin@colmenacocina.com');
+            results.push({ tipo: 'admin', ...adminResult });
+        } else if (canceladoPor === 'admin') {
+            console.log('📧 Cancelación iniciada por admin, no se notifica al admin');
+            results.push({ tipo: 'admin', success: false, reason: 'Cancelación iniciada por admin' });
+        } else {
+            console.log('📧 Cancelación de curso al admin deshabilitada');
+            results.push({ tipo: 'admin', success: false, reason: 'Notificación deshabilitada' });
+        }
+
+        return {
+            success: results.some(r => r.success),
+            results: results
+        };
     }
 
     /**

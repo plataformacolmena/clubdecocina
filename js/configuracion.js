@@ -470,14 +470,9 @@ class ConfiguracionManager {
     getNotificationLabel(key) {
         const labels = {
             nuevaInscripcion: 'Nueva Inscripción',
-            cancelacionCurso: 'Cancelación de Curso',
+            cancelacionCurso: 'Cancelación de Curso', 
             pagoRecibido: 'Pago Recibido',
-            inscripcion: 'Inscripción',
-            confirmacionInscripcion: 'Confirmación de Inscripción',
-            recordatorioCurso: 'Recordatorio de Curso',
-            confirmacionPago: 'Confirmación de Pago',
-            cancelacionAdmin: 'Cancelación por Admin',
-            nuevoUsuario: 'Nuevo Usuario'
+            confirmacionInscripcion: 'Confirmación de Inscripción'
         };
         return labels[key] || key;
     }
@@ -1318,12 +1313,10 @@ class ConfiguracionManager {
      */
     getTipoBadgeColor(tipo) {
         const colors = {
-            'inscripcion': 'success',
-            'confirmacion': 'info', 
-            'cancelacion': 'danger',
-            'recordatorio': 'warning',
-            'pago': 'primary',
-            'receta': 'secondary'
+            'nuevaInscripcion': 'success',
+            'confirmacionInscripcion': 'info', 
+            'cancelacionCurso': 'danger',
+            'pagoRecibido': 'primary'
         };
         return colors[tipo] || 'secondary';
     }
@@ -1333,12 +1326,10 @@ class ConfiguracionManager {
      */
     getTipoDisplayName(tipo) {
         const names = {
-            'inscripcion': 'Inscripción',
-            'confirmacion': 'Confirmación',
-            'cancelacion': 'Cancelación', 
-            'recordatorio': 'Recordatorio',
-            'pago': 'Conf. Pago',
-            'receta': 'Receta'
+            'nuevaInscripcion': 'Nueva Inscripción',
+            'confirmacionInscripcion': 'Confirmación Inscripción',
+            'cancelacionCurso': 'Cancelación Curso', 
+            'pagoRecibido': 'Pago Recibido'
         };
         return names[tipo] || tipo;
     }
