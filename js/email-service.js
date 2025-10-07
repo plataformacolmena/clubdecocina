@@ -303,7 +303,7 @@ class EmailService {
             sede: sede
         };
 
-        return await this.sendEmail('confirmacion_inscripcion', datos);
+        return await this.sendEmail('confirmacion', datos);
     }
 
     /**
@@ -362,7 +362,7 @@ class EmailService {
             }
         };
 
-        return await this.sendEmail('confirmacion_pago', datos);
+        return await this.sendEmail('pago', datos);
     }
 
     /**
@@ -388,7 +388,7 @@ class EmailService {
             }
         };
 
-        return await this.sendEmail('cancelacion_curso', datos);
+        return await this.sendEmail('cancelacion', datos);
     }
 
     /**
@@ -413,7 +413,7 @@ class EmailService {
             sede: sede
         };
 
-        return await this.sendEmail('recordatorio_curso', datos);
+        return await this.sendEmail('recordatorio', datos);
     }
 
     /**
