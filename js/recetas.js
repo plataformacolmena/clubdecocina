@@ -38,24 +38,81 @@ class RecetasManager {
         });
     }
 
+    // Método público para recargar recetas (útil cuando cambia estado de inscripción)
+    async reloadRecetas() {
+        await this.loadRecetas();
+    }
+
+    async getUserConfirmedCourses() {
+        const currentUser = window.authManager.getCurrentUser();
+        if (!currentUser) {
+            return []; // Usuario no logueado - sin cursos confirmados
+        }
+
+        try {
+            const q = query(
+                collection(db, 'inscripciones'),
+                where('usuarioId', '==', currentUser.uid),
+                where('estado', '==', 'confirmado')
+            );
+            
+            const querySnapshot = await getDocs(q);
+            const cursosConfirmados = [];
+            
+            querySnapshot.forEach((doc) => {
+                const inscripcion = doc.data();
+                if (inscripcion.cursoNombre) {
+                    cursosConfirmados.push(inscripcion.cursoNombre);
+                }
+            });
+            
+            console.log(`📚 Cursos confirmados para usuario:`, cursosConfirmados);
+            return cursosConfirmados;
+            
+        } catch (error) {
+            console.error('Error obteniendo cursos confirmados:', error);
+            return [];
+        }
+    }
+
     async loadRecetas() {
         try {
             window.authManager.showLoading();
             
+            // 1. Cargar todas las recetas
             const q = query(
                 collection(db, 'recetas'),
                 orderBy('fechaCreacion', 'desc')
             );
             
             const querySnapshot = await getDocs(q);
-            this.recetas = [];
+            const todasLasRecetas = [];
             
             querySnapshot.forEach((doc) => {
-                this.recetas.push({
+                todasLasRecetas.push({
                     id: doc.id,
                     ...doc.data()
                 });
             });
+            
+            // 2. Obtener cursos confirmados del usuario actual
+            const cursosConfirmados = await this.getUserConfirmedCourses();
+            
+            // 3. Filtrar recetas según acceso del usuario
+            this.recetas = todasLasRecetas.filter(receta => {
+                // Recetas sin curso específico: visibles para todos
+                if (!receta.cursoNombre || 
+                    receta.cursoNombre === '' || 
+                    receta.cursoNombre === 'Sin curso específico' ||
+                    receta.cursoNombre === 'Curso General') {
+                    return true;
+                }
+                
+                // Recetas de curso específico: solo para usuarios confirmados en ese curso
+                return cursosConfirmados.includes(receta.cursoNombre);
+            });
+            
+            console.log(`🍳 Recetas cargadas: ${this.recetas.length} de ${todasLasRecetas.length} total`);
             
             await this.loadComentarios();
             this.renderRecetas();
