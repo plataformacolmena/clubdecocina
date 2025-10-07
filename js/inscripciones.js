@@ -269,7 +269,19 @@ class InscripcionesManager {
         
         const file = fileInput.files[0];
         if (!file) {
-            window.authManager.showMessage('Selecciona un archivo', 'error');
+            window.authManager.showMessage('Selecciona un archivo para subir como comprobante', 'error');
+            return;
+        }
+
+        // Validación previa para feedback inmediato
+        if (file.size > 1024 * 1024) {
+            window.authManager.showMessage('Archivo muy grande: máximo 1MB permitido. Reduzca el tamaño de la imagen o conviértala a JPG con menor calidad.', 'error');
+            return;
+        }
+
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+        if (!allowedTypes.includes(file.type)) {
+            window.authManager.showMessage('Formato no válido: solo se permiten imágenes JPG, PNG, GIF, WebP o archivos PDF.', 'error');
             return;
         }
 
@@ -323,7 +335,25 @@ class InscripcionesManager {
 
         } catch (error) {
             console.error('Error uploading comprobante:', error);
-            window.authManager.showMessage('Error al subir el comprobante', 'error');
+            
+            // Interpretar errores específicos
+            let mensajeError = 'Error al subir el comprobante';
+            
+            if (error.message.includes('ARCHIVO_MUY_GRANDE|')) {
+                mensajeError = error.message.split('|')[1];
+            } else if (error.message.includes('FORMATO_NO_VALIDO|')) {
+                mensajeError = error.message.split('|')[1];
+            } else if (error.message.includes('ERROR_PROCESAMIENTO|')) {
+                mensajeError = error.message.split('|')[1];
+            } else if (error.message.includes('ERROR_LECTURA|')) {
+                mensajeError = error.message.split('|')[1];
+            } else if (error.message.includes('muy grande')) {
+                mensajeError = 'Archivo muy grande: máximo 1MB permitido. Reduzca el tamaño de la imagen.';
+            } else if (error.message.includes('not allowed') || error.message.includes('no permitido')) {
+                mensajeError = 'Formato no válido: solo se permiten imágenes JPG, PNG, GIF, WebP o archivos PDF.';
+            }
+            
+            window.authManager.showMessage(mensajeError, 'error');
         } finally {
             window.authManager.hideLoading();
         }
@@ -333,15 +363,15 @@ class InscripcionesManager {
         // Sistema principal Base64: almacenar directamente en Firestore
         // Compatible con Firebase Spark - Sin necesidad de Storage o Cloud Functions
         
-        // Validaciones mejoradas
+        // Validaciones mejoradas con mensajes específicos
         if (file.size > 1024 * 1024) { // 1MB límite de Firestore
-            throw new Error('El archivo es muy grande. Máximo 1MB permitido (requerimiento de Firestore).');
+            throw new Error('ARCHIVO_MUY_GRANDE|Archivo muy grande: máximo 1MB permitido. Reduzca el tamaño de la imagen o conviértala a JPG con menor calidad.');
         }
 
         // Validar tipo de archivo
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
         if (!allowedTypes.includes(file.type)) {
-            throw new Error('Tipo de archivo no permitido. Use JPG, PNG, GIF, WebP o PDF.');
+            throw new Error('FORMATO_NO_VALIDO|Formato no válido: solo se permiten imágenes JPG, PNG, GIF, WebP o archivos PDF.');
         }
 
         console.log(`📤 Convirtiendo archivo ${file.name} (${(file.size / 1024).toFixed(1)}KB) a Base64...`);
@@ -372,13 +402,13 @@ class InscripcionesManager {
                     });
                 } catch (error) {
                     console.error('❌ Error procesando archivo:', error);
-                    reject(new Error('Error al procesar el archivo: ' + error.message));
+                    reject(new Error('ERROR_PROCESAMIENTO|Error al procesar el archivo: verifique que no esté corrupto y vuelva a intentarlo.'));
                 }
             };
             
             reader.onerror = function(error) {
                 console.error('❌ Error leyendo archivo:', error);
-                reject(new Error('Error al leer el archivo'));
+                reject(new Error('ERROR_LECTURA|Error al leer el archivo: intente con otro archivo o verifique que no esté dañado.'));
             };
             
             reader.readAsDataURL(file);
