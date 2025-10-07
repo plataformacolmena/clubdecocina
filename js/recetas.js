@@ -119,36 +119,22 @@ class RecetasManager {
                         <span class="curso-tag">${receta.cursoNombre || 'Curso General'}</span>
                     </div>
                 </div>
-                ${receta.imagenUrl ? `
-                    <div class="receta-image">
-                        <img src="${receta.imagenUrl}" alt="${receta.nombre}" loading="lazy">
-                    </div>
-                ` : ''}
                 <div class="card__content">
-                    ${receta.descripcion ? `
-                        <p class="receta-description">${receta.descripcion}</p>
-                    ` : ''}
-                    
-                    <div class="receta-info">
-                        <div class="info-item">
-                            <i class="fas fa-clock"></i>
-                            <span>${receta.tiempoPreparacion || 'N/A'}</span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-users"></i>
-                            <span>${receta.porciones || 'N/A'} porciones</span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-signal"></i>
-                            <span>${receta.dificultad || 'Media'}</span>
-                        </div>
+                    <div class="receta-pdf-section">
+                        ${receta.pdfUrl ? `
+                            <a href="${receta.pdfUrl}" download="${receta.nombre}.pdf" class="btn btn--primary pdf-download-btn">
+                                <i class="fas fa-file-pdf"></i>
+                                Descargar Receta PDF
+                            </a>
+                        ` : `
+                            <p class="no-pdf-message">
+                                <i class="fas fa-info-circle"></i>
+                                PDF no disponible
+                            </p>
+                        `}
                     </div>
                 </div>
                 <div class="card__actions">
-                    <button class="btn btn--outline ver-receta-btn" data-receta-id="${receta.id}">
-                        <i class="fas fa-eye"></i>
-                        Ver Receta
-                    </button>
                     <div class="receta-interactions">
                         <button class="btn ${userLiked ? 'btn--primary' : 'btn--outline'} like-btn" 
                                 data-receta-id="${receta.id}">
@@ -166,14 +152,6 @@ class RecetasManager {
     }
 
     setupRecetaEventListeners() {
-        // Botones de ver receta
-        document.querySelectorAll('.ver-receta-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const recetaId = e.target.dataset.recetaId;
-                this.showRecetaModal(recetaId);
-            });
-        });
-
         // Botones de like
         document.querySelectorAll('.like-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -198,9 +176,9 @@ class RecetasManager {
         const modal = document.createElement('div');
         modal.className = 'modal active';
         modal.innerHTML = `
-            <div class="modal__content modal__content--large">
+            <div class="modal__content">
                 <span class="modal__close">&times;</span>
-                <div class="receta-full">
+                <div class="receta-simple">
                     <div class="receta-header">
                         <h2 class="receta-title">${receta.nombre}</h2>
                         <div class="receta-meta">
@@ -208,61 +186,22 @@ class RecetasManager {
                         </div>
                     </div>
                     
-                    ${receta.imagenUrl ? `
-                        <div class="receta-image-full">
-                            <img src="${receta.imagenUrl}" alt="${receta.nombre}">
-                        </div>
-                    ` : ''}
-                    
-                    <div class="receta-content">
-                        <div class="receta-info-full">
-                            <div class="info-item">
-                                <i class="fas fa-clock"></i>
-                                <span><strong>Tiempo:</strong> ${receta.tiempoPreparacion || 'N/A'}</span>
+                    <div class="receta-pdf-section">
+                        ${receta.pdfUrl ? `
+                            <div class="pdf-download-area">
+                                <i class="fas fa-file-pdf pdf-icon"></i>
+                                <p>Descarga la receta completa en formato PDF</p>
+                                <a href="${receta.pdfUrl}" download="${receta.nombre}.pdf" class="btn btn--primary">
+                                    <i class="fas fa-download"></i>
+                                    Descargar ${receta.nombre}.pdf
+                                </a>
                             </div>
-                            <div class="info-item">
-                                <i class="fas fa-users"></i>
-                                <span><strong>Porciones:</strong> ${receta.porciones || 'N/A'}</span>
+                        ` : `
+                            <div class="no-pdf-area">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p>PDF de receta no disponible</p>
                             </div>
-                            <div class="info-item">
-                                <i class="fas fa-signal"></i>
-                                <span><strong>Dificultad:</strong> ${receta.dificultad || 'Media'}</span>
-                            </div>
-                        </div>
-                        
-                        ${receta.descripcion ? `
-                            <div class="receta-section">
-                                <h3>Descripción</h3>
-                                <p>${receta.descripcion}</p>
-                            </div>
-                        ` : ''}
-                        
-                        ${receta.ingredientes ? `
-                            <div class="receta-section">
-                                <h3>Ingredientes</h3>
-                                <div class="ingredientes-list">
-                                    ${receta.ingredientes.split('\n').map(ing => `<p>• ${ing}</p>`).join('')}
-                                </div>
-                            </div>
-                        ` : ''}
-                        
-                        ${receta.instrucciones ? `
-                            <div class="receta-section">
-                                <h3>Instrucciones</h3>
-                                <div class="instrucciones-list">
-                                    ${receta.instrucciones.split('\n').map((inst, index) => 
-                                        `<p><strong>${index + 1}.</strong> ${inst}</p>`
-                                    ).join('')}
-                                </div>
-                            </div>
-                        ` : ''}
-                        
-                        ${receta.tips ? `
-                            <div class="receta-section">
-                                <h3>Tips</h3>
-                                <p class="tips">${receta.tips}</p>
-                            </div>
-                        ` : ''}
+                        `}
                     </div>
                 </div>
             </div>

@@ -1965,9 +1965,12 @@ class AdminManager {
                         </button>
                     </div>
                 </div>
-                ${receta.imagenUrl ? `
-                    <div class="receta-image-small">
-                        <img src="${receta.imagenUrl}" alt="${receta.nombre}">
+                ${receta.pdfUrl ? `
+                    <div class="receta-pdf-preview">
+                        <a href="${receta.pdfUrl}" download="${receta.nombre}.pdf" class="btn btn--outline btn--small">
+                            <i class="fas fa-file-pdf"></i>
+                            Descargar PDF
+                        </a>
                     </div>
                 ` : ''}
                 <div class="card__content">
@@ -1977,12 +1980,12 @@ class AdminManager {
                             <span>${receta.cursoNombre || 'Sin curso'}</span>
                         </div>
                         <div class="card__info-item">
-                            <i class="fas fa-clock"></i>
-                            <span>${receta.tiempoPreparacion || 'N/A'}</span>
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>${receta.fechaCreacion ? new Date(receta.fechaCreacion.seconds * 1000).toLocaleDateString() : 'N/A'}</span>
                         </div>
                         <div class="card__info-item">
-                            <i class="fas fa-users"></i>
-                            <span>${receta.porciones || 'N/A'} porciones</span>
+                            <i class="fas fa-heart"></i>
+                            <span>${receta.likes ? receta.likes.length : 0} likes</span>
                         </div>
                     </div>
                 </div>
