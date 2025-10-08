@@ -85,17 +85,28 @@ class EmailService {
             const adminsRef = collection(db, APP_CONFIG.adminSystem.collection);
             const q = query(
                 adminsRef,
-                where('activo', '==', true),
-                orderBy('fechaCreacion', 'asc'), // El más antiguo es el principal
-                limit(1)
+                where('activo', '==', true)
             );
             
             const snapshot = await getDocs(q);
             
             if (!snapshot.empty) {
-                const adminData = snapshot.docs[0].data();
-                console.log(`📧 Admin principal encontrado: ${adminData.email}`);
-                return adminData.email;
+                // Obtener todos los admins activos y ordenar en JavaScript (sin índice)
+                const adminsActivos = snapshot.docs.map(doc => ({
+                    email: doc.data().email,
+                    fechaCreacion: doc.data().fechaCreacion || doc.data().created || new Date(0)
+                }));
+                
+                // Ordenar por fecha de creación (más antiguo primero)
+                adminsActivos.sort((a, b) => {
+                    const fechaA = a.fechaCreacion?.toDate ? a.fechaCreacion.toDate() : new Date(a.fechaCreacion);
+                    const fechaB = b.fechaCreacion?.toDate ? b.fechaCreacion.toDate() : new Date(b.fechaCreacion);
+                    return fechaA - fechaB;
+                });
+                
+                const adminPrincipal = adminsActivos[0];
+                console.log(`📧 Admin principal encontrado: ${adminPrincipal.email}`);
+                return adminPrincipal.email;
             }
             
             console.warn('⚠️ No se encontró ningún admin activo');
