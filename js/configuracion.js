@@ -293,15 +293,11 @@ class ConfiguracionManager {
             } else {
                 console.log('⚠️ No existe configuración de envío, creando por defecto...');
                 this.envioConfig = {
-                    notificacionesAdmin: {
+                    eventosNotificacion: {
                         nuevaInscripcion: true,
                         cancelacionCurso: true,
-                        pagoRecibido: true
-                    },
-                    notificacionesAlumno: {
-                        confirmacionInscripcion: true,
-                        recordatorioCurso: true,
-                        confirmacionPago: true
+                        pagoRecibido: true,
+                        confirmacionInscripcion: true
                     }
                 };
                 await this.saveEnvioConfiguration(this.envioConfig);

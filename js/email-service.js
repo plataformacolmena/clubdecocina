@@ -375,34 +375,7 @@ class EmailService {
         return await this.enviarEmailUnificado('pagoRecibido', datos, inscripcion.usuarioEmail);
     }
 
-    /**
-     * Confirmación de pago al alumno
-     */
-    async enviarConfirmacionPago(inscripcion, curso) {
-        if (!this.isNotificationEnabled('confirmacionPago', 'alumno')) {
-            console.log('📧 Confirmación de pago deshabilitada');
-            return { success: false, reason: 'Notificación deshabilitada' };
-        }
 
-        const datos = {
-            alumno: {
-                nombre: inscripcion.usuarioNombre,
-                email: inscripcion.usuarioEmail
-            },
-            curso: {
-                nombre: curso.nombre,
-                fecha: curso.fechaHora,
-                precio: inscripcion.costo
-            },
-            pago: {
-                monto: inscripcion.costo,
-                metodo: inscripcion.metodoPago,
-                fecha: new Date()
-            }
-        };
-
-        return await this.sendEmail('pago', datos);
-    }
 
     /**
      * Notificar cancelación de curso (admin y alumno)
@@ -432,30 +405,7 @@ class EmailService {
         return await this.enviarEmailUnificado('cancelacionCurso', datos, inscripcion.usuarioEmail);
     }
 
-    /**
-     * Enviar recordatorio de curso
-     */
-    async enviarRecordatorio(inscripcion, curso, sede = null) {
-        if (!this.isNotificationEnabled('recordatorioCurso', 'alumno')) {
-            console.log('📧 Recordatorio de curso deshabilitado');
-            return { success: false, reason: 'Notificación deshabilitada' };
-        }
 
-        const datos = {
-            alumno: {
-                nombre: inscripcion.usuarioNombre,
-                email: inscripcion.usuarioEmail
-            },
-            curso: {
-                nombre: curso.nombre,
-                fecha: curso.fechaHora,
-                horario: curso.horario || 'Por confirmar'
-            },
-            sede: sede
-        };
-
-        return await this.sendEmail('recordatorio', datos);
-    }
 
     /**
      * FUNCIONES DE UTILIDAD
@@ -518,7 +468,7 @@ class EmailService {
                     return await this.notificarPagoRecibido(inscripcion, curso);
 
                 case 'cancelar':
-                    return await this.enviarCancelacionAdmin(inscripcion, curso, motivo);
+                    return await this.notificarCancelacionCurso(inscripcion, curso, motivo);
 
                 case 'nueva':
                     // Usar una sola plantilla 'inscripcion' para todos
