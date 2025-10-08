@@ -432,8 +432,7 @@ class ConfiguracionManager {
     }
 
     renderEnvioDisplay() {
-        const notifAdminList = document.getElementById('notif-admin-list');
-        const notifAlumnoList = document.getElementById('notif-alumno-list');
+        const notifList = document.getElementById('notif-admin-list');
 
         if (this.envioConfig?.eventosNotificacion) {
             const eventosHtml = Object.entries(this.envioConfig.eventosNotificacion)
@@ -444,12 +443,13 @@ class ConfiguracionManager {
                     </div>
                 `).join('');
 
-            // Mostrar la misma lista en ambos contenedores
-            if (notifAdminList) {
-                notifAdminList.innerHTML = eventosHtml;
+            if (notifList) {
+                notifList.innerHTML = eventosHtml;
             }
-            if (notifAlumnoList) {
-                notifAlumnoList.innerHTML = eventosHtml;
+        } else {
+            // Mostrar estado inicial
+            if (notifList) {
+                notifList.innerHTML = '<div class="config-status-item disabled"><i class="fas fa-times"></i> Sin configurar</div>';
             }
         }
     }
@@ -805,20 +805,12 @@ class ConfiguracionManager {
         if (!modal) return;
 
         if (this.envioConfig) {
-            // Rellenar checkboxes de notificaciones admin
-            const adminNotifs = this.envioConfig.notificacionesAdmin || {};
-            document.getElementById('notif-admin-nueva-inscripcion').checked = adminNotifs.nuevaInscripcion || false;
-            document.getElementById('notif-admin-cancelacion-curso').checked = adminNotifs.cancelacionCurso || false;
-            document.getElementById('notif-admin-pago-recibido').checked = adminNotifs.pagoRecibido || false;
-            document.getElementById('notif-admin-nuevo-usuario').checked = adminNotifs.nuevoUsuario || false;
-
-            // Rellenar checkboxes de notificaciones alumno
-            const alumnoNotifs = this.envioConfig.notificacionesAlumno || {};
-            document.getElementById('notif-alumno-inscripcion').checked = alumnoNotifs.inscripcion || false;
-            document.getElementById('notif-alumno-confirmacion-inscripcion').checked = alumnoNotifs.confirmacionInscripcion || false;
-            document.getElementById('notif-alumno-recordatorio-curso').checked = alumnoNotifs.recordatorioCurso || false;
-            document.getElementById('notif-alumno-confirmacion-pago').checked = alumnoNotifs.confirmacionPago || false;
-            document.getElementById('notif-alumno-cancelacion-admin').checked = alumnoNotifs.cancelacionAdmin || false;
+            // Rellenar checkboxes de eventos unificados
+            const eventosNotifs = this.envioConfig.eventosNotificacion || {};
+            document.getElementById('evento-nueva-inscripcion').checked = eventosNotifs.nuevaInscripcion || false;
+            document.getElementById('evento-cancelacion-curso').checked = eventosNotifs.cancelacionCurso || false;
+            document.getElementById('evento-pago-recibido').checked = eventosNotifs.pagoRecibido || false;
+            document.getElementById('evento-confirmacion-inscripcion').checked = eventosNotifs.confirmacionInscripcion || false;
         }
 
         modal.classList.add('active');
@@ -835,18 +827,11 @@ class ConfiguracionManager {
             e.preventDefault();
             
             const nuevaConfigEnvio = {
-                notificacionesAdmin: {
-                    nuevaInscripcion: document.getElementById('notif-admin-nueva-inscripcion').checked,
-                    cancelacionCurso: document.getElementById('notif-admin-cancelacion-curso').checked,
-                    pagoRecibido: document.getElementById('notif-admin-pago-recibido').checked,
-                    nuevoUsuario: document.getElementById('notif-admin-nuevo-usuario').checked
-                },
-                notificacionesAlumno: {
-                    inscripcion: document.getElementById('notif-alumno-inscripcion').checked,
-                    confirmacionInscripcion: document.getElementById('notif-alumno-confirmacion-inscripcion').checked,
-                    recordatorioCurso: document.getElementById('notif-alumno-recordatorio-curso').checked,
-                    confirmacionPago: document.getElementById('notif-alumno-confirmacion-pago').checked,
-                    cancelacionAdmin: document.getElementById('notif-alumno-cancelacion-admin').checked
+                eventosNotificacion: {
+                    nuevaInscripcion: document.getElementById('evento-nueva-inscripcion').checked,
+                    cancelacionCurso: document.getElementById('evento-cancelacion-curso').checked,
+                    pagoRecibido: document.getElementById('evento-pago-recibido').checked,
+                    confirmacionInscripcion: document.getElementById('evento-confirmacion-inscripcion').checked
                 },
                 updated: new Date()
             };

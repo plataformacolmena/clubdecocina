@@ -1672,108 +1672,60 @@
         <div class="modal__content modal__content--horizontal">
             <span class="modal__close" id="envio-modal-close">&times;</span>
             <h2 class="modal__title">
-                <i class="fas fa-paper-plane"></i> Configuración de Envío de Emails
+                <i class="fas fa-paper-plane"></i> Configuración de Eventos de Notificación
             </h2>
             <div class="modal__body">
                 <p class="modal__description">
-                    Configura qué notificaciones automáticas se enviarán por email:
+                    Configura qué eventos enviarán notificaciones automáticas por email. Cuando está habilitado, tanto administradores como alumnos reciben el mismo email utilizando las plantillas correspondientes:
                 </p>
                 
                 <form id="envio-form" class="config-form-horizontal">
                     <div class="config-form-section">
                         <h4 class="form-section-title">
-                            <i class="fas fa-user-tie"></i> Notificaciones para Administradores
+                            <i class="fas fa-bell"></i> Eventos de Notificación Unificados
                         </h4>
                         
                         <div class="notification-checkboxes">
                             <label class="notification-checkbox">
-                                <input type="checkbox" id="notif-admin-nueva-inscripcion">
+                                <input type="checkbox" id="evento-nueva-inscripcion">
                                 <span class="checkmark"></span>
                                 <div class="notification-info">
                                     <strong>Nueva Inscripción</strong>
-                                    <small>Cuando un alumno se inscribe a un curso</small>
+                                    <small>Cuando un alumno se inscribe a un curso (admin y alumno reciben email)</small>
                                 </div>
                             </label>
                             
                             <label class="notification-checkbox">
-                                <input type="checkbox" id="notif-admin-cancelacion-curso">
+                                <input type="checkbox" id="evento-cancelacion-curso">
                                 <span class="checkmark"></span>
                                 <div class="notification-info">
                                     <strong>Cancelación de Curso</strong>
-                                    <small>Cuando un alumno cancela su inscripción</small>
+                                    <small>Cuando se cancela una inscripción (admin y alumno reciben email)</small>
                                 </div>
                             </label>
                             
                             <label class="notification-checkbox">
-                                <input type="checkbox" id="notif-admin-pago-recibido">
+                                <input type="checkbox" id="evento-pago-recibido">
                                 <span class="checkmark"></span>
                                 <div class="notification-info">
                                     <strong>Pago Recibido</strong>
-                                    <small>Cuando se sube un comprobante de pago</small>
+                                    <small>Cuando se sube un comprobante de pago (admin y alumno reciben email)</small>
                                 </div>
                             </label>
                             
                             <label class="notification-checkbox">
-                                <input type="checkbox" id="notif-admin-nuevo-usuario">
-                                <span class="checkmark"></span>
-                                <div class="notification-info">
-                                    <strong>Nuevo Usuario</strong>
-                                    <small>Cuando se registra un nuevo usuario</small>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="config-form-section">
-                        <h4 class="form-section-title">
-                            <i class="fas fa-users"></i> Notificaciones para Alumnos
-                        </h4>
-                        
-                        <div class="notification-checkboxes">
-                            <label class="notification-checkbox">
-                                <input type="checkbox" id="notif-alumno-inscripcion">
-                                <span class="checkmark"></span>
-                                <div class="notification-info">
-                                    <strong>Inscripción</strong>
-                                    <small>Email automático al inscribirse a un curso</small>
-                                </div>
-                            </label>
-                            
-                            <label class="notification-checkbox">
-                                <input type="checkbox" id="notif-alumno-confirmacion-inscripcion">
+                                <input type="checkbox" id="evento-confirmacion-inscripcion">
                                 <span class="checkmark"></span>
                                 <div class="notification-info">
                                     <strong>Confirmación de Inscripción</strong>
-                                    <small>Confirma la inscripción exitosa al curso</small>
+                                    <small>Cuando el admin confirma una inscripción (admin y alumno reciben email)</small>
                                 </div>
                             </label>
-                            
-                            <label class="notification-checkbox">
-                                <input type="checkbox" id="notif-alumno-recordatorio-curso">
-                                <span class="checkmark"></span>
-                                <div class="notification-info">
-                                    <strong>Recordatorio de Curso</strong>
-                                    <small>Recordatorio antes del día del curso</small>
-                                </div>
-                            </label>
-                            
-                            <label class="notification-checkbox">
-                                <input type="checkbox" id="notif-alumno-confirmacion-pago">
-                                <span class="checkmark"></span>
-                                <div class="notification-info">
-                                    <strong>Confirmación de Pago</strong>
-                                    <small>Cuando el pago es confirmado por admin</small>
-                                </div>
-                            </label>
-                            
-                            <label class="notification-checkbox">
-                                <input type="checkbox" id="notif-alumno-cancelacion-admin">
-                                <span class="checkmark"></span>
-                                <div class="notification-info">
-                                    <strong>Cancelación por Admin</strong>
-                                    <small>Cuando el admin cancela una inscripción</small>
-                                </div>
-                            </label>
+                        </div>
+                        
+                        <div class="alert alert--info" style="margin-top: 1rem;">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Importante:</strong> Para cada evento habilitado, se requiere una plantilla de email activa del tipo correspondiente. Si no existe plantilla, no se enviará el email.
                         </div>
                     </div>
                 </form>
