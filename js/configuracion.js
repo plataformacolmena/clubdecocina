@@ -435,24 +435,22 @@ class ConfiguracionManager {
         const notifAdminList = document.getElementById('notif-admin-list');
         const notifAlumnoList = document.getElementById('notif-alumno-list');
 
-        if (notifAdminList && this.envioConfig) {
-            notifAdminList.innerHTML = Object.entries(this.envioConfig.notificacionesAdmin)
+        if (this.envioConfig?.eventosNotificacion) {
+            const eventosHtml = Object.entries(this.envioConfig.eventosNotificacion)
                 .map(([key, value]) => `
                     <div class="config-status-item ${value ? 'enabled' : 'disabled'}">
                         <i class="fas fa-${value ? 'check' : 'times'}"></i>
                         ${this.getNotificationLabel(key)}
                     </div>
                 `).join('');
-        }
 
-        if (notifAlumnoList && this.envioConfig) {
-            notifAlumnoList.innerHTML = Object.entries(this.envioConfig.notificacionesAlumno)
-                .map(([key, value]) => `
-                    <div class="config-status-item ${value ? 'enabled' : 'disabled'}">
-                        <i class="fas fa-${value ? 'check' : 'times'}"></i>
-                        ${this.getNotificationLabel(key)}
-                    </div>
-                `).join('');
+            // Mostrar la misma lista en ambos contenedores
+            if (notifAdminList) {
+                notifAdminList.innerHTML = eventosHtml;
+            }
+            if (notifAlumnoList) {
+                notifAlumnoList.innerHTML = eventosHtml;
+            }
         }
     }
 

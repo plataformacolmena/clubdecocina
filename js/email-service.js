@@ -8,20 +8,23 @@
  */
 
 // Importar Firebase siguiendo el patrón establecido en el sistema
-import { db } from './firebase-config.js';
+import { db, APP_CONFIG } from './firebase-config.js';
 import {
     doc,
     getDoc,
     collection,
     getDocs,
     query,
-    where
+    where,
+    orderBy,
+    limit
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
 class EmailService {
     constructor() {
         this.scriptConfig = null;
         this.envioConfig = null;
+        this.adminEmail = null;
         this.initialized = false;
     }
 
@@ -56,9 +59,16 @@ class EmailService {
                 this.envioConfig = envioDoc.data();
             }
 
+            // Cargar email del admin principal
+            this.adminEmail = await this.getAdminPrincipalEmail();
+
             // Verificar que tenemos las configuraciones necesarias
             if (!this.scriptConfig?.url || !this.scriptConfig?.activo) {
                 throw new Error('Apps Script no configurado o desactivado');
+            }
+
+            if (!this.adminEmail) {
+                console.warn('⚠️ No se encontró email del admin principal');
             }
 
         } catch (error) {
@@ -68,16 +78,40 @@ class EmailService {
     }
 
     /**
-     * Verificar si un tipo de notificación está habilitado
+     * Obtener email del admin principal desde Firestore
      */
-    isNotificationEnabled(type, recipient = 'alumno') {
-        if (!this.envioConfig) return false;
-        
-        const notificaciones = recipient === 'admin' 
-            ? this.envioConfig.notificacionesAdmin 
-            : this.envioConfig.notificacionesAlumno;
+    async getAdminPrincipalEmail() {
+        try {
+            const adminsRef = collection(db, APP_CONFIG.adminSystem.collection);
+            const q = query(
+                adminsRef,
+                where('activo', '==', true),
+                orderBy('fechaCreacion', 'asc'), // El más antiguo es el principal
+                limit(1)
+            );
             
-        return notificaciones?.[type] === true;
+            const snapshot = await getDocs(q);
+            
+            if (!snapshot.empty) {
+                const adminData = snapshot.docs[0].data();
+                console.log(`📧 Admin principal encontrado: ${adminData.email}`);
+                return adminData.email;
+            }
+            
+            console.warn('⚠️ No se encontró ningún admin activo');
+            return null;
+        } catch (error) {
+            console.error('Error obteniendo admin principal:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Verificar si un tipo de evento está habilitado
+     */
+    isNotificationEnabled(type) {
+        if (!this.envioConfig) return false;
+        return this.envioConfig.eventosNotificacion?.[type] === true;
     }
 
     /**
@@ -213,7 +247,39 @@ class EmailService {
      * NOTIFICACIONES ESPECÍFICAS DEL SISTEMA
      */
 
+    /**
+     * Enviar email unificado (mismo email a admin y alumno)
+     */
+    async enviarEmailUnificado(tipoEvento, datos, emailAlumno) {
+        // Verificar si el evento está habilitado
+        if (!this.isNotificationEnabled(tipoEvento)) {
+            console.log(`📧 Evento ${tipoEvento} deshabilitado en configuración`);
+            return { success: false, reason: 'Evento deshabilitado' };
+        }
 
+        const results = [];
+
+        // Enviar al alumno
+        console.log(`📧 Enviando ${tipoEvento} al alumno: ${emailAlumno}`);
+        const alumnoResult = await this.sendEmail(tipoEvento, datos, emailAlumno);
+        results.push({ destinatario: 'alumno', email: emailAlumno, ...alumnoResult });
+
+        // Enviar al admin principal (si existe)
+        if (this.adminEmail) {
+            console.log(`📧 Enviando ${tipoEvento} al admin: ${this.adminEmail}`);
+            const adminResult = await this.sendEmail(tipoEvento, datos, this.adminEmail);
+            results.push({ destinatario: 'admin', email: this.adminEmail, ...adminResult });
+        } else {
+            console.warn('⚠️ No se pudo enviar al admin: email no configurado');
+            results.push({ destinatario: 'admin', email: null, success: false, reason: 'Admin email no configurado' });
+        }
+
+        return {
+            success: results.some(r => r.success),
+            tipoEvento: tipoEvento,
+            results: results
+        };
+    }
 
     /**
      * Email de nueva inscripción (admin y alumno)
@@ -236,32 +302,7 @@ class EmailService {
             metodoPago: inscripcion.metodoPago || 'No especificado'
         };
 
-        const results = [];
-
-        // Enviar al alumno si está habilitado
-        if (this.isNotificationEnabled('nuevaInscripcion', 'alumno')) {
-            console.log('📧 Enviando nueva inscripción al alumno...');
-            const alumnoResult = await this.sendEmail('nuevaInscripcion', datos, inscripcion.usuarioEmail);
-            results.push({ tipo: 'alumno', ...alumnoResult });
-        } else {
-            console.log('📧 Email de nueva inscripción al alumno deshabilitado');
-            results.push({ tipo: 'alumno', success: false, reason: 'Notificación deshabilitada' });
-        }
-
-        // Enviar al admin si está habilitado
-        if (this.isNotificationEnabled('nuevaInscripcion', 'admin')) {
-            console.log('📧 Enviando nueva inscripción al admin...');
-            const adminResult = await this.sendEmail('nuevaInscripcion', datos, 'admin@colmenacocina.com');
-            results.push({ tipo: 'admin', ...adminResult });
-        } else {
-            console.log('📧 Email de nueva inscripción al admin deshabilitado');
-            results.push({ tipo: 'admin', success: false, reason: 'Notificación deshabilitada' });
-        }
-
-        return {
-            success: results.some(r => r.success),
-            results: results
-        };
+        return await this.enviarEmailUnificado('nuevaInscripcion', datos, inscripcion.usuarioEmail);
     }
 
     /**
@@ -284,32 +325,7 @@ class EmailService {
             estado: inscripcion.estado
         };
 
-        const results = [];
-
-        // Enviar al alumno si está habilitado
-        if (this.isNotificationEnabled('confirmacionInscripcion', 'alumno')) {
-            console.log('📧 Enviando confirmación de inscripción al alumno...');
-            const alumnoResult = await this.sendEmail('confirmacionInscripcion', datos, inscripcion.usuarioEmail);
-            results.push({ tipo: 'alumno', ...alumnoResult });
-        } else {
-            console.log('📧 Confirmación de inscripción al alumno deshabilitada');
-            results.push({ tipo: 'alumno', success: false, reason: 'Notificación deshabilitada' });
-        }
-
-        // Enviar al admin si está habilitado
-        if (this.isNotificationEnabled('confirmacionInscripcion', 'admin')) {
-            console.log('📧 Enviando confirmación de inscripción al admin...');
-            const adminResult = await this.sendEmail('confirmacionInscripcion', datos, 'admin@colmenacocina.com');
-            results.push({ tipo: 'admin', ...adminResult });
-        } else {
-            console.log('📧 Confirmación de inscripción al admin deshabilitada');
-            results.push({ tipo: 'admin', success: false, reason: 'Notificación deshabilitada' });
-        }
-
-        return {
-            success: results.some(r => r.success),
-            results: results
-        };
+        return await this.enviarEmailUnificado('confirmacionInscripcion', datos, inscripcion.usuarioEmail);
     }
 
     /**
@@ -335,32 +351,7 @@ class EmailService {
             }
         };
 
-        const results = [];
-
-        // Enviar al alumno si está habilitado
-        if (this.isNotificationEnabled('pagoRecibido', 'alumno')) {
-            console.log('📧 Enviando notificación de pago al alumno...');
-            const alumnoResult = await this.sendEmail('pagoRecibido', datos, inscripcion.usuarioEmail);
-            results.push({ tipo: 'alumno', ...alumnoResult });
-        } else {
-            console.log('📧 Notificación de pago al alumno deshabilitada');
-            results.push({ tipo: 'alumno', success: false, reason: 'Notificación deshabilitada' });
-        }
-
-        // Enviar al admin si está habilitado
-        if (this.isNotificationEnabled('pagoRecibido', 'admin')) {
-            console.log('📧 Enviando notificación de pago al admin...');
-            const adminResult = await this.sendEmail('pagoRecibido', datos, 'admin@colmenacocina.com');
-            results.push({ tipo: 'admin', ...adminResult });
-        } else {
-            console.log('📧 Notificación de pago al admin deshabilitada');
-            results.push({ tipo: 'admin', success: false, reason: 'Notificación deshabilitada' });
-        }
-
-        return {
-            success: results.some(r => r.success),
-            results: results
-        };
+        return await this.enviarEmailUnificado('pagoRecibido', datos, inscripcion.usuarioEmail);
     }
 
     /**
@@ -415,35 +406,9 @@ class EmailService {
             }
         };
 
-        const results = [];
-
-        // Enviar al alumno si está habilitado
-        if (this.isNotificationEnabled('cancelacionCurso', 'alumno')) {
-            console.log('📧 Enviando cancelación de curso al alumno...');
-            const alumnoResult = await this.sendEmail('cancelacionCurso', datos, inscripcion.usuarioEmail);
-            results.push({ tipo: 'alumno', ...alumnoResult });
-        } else {
-            console.log('📧 Cancelación de curso al alumno deshabilitada');
-            results.push({ tipo: 'alumno', success: false, reason: 'Notificación deshabilitada' });
-        }
-
-        // Enviar al admin si está habilitado (solo si el alumno canceló)
-        if (canceladoPor === 'alumno' && this.isNotificationEnabled('cancelacionCurso', 'admin')) {
-            console.log('📧 Enviando cancelación de curso al admin...');
-            const adminResult = await this.sendEmail('cancelacionCurso', datos, 'admin@colmenacocina.com');
-            results.push({ tipo: 'admin', ...adminResult });
-        } else if (canceladoPor === 'admin') {
-            console.log('📧 Cancelación iniciada por admin, no se notifica al admin');
-            results.push({ tipo: 'admin', success: false, reason: 'Cancelación iniciada por admin' });
-        } else {
-            console.log('📧 Cancelación de curso al admin deshabilitada');
-            results.push({ tipo: 'admin', success: false, reason: 'Notificación deshabilitada' });
-        }
-
-        return {
-            success: results.some(r => r.success),
-            results: results
-        };
+        // Para cancelaciones, enviamos a ambos independientemente de quién canceló
+        // La plantilla puede personalizar el mensaje según la variable {{canceladoPor}}
+        return await this.enviarEmailUnificado('cancelacionCurso', datos, inscripcion.usuarioEmail);
     }
 
     /**
