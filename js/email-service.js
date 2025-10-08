@@ -85,16 +85,26 @@ class EmailService {
             const adminsRef = collection(db, APP_CONFIG.adminSystem.collection);
             const q = query(
                 adminsRef,
-                where('activo', '==', true)
+                where('active', '==', true)
             );
             
             const snapshot = await getDocs(q);
             
+            console.log(`🔍 DEBUG: Encontrados ${snapshot.docs.length} documentos en colección admins`);
+            
             if (!snapshot.empty) {
+                // Debug: mostrar estructura de los documentos
+                snapshot.docs.forEach((doc, index) => {
+                    console.log(`🔍 DEBUG Admin ${index}:`, {
+                        id: doc.id,
+                        data: doc.data()
+                    });
+                });
+                
                 // Obtener todos los admins activos y ordenar en JavaScript (sin índice)
                 const adminsActivos = snapshot.docs.map(doc => ({
                     email: doc.data().email,
-                    fechaCreacion: doc.data().fechaCreacion || doc.data().created || new Date(0)
+                    fechaCreacion: doc.data().createdAt || doc.data().created || new Date(0)
                 }));
                 
                 // Ordenar por fecha de creación (más antiguo primero)
