@@ -1671,17 +1671,17 @@
         <div class="modal__content modal__content--horizontal">
             <span class="modal__close" id="envio-modal-close">&times;</span>
             <h2 class="modal__title">
-                <i class="fas fa-paper-plane"></i> Configuración de Eventos de Notificación
+                <i class="fas fa-paper-plane"></i> Configuración de Notificaciones por Email
             </h2>
             <div class="modal__body">
                 <p class="modal__description">
-                    Configura qué eventos enviarán notificaciones automáticas por email. Cuando está habilitado, tanto administradores como alumnos reciben el mismo email utilizando las plantillas correspondientes:
+                    Configura los eventos que enviarán notificaciones automáticas por email:
                 </p>
                 
                 <form id="envio-form" class="config-form-horizontal">
                     <div class="config-form-section">
                         <h4 class="form-section-title">
-                            <i class="fas fa-bell"></i> Eventos de Notificación Unificados
+                            <i class="fas fa-bell"></i> Eventos Disponibles
                         </h4>
                         
                         <div class="notification-checkboxes">
@@ -1690,7 +1690,7 @@
                                 <span class="checkmark"></span>
                                 <div class="notification-info">
                                     <strong>Nueva Inscripción</strong>
-                                    <small>Cuando un alumno se inscribe a un curso (admin y alumno reciben email)</small>
+                                    <small>Se envía cuando un alumno se inscribe a un curso</small>
                                 </div>
                             </label>
                             
@@ -1699,7 +1699,7 @@
                                 <span class="checkmark"></span>
                                 <div class="notification-info">
                                     <strong>Cancelación de Curso</strong>
-                                    <small>Cuando se cancela una inscripción (admin y alumno reciben email)</small>
+                                    <small>Se envía cuando se cancela una inscripción</small>
                                 </div>
                             </label>
                             
@@ -1708,7 +1708,7 @@
                                 <span class="checkmark"></span>
                                 <div class="notification-info">
                                     <strong>Pago Recibido</strong>
-                                    <small>Cuando se sube un comprobante de pago (admin y alumno reciben email)</small>
+                                    <small>Se envía cuando se sube un comprobante de pago</small>
                                 </div>
                             </label>
                             
@@ -1717,28 +1717,28 @@
                                 <span class="checkmark"></span>
                                 <div class="notification-info">
                                     <strong>Confirmación de Inscripción</strong>
-                                    <small>Cuando el admin confirma una inscripción (admin y alumno reciben email)</small>
+                                    <small>Se envía cuando el admin confirma una inscripción</small>
                                 </div>
                             </label>
                         </div>
                         
                         <div class="alert alert--info" style="margin-top: 1rem;">
                             <i class="fas fa-info-circle"></i>
-                            <strong>Importante:</strong> Para cada evento habilitado, se requiere una plantilla de email activa del tipo correspondiente. Si no existe plantilla, no se enviará el email.
+                            <strong>Nota:</strong> Cada evento requiere una plantilla de email activa. Sin plantilla, no se enviará el email.
                         </div>
                     </div>
                 </form>
                 
                 <div class="modal__actions">
                     <button type="button" id="test-envio" class="btn btn--outline">
-                        <i class="fas fa-paper-plane"></i> Probar Envío
+                        <i class="fas fa-paper-plane"></i> Probar Conexión
                     </button>
                     <div class="modal__actions-right">
                         <button type="button" id="cancel-envio" class="btn btn--secondary">
                             <i class="fas fa-times"></i> Cancelar
                         </button>
                         <button type="submit" form="envio-form" class="btn btn--primary">
-                            <i class="fas fa-save"></i> Guardar Configuración
+                            <i class="fas fa-save"></i> Guardar
                         </button>
                     </div>
                 </div>
