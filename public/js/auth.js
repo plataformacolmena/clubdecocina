@@ -1,5 +1,5 @@
 // Módulo de autenticación
-import { auth, db, ADMIN_EMAIL, ADMIN_EMAIL1, ADMIN_EMAIL2, ADMIN_EMAILS } from './firebase-config.js';
+import { auth, db, APP_CONFIG } from './firebase-config.js';
 import { 
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -13,39 +13,247 @@ import {
 import { 
     doc, 
     setDoc, 
-    getDoc,
+    getDoc, 
+    updateDoc,
+    addDoc,
+    deleteDoc,
     collection,
-    addDoc 
+    query,
+    where,
+    getDocs,
+    orderBy,
+    serverTimestamp,
+    onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+// Gestor de administradores dinámico con Firestore
+class AdminManager {
+    constructor() {
+        this.adminCache = new Map();
+        this.cacheExpiry = APP_CONFIG.adminSystem.cacheExpiry;
+    }
+
+
+
+    // Verificar si un usuario es administrador (solo Firestore)
+    async isUserAdmin(userEmail) {
+        if (!userEmail) return false;
+
+        try {
+            // Verificar cache primero
+            const cached = this.adminCache.get(userEmail);
+            if (cached && Date.now() < cached.expiry) {
+                return cached.isAdmin;
+            }
+
+            // Consultar Firestore
+            const isAdmin = await this.checkFirestoreAdmin(userEmail);
+            
+            // Actualizar cache
+            this.adminCache.set(userEmail, {
+                isAdmin,
+                expiry: Date.now() + this.cacheExpiry
+            });
+
+            return isAdmin;
+
+        } catch (error) {
+            console.error('❌ Error verificando admin:', error);
+            return false; // Por seguridad, denegar acceso si falla Firestore
+        }
+    }
+
+    // Verificar en Firestore (método interno)
+    async checkFirestoreAdmin(userEmail) {
+        try {
+            const adminDoc = await getDoc(doc(db, APP_CONFIG.adminSystem.collection, userEmail));
+            
+            if (!adminDoc.exists()) {
+                return false;
+            }
+            
+            const adminData = adminDoc.data();
+            return adminData.active === true && adminData.role === 'admin';
+            
+        } catch (error) {
+            console.error('Error consultando Firestore admin:', error);
+            throw error;
+        }
+    }
+
+    // Agregar nuevo administrador
+    async addAdmin(newAdminEmail, createdByEmail) {
+        try {
+            const adminDoc = doc(db, APP_CONFIG.adminSystem.collection, newAdminEmail);
+            
+            await setDoc(adminDoc, {
+                email: newAdminEmail,
+                role: 'admin',
+                active: true,
+                createdAt: serverTimestamp(),
+                createdBy: createdByEmail,
+                permissions: ['all'],
+                lastLogin: null
+            });
+
+            // Limpiar cache para forzar actualización
+            this.adminCache.delete(newAdminEmail);
+            
+            // Log de seguridad
+            await this.logAdminAction('add_admin', createdByEmail, { newAdmin: newAdminEmail });
+            
+            return { success: true, message: 'Administrador agregado exitosamente' };
+            
+        } catch (error) {
+            console.error('Error agregando administrador:', error);
+            return { success: false, message: 'Error agregando administrador: ' + error.message };
+        }
+    }
+
+    // Desactivar administrador (no eliminar para auditoría)
+    async deactivateAdmin(adminEmail, deactivatedByEmail) {
+        try {
+            // Prevenir auto-desactivación del último admin
+            const activeAdmins = await this.getActiveAdmins();
+            if (activeAdmins.length <= 1 && activeAdmins[0]?.email === adminEmail) {
+                return { success: false, message: 'No se puede desactivar el último administrador' };
+            }
+
+            const adminDoc = doc(db, APP_CONFIG.adminSystem.collection, adminEmail);
+            
+            await updateDoc(adminDoc, {
+                active: false,
+                deactivatedAt: serverTimestamp(),
+                deactivatedBy: deactivatedByEmail
+            });
+
+            // Limpiar cache
+            this.adminCache.delete(adminEmail);
+            
+            // Log de seguridad
+            await this.logAdminAction('deactivate_admin', deactivatedByEmail, { deactivatedAdmin: adminEmail });
+            
+            return { success: true, message: 'Administrador desactivado exitosamente' };
+            
+        } catch (error) {
+            console.error('Error desactivando administrador:', error);
+            return { success: false, message: 'Error desactivando administrador: ' + error.message };
+        }
+    }
+
+    // Obtener lista de administradores activos (solo para otros admins)
+    async getActiveAdmins() {
+        try {
+            // Consulta simplificada para evitar índice compuesto
+            const adminsQuery = query(
+                collection(db, APP_CONFIG.adminSystem.collection),
+                where('active', '==', true)
+            );
+            
+            const querySnapshot = await getDocs(adminsQuery);
+            const admins = [];
+            
+            querySnapshot.forEach((doc) => {
+                admins.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // Ordenar en memoria por fecha de creación
+            admins.sort((a, b) => {
+                const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+                const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+                return dateA - dateB;
+            });
+            
+            return admins;
+            
+        } catch (error) {
+            console.error('Error obteniendo administradores:', error);
+            return [];
+        }
+    }
+
+    // Registrar acciones de administración para auditoría
+    async logAdminAction(action, performedBy, details = {}) {
+        try {
+            await addDoc(collection(db, 'admin_security_logs'), {
+                action: action,
+                performedBy: performedBy,
+                details: details,
+                timestamp: serverTimestamp(),
+                userAgent: navigator.userAgent,
+                ip: null // Se podría obtener del cliente si es necesario
+            });
+        } catch (error) {
+            console.error('Error logging admin action:', error);
+        }
+    }
+
+    // Limpiar cache (útil para pruebas o actualizaciones forzadas)
+    clearCache() {
+        this.adminCache.clear();
+        console.log('🧹 Cache de administradores limpiado');
+    }
+
+    // Obtener estadísticas del cache (para debugging)
+    getCacheStats() {
+        const now = Date.now();
+        const entries = Array.from(this.adminCache.entries());
+        
+        return {
+            total: entries.length,
+            expired: entries.filter(([, data]) => now >= data.expiry).length,
+            valid: entries.filter(([, data]) => now < data.expiry).length
+        };
+    }
+}
 
 class AuthManager {
     constructor() {
         this.currentUser = null;
         this.isAdmin = false;
+        this.userData = null;
+        this.adminManager = new AdminManager();
+        
+        // Mostrar loading inmediatamente al inicializar
+        this.showLoading();
+        
         this.initAuthStateListener();
         this.setupEventListeners();
     }
 
     initAuthStateListener() {
         onAuthStateChanged(auth, async (user) => {
-            this.currentUser = user;
+            // Mostrar loading durante verificación de estado
+            this.showLoading();
             
-            if (user) {
-                // Verificar si es administrador
-                this.isAdmin = ADMIN_EMAILS.includes(user.email);
+            try {
+                this.currentUser = user;
                 
-                // Crear/actualizar documento de usuario
-                await this.createUserDocument(user);
-                
-                // Crear administrador si es necesario
-                if (this.isAdmin) {
-                    await this.createAdminDocument(user);
+                if (user) {
+                    // Verificar si es administrador usando Firestore
+                    this.isAdmin = await this.adminManager.isUserAdmin(user.email);
+                    
+                    // Crear/actualizar documento de usuario
+                    await this.createUserDocument(user);
+                    
+                    // Actualizar último login si es admin
+                    if (this.isAdmin) {
+                        await this.updateAdminLastLogin(user.email);
+                    }
+                    
+                    this.updateUI(true);
+                } else {
+                    this.isAdmin = false;
+                    this.updateUI(false);
                 }
-                
-                this.updateUI(true);
-            } else {
+            } catch (error) {
+                console.error('Error en verificación de estado de autenticación:', error);
+                // En caso de error, mostrar como no logueado
                 this.isAdmin = false;
                 this.updateUI(false);
+            } finally {
+                // Ocultar loading al completar verificación (siempre)
+                this.hideLoading();
             }
         });
     }
@@ -247,6 +455,11 @@ class AuthManager {
             
             // Ocultar la sección home y mostrar cursos por defecto
             this.showSection('cursos');
+            
+            // Cargar cursos automáticamente para una mejor UX
+            if (window.cursosManager) {
+                window.cursosManager.loadCursos();
+            }
         } else {
             loginBtn?.classList.remove('hidden');
             userMenu?.classList.add('hidden');
@@ -359,8 +572,8 @@ class AuthManager {
         
         switch (error.code) {
             case 'auth/user-not-found':
-                message = 'Usuario no encontrado';
-                break;
+                this.handleUserNotFound();
+                return; // No mostrar mensaje genérico
             case 'auth/wrong-password':
                 message = 'Contraseña incorrecta';
                 break;
@@ -383,9 +596,93 @@ class AuthManager {
         this.showMessage(message, 'error');
     }
 
+    // Manejar caso específico de usuario no encontrado
+    handleUserNotFound() {
+        // Mostrar mensaje amigable con opción de registro
+        this.showMessage('📧 Este email no está registrado. Te abriremos el formulario de registro...', 'info');
+        
+        // Cerrar modal de login y abrir registro después de mostrar el mensaje
+        setTimeout(() => {
+            this.hideLoginModal();
+            
+            // Esperar un momento antes de abrir el registro para mejor UX
+            setTimeout(() => {
+                this.showRegisterModal();
+                
+                // Pre-llenar el email en el formulario de registro
+                const loginEmail = document.getElementById('login-email').value;
+                if (loginEmail) {
+                    const registerEmailField = document.getElementById('register-email');
+                    if (registerEmailField) {
+                        registerEmailField.value = loginEmail;
+                        // Mostrar mensaje adicional en el registro
+                        this.showMessage('✨ Email pre-completado. Solo completa los demás campos', 'success');
+                    }
+                }
+            }, 300);
+        }, 2500);
+    }
+
     // Método para verificar si el usuario actual es admin
     isCurrentUserAdmin() {
         return this.isAdmin;
+    }
+
+    // Actualizar último login del administrador
+    async updateAdminLastLogin(userEmail) {
+        try {
+            const adminDoc = doc(db, APP_CONFIG.adminSystem.collection, userEmail);
+            await updateDoc(adminDoc, {
+                lastLogin: serverTimestamp()
+            });
+        } catch (error) {
+            console.log('Error actualizando último login admin:', error);
+            // No es crítico, continuar sin error
+        }
+    }
+
+    // Método público para verificar admin (compatible con código existente)
+    async checkAdminStatus(userEmail = null) {
+        const emailToCheck = userEmail || this.currentUser?.email;
+        if (!emailToCheck) return false;
+        
+        return await this.adminManager.isUserAdmin(emailToCheck);
+    }
+
+    // Métodos públicos para gestión de administradores (solo para admins)
+    async addNewAdmin(newAdminEmail) {
+        if (!this.isAdmin) {
+            throw new Error('Solo administradores pueden agregar nuevos administradores');
+        }
+        
+        return await this.adminManager.addAdmin(newAdminEmail, this.currentUser.email);
+    }
+
+    async removeAdmin(adminEmail) {
+        if (!this.isAdmin) {
+            throw new Error('Solo administradores pueden remover administradores');
+        }
+        
+        if (adminEmail === this.currentUser.email) {
+            throw new Error('No puedes removerte a ti mismo como administrador');
+        }
+        
+        return await this.adminManager.deactivateAdmin(adminEmail, this.currentUser.email);
+    }
+
+    async getAdminList() {
+        if (!this.isAdmin) {
+            throw new Error('Solo administradores pueden ver la lista de administradores');
+        }
+        
+        return await this.adminManager.getActiveAdmins();
+    }
+
+    // Limpiar cache de administradores (para debugging)
+    clearAdminCache() {
+        if (this.isAdmin) {
+            this.adminManager.clearCache();
+        }
     }
 
     // Método para obtener el usuario actual

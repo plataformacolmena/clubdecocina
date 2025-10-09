@@ -1,5 +1,5 @@
 // Módulo de gestión de cursos
-import { db } from './firebase-config.js';
+import { db, APP_CONFIG } from './firebase-config.js';
 import {
     collection,
     addDoc,
@@ -20,25 +20,22 @@ class CursosManager {
     }
 
     setupEventListeners() {
-        // Filtros de búsqueda
-        document.getElementById('search-cursos')?.addEventListener('input', (e) => {
-            this.filterCursos(e.target.value);
-        });
-        
-        document.getElementById('filter-fecha')?.addEventListener('change', (e) => {
-            this.filterByFecha(e.target.value);
-        });
-
         // Navegación a cursos
         document.querySelector('a[href="#cursos"]')?.addEventListener('click', (e) => {
             e.preventDefault();
-            this.loadCursos();
+            this.loadCursos(true); // Forzar recarga al hacer click en el menú
             window.authManager.showSection('cursos');
         });
     }
 
-    async loadCursos() {
+    async loadCursos(forceReload = false) {
         try {
+            // Si ya hay cursos cargados y no se fuerza la recarga, solo renderizar
+            if (this.cursos.length > 0 && !forceReload) {
+                this.renderCursos();
+                return;
+            }
+            
             window.authManager.showLoading();
             
             const q = query(
@@ -57,7 +54,6 @@ class CursosManager {
             });
             
             this.renderCursos();
-            this.updateFechaFilter();
             
         } catch (error) {
             console.error('Error loading cursos:', error);
@@ -67,21 +63,39 @@ class CursosManager {
         }
     }
 
-    renderCursos(cursosToRender = this.cursos) {
+    async renderCursos(cursosToRender = null) {
         const cursosGrid = document.getElementById('cursos-grid');
         if (!cursosGrid) return;
 
-        if (cursosToRender.length === 0) {
+        let cursos = cursosToRender || this.cursos;
+        
+        // Filtrar automáticamente cursos terminados y cancelados para usuarios normales
+        if (!window.authManager.getCurrentUser()?.isAdmin) {
+            const now = new Date();
+            cursos = cursos.filter(curso => {
+                // Filtrar cursos terminados (fecha ya pasó)
+                const cursoDate = new Date(curso.fechaHora.seconds * 1000);
+                const yaTermino = cursoDate < now;
+                
+                // Filtrar cursos cancelados (si tienen estado)
+                const estaCancelado = curso.estado === 'cancelado';
+                
+                return !yaTermino && !estaCancelado;
+            });
+        }
+
+        if (cursos.length === 0) {
             cursosGrid.innerHTML = `
-                <div class="no-content">
-                    <i class="fas fa-search"></i>
-                    <p>No se encontraron cursos</p>
+                <div class="empty-state">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h3>No hay cursos disponibles</h3>
+                    <p>Vuelve pronto para ver nuevos cursos</p>
                 </div>
             `;
             return;
         }
 
-        cursosGrid.innerHTML = cursosToRender.map(curso => this.createCursoCard(curso)).join('');
+        cursosGrid.innerHTML = await Promise.all(cursos.map(curso => this.createCursoCard(curso))).then(cards => cards.join(''));
         
         // Agregar event listeners a los botones de inscripción
         cursosGrid.querySelectorAll('.inscribirse-btn').forEach(btn => {
@@ -92,7 +106,7 @@ class CursosManager {
         });
     }
 
-    createCursoCard(curso) {
+    async createCursoCard(curso) {
         const fechaFormatted = new Date(curso.fechaHora.seconds * 1000).toLocaleString('es-AR', {
             weekday: 'long',
             year: 'numeric',
@@ -107,12 +121,34 @@ class CursosManager {
         const estaCompleto = disponibles <= 0;
         const yaTermino = new Date(curso.fechaHora.seconds * 1000) < new Date();
 
+        // Verificar si el usuario actual está inscrito en este curso
+        let estaInscrito = false;
+        let estadoInscripcion = '';
+        if (window.authManager.getCurrentUser()) {
+            try {
+                const inscripcionInfo = await this.verificarInscripcionCompleta(curso.id);
+                estaInscrito = inscripcionInfo.inscrito;
+                estadoInscripcion = inscripcionInfo.estado || '';
+            } catch (error) {
+                console.log('Error verificando inscripción:', error);
+            }
+        }
+
         return `
-            <div class="card curso-card">
+            <div class="card curso-card ${estaInscrito ? 'curso-card--inscrito' : ''}">
                 <div class="card__header">
                     <h3 class="card__title">${curso.nombre}</h3>
-                    <div class="status ${estaCompleto ? 'status--completo' : 'status--disponible'}">
-                        ${estaCompleto ? 'Completo' : 'Disponible'}
+                    <div class="curso-status-container">
+                        ${estaInscrito ? `
+                            <div class="status status--inscrito">
+                                <i class="fas fa-check-circle"></i> 
+                                ${estadoInscripcion === 'pagado' ? 'Inscrito y Pagado' : 
+                                  estadoInscripcion === 'confirmado' ? 'Confirmado' : 'Inscrito'}
+                            </div>
+                        ` : ''}
+                        <div class="status ${estaCompleto ? 'status--completo' : 'status--disponible'}">
+                            ${estaCompleto ? 'Completo' : 'Disponible'}
+                        </div>
                     </div>
                 </div>
                 <div class="card__content">
@@ -141,12 +177,19 @@ class CursosManager {
                     ` : ''}
                 </div>
                 <div class="card__actions">
-                    ${!estaCompleto && !yaTermino ? `
-                        <button class="btn btn--primary inscribirse-btn" data-curso-id="${curso.id}">
-                            <i class="fas fa-user-plus"></i>
-                            Inscribirse
-                        </button>
-                    ` : ''}
+                    ${!estaCompleto && !yaTermino ? (
+                        estaInscrito ? `
+                            <button class="btn btn--success" disabled>
+                                <i class="fas fa-check"></i>
+                                Ya inscrito
+                            </button>
+                        ` : `
+                            <button class="btn btn--primary inscribirse-btn" data-curso-id="${curso.id}">
+                                <i class="fas fa-user-plus"></i>
+                                Inscribirse
+                            </button>
+                        `
+                    ) : ''}
                     <button class="btn btn--outline ver-detalles-btn" data-curso-id="${curso.id}">
                         <i class="fas fa-info-circle"></i>
                         Ver Detalles
@@ -154,55 +197,6 @@ class CursosManager {
                 </div>
             </div>
         `;
-    }
-
-    filterCursos(searchTerm) {
-        const filtered = this.cursos.filter(curso =>
-            curso.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            curso.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        this.renderCursos(filtered);
-    }
-
-    filterByFecha(fechaFilter) {
-        if (!fechaFilter) {
-            this.renderCursos();
-            return;
-        }
-
-        const filtered = this.cursos.filter(curso => {
-            const cursoDate = new Date(curso.fechaHora.seconds * 1000);
-            const filterDate = new Date(fechaFilter);
-            
-            return cursoDate.toDateString() === filterDate.toDateString();
-        });
-        
-        this.renderCursos(filtered);
-    }
-
-    updateFechaFilter() {
-        const fechaFilter = document.getElementById('filter-fecha');
-        if (!fechaFilter) return;
-
-        // Obtener fechas únicas de los cursos
-        const fechas = [...new Set(this.cursos.map(curso => {
-            const date = new Date(curso.fechaHora.seconds * 1000);
-            return date.toISOString().split('T')[0];
-        }))].sort();
-
-        // Limpiar y agregar opciones
-        fechaFilter.innerHTML = '<option value="">Todas las fechas</option>';
-        fechas.forEach(fecha => {
-            const option = document.createElement('option');
-            option.value = fecha;
-            option.textContent = new Date(fecha).toLocaleDateString('es-AR', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            fechaFilter.appendChild(option);
-        });
     }
 
     async inscribirseACurso(cursoId) {
@@ -246,13 +240,27 @@ class CursosManager {
                 comprobanteUrl: null
             };
 
-            await addDoc(collection(db, 'inscripciones'), inscripcionData);
+            const inscripcionRef = await addDoc(collection(db, 'inscripciones'), inscripcionData);
 
             // Actualizar contador de inscriptos en el curso
             const cursoRef = doc(db, 'cursos', cursoId);
             await updateDoc(cursoRef, {
                 inscriptos: inscriptosActuales + 1
             });
+
+            // Enviar notificación de nueva inscripción al admin
+            if (window.emailService) {
+                try {
+                    const emailResult = await window.emailService.procesarInscripcion(inscripcionRef.id, 'nueva');
+                    if (emailResult.success) {
+                        console.log('✅ Notificación de nueva inscripción enviada al admin');
+                    } else {
+                        console.log('⚠️ Notificación de nueva inscripción no enviada:', emailResult.reason);
+                    }
+                } catch (emailError) {
+                    console.error('Error enviando notificación de nueva inscripción:', emailError);
+                }
+            }
 
             window.authManager.showMessage('¡Inscripción exitosa!', 'success');
             
@@ -281,8 +289,42 @@ class CursosManager {
         return !querySnapshot.empty;
     }
 
-    mostrarInformacionPago(curso) {
-        const { bankInfo } = window.APP_CONFIG;
+    async verificarInscripcionCompleta(cursoId) {
+        const q = query(
+            collection(db, 'inscripciones'),
+            where('usuarioId', '==', window.authManager.getCurrentUser().uid),
+            where('cursoId', '==', cursoId)
+        );
+
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+            return { inscrito: false, estado: null };
+        }
+        
+        const inscripcion = querySnapshot.docs[0].data();
+        return { 
+            inscrito: true, 
+            estado: inscripcion.estado || 'pendiente',
+            id: querySnapshot.docs[0].id
+        };
+    }
+
+    async mostrarInformacionPago(curso) {
+        // Obtener datos bancarios dinámicos
+        const bankAccount = await window.bankAccountManager?.getActiveAccount();
+        
+        if (!bankAccount) {
+            const message = `
+                ¡Te has inscripto exitosamente al curso "${curso.nombre}"!
+                
+                ⚠️ Los datos bancarios no están configurados.
+                Por favor contacta al administrador para obtener la información de pago.
+                
+                Luego sube tu comprobante en "Mis Inscripciones".
+            `;
+            alert(message);
+            return;
+        }
         
         const message = `
             ¡Te has inscripto exitosamente al curso "${curso.nombre}"!
@@ -290,10 +332,10 @@ class CursosManager {
             Para completar tu inscripción, realiza la transferencia:
             
             Monto: $${curso.costo.toLocaleString()}
-            Cuenta: ${bankInfo.account}
-            CBU: ${bankInfo.cbu}
-            Alias: ${bankInfo.alias}
-            Banco: ${bankInfo.bank}
+            CVU/CBU: ${bankAccount.cvu}
+            Alias: ${bankAccount.alias}
+            CUIT: ${bankAccount.cuit}
+            Titular: ${bankAccount.titular}
             
             Luego sube tu comprobante en "Mis Inscripciones".
         `;
@@ -312,10 +354,10 @@ class CursosManager {
                     
                     <div class="bank-details">
                         <h3>Datos para transferencia:</h3>
-                        <p><strong>Cuenta:</strong> ${bankInfo.account}</p>
-                        <p><strong>CBU:</strong> ${bankInfo.cbu}</p>
-                        <p><strong>Alias:</strong> ${bankInfo.alias}</p>
-                        <p><strong>Banco:</strong> ${bankInfo.bank}</p>
+                        <p><strong>CVU/CBU:</strong> ${bankAccount.cvu}</p>
+                        <p><strong>Alias:</strong> ${bankAccount.alias}</p>
+                        <p><strong>CUIT:</strong> ${bankAccount.cuit}</p>
+                        <p><strong>Titular:</strong> ${bankAccount.titular}</p>
                     </div>
                     
                     <p class="note">

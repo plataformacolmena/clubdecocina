@@ -4,6 +4,9 @@ import CursosManager from './cursos.js';
 import InscripcionesManager from './inscripciones.js';
 import RecetasManager from './recetas.js';
 import AdminManager from './admin.js';
+import NotasManager from './notas.js';
+import ConfiguracionManager from './configuracion.js';
+import ConfiguracionesInitializer from './init-configuraciones.js';
 
 class App {
     constructor() {
@@ -12,9 +15,19 @@ class App {
         this.initializeApp();
     }
 
-    initializeApp() {
+    async initializeApp() {
         // Los managers se inicializan automáticamente al importarse
-        console.log('🎉 Club de Cocina Colmena - Aplicación iniciada');
+        console.log('🎉 Club de Cocina - Aplicación iniciada');
+        
+        // Inicializar servicio de emails
+        if (window.emailService) {
+            try {
+                await window.emailService.initialize();
+                console.log('✅ Servicio de emails inicializado');
+            } catch (error) {
+                console.warn('⚠️ Error inicializando servicio de emails:', error.message);
+            }
+        }
         
         // Agregar estilos CSS adicionales dinámicamente
         this.addDynamicStyles();
@@ -34,6 +47,9 @@ class App {
                 
                 this.showSection(sectionId);
                 this.updateActiveNavigation(sectionId);
+                
+                // Cerrar menú móvil automáticamente después de navegar
+                this.closeMobileMenu();
             });
         });
 
@@ -62,6 +78,14 @@ class App {
                 const navMenu = document.querySelector('.nav__menu');
                 navMenu.classList.toggle('nav__menu--active');
             });
+        }
+    }
+
+    closeMobileMenu() {
+        // Cerrar menú móvil si está abierto (solo afecta móvil)
+        const navMenu = document.querySelector('.nav__menu');
+        if (navMenu && navMenu.classList.contains('nav__menu--active')) {
+            navMenu.classList.remove('nav__menu--active');
         }
     }
 
