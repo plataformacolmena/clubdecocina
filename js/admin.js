@@ -543,6 +543,14 @@ class AdminManager {
             this.showCursoModal();
         });
 
+        document.getElementById('sincronizar-cupos-btn')?.addEventListener('click', async () => {
+            if (confirm('¿Deseas sincronizar los contadores de cupos de todos los cursos?\n\nEsto recalculará los inscriptos basándose en las inscripciones activas.')) {
+                await window.cursosManager?.sincronizarTodosLosContadores();
+                // Recargar la vista de cursos
+                await this.loadData();
+            }
+        });
+
         document.getElementById('nueva-receta-btn')?.addEventListener('click', () => {
             this.showRecetaModal();
         });
@@ -3010,7 +3018,10 @@ class AdminManager {
                 .reduce((sum, i) => sum + (i.costo || 0), 0);
             
             const capacidadMaxima = curso.capacidadMaxima || 999;
-            const inscriptosActuales = curso.inscriptos || 0;
+            // Contar inscriptos activos dinámicamente
+            const inscriptosActuales = inscripcionesPorCurso[curso.id]?.filter(i => 
+                ['pendiente', 'pagado', 'confirmado'].includes(i.estado)
+            ).length || 0;
             const porcentajeOcupacion = capacidadMaxima > 0 ? 
                 ((inscriptosActuales / capacidadMaxima) * 100).toFixed(1) : '0.0';
             

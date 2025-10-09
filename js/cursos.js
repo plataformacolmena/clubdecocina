@@ -19,6 +19,75 @@ class CursosManager {
         this.setupEventListeners();
     }
 
+    // Método para contar inscriptos activos dinámicamente
+    async contarInscriptosActivos(cursoId) {
+        try {
+            const q = query(
+                collection(db, 'inscripciones'),
+                where('cursoId', '==', cursoId),
+                where('estado', 'in', ['pendiente', 'pagado', 'confirmado'])
+            );
+            
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.size;
+        } catch (error) {
+            console.error('Error contando inscriptos activos:', error);
+            return 0;
+        }
+    }
+
+    // Método para contar inscriptos activos dinámicamente
+    async contarInscriptosActivos(cursoId) {
+        try {
+            const q = query(
+                collection(db, 'inscripciones'),
+                where('cursoId', '==', cursoId),
+                where('estado', 'in', ['pendiente', 'pagado', 'confirmado'])
+            );
+            
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.size;
+        } catch (error) {
+            console.error('Error contando inscriptos activos:', error);
+            return 0;
+        }
+    }
+
+    // Método utilitario para sincronizar contador legacy (opcional)
+    async sincronizarContadorCurso(cursoId) {
+        try {
+            const inscriptosReales = await this.contarInscriptosActivos(cursoId);
+            const cursoRef = doc(db, 'cursos', cursoId);
+            await updateDoc(cursoRef, {
+                inscriptos: inscriptosReales,
+                ultimaSincronizacion: new Date()
+            });
+            console.log(`✅ Contador sincronizado para curso ${cursoId}: ${inscriptosReales} inscriptos`);
+        } catch (error) {
+            console.error('Error sincronizando contador:', error);
+        }
+    }
+
+    // Método para sincronizar todos los contadores (migración)
+    async sincronizarTodosLosContadores() {
+        try {
+            console.log('🔄 Iniciando sincronización de contadores...');
+            for (const curso of this.cursos) {
+                await this.sincronizarContadorCurso(curso.id);
+            }
+            console.log('✅ Sincronización completa');
+            window.authManager?.showMessage('Contadores sincronizados exitosamente', 'success');
+        } catch (error) {
+            console.error('Error en sincronización masiva:', error);
+            window.authManager?.showMessage('Error en sincronización', 'error');
+        }
+    }
+
+    // Método para obtener curso por ID (usado por otros módulos)
+    getCursoById(cursoId) {
+        return this.cursos.find(c => c.id === cursoId);
+    }
+
     setupEventListeners() {
         // Navegación a cursos
         document.querySelector('a[href="#cursos"]')?.addEventListener('click', (e) => {
@@ -116,7 +185,8 @@ class CursosManager {
             minute: '2-digit'
         });
 
-        const inscriptosActuales = curso.inscriptos || 0;
+        // Calcular inscriptos dinámicamente contando inscripciones activas
+        const inscriptosActuales = await this.contarInscriptosActivos(curso.id);
         const disponibles = curso.capacidadMaxima - inscriptosActuales;
         const estaCompleto = disponibles <= 0;
         const yaTermino = new Date(curso.fechaHora.seconds * 1000) < new Date();
@@ -215,7 +285,8 @@ class CursosManager {
                 throw new Error('Curso no encontrado');
             }
 
-            const inscriptosActuales = curso.inscriptos || 0;
+            // Contar inscriptos activos dinámicamente
+            const inscriptosActuales = await this.contarInscriptosActivos(cursoId);
             if (inscriptosActuales >= curso.capacidadMaxima) {
                 throw new Error('El curso está completo');
             }
@@ -242,11 +313,8 @@ class CursosManager {
 
             const inscripcionRef = await addDoc(collection(db, 'inscripciones'), inscripcionData);
 
-            // Actualizar contador de inscriptos en el curso
-            const cursoRef = doc(db, 'cursos', cursoId);
-            await updateDoc(cursoRef, {
-                inscriptos: inscriptosActuales + 1
-            });
+            // Ya no necesitamos actualizar manualmente el contador
+            // El sistema ahora calcula dinámicamente los inscriptos activos
 
             // Enviar notificación de nueva inscripción al admin
             if (window.emailService) {
