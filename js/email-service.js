@@ -162,14 +162,42 @@ class EmailService {
     }
 
     /**
+     * Obtener datos bancarios activos formateados
+     */
+    async getDatosBancarios() {
+        try {
+            if (!window.bankAccountManager) {
+                console.warn('⚠️ BankAccountManager no disponible');
+                return 'Datos bancarios no configurados';
+            }
+
+            const cuenta = await window.bankAccountManager.getActiveAccount();
+            
+            if (!cuenta) {
+                return 'No hay cuenta bancaria activa configurada';
+            }
+
+            return `
+CVU/CBU: ${cuenta.cvu}
+Alias: ${cuenta.alias}
+CUIT: ${cuenta.cuit}
+Titular: ${cuenta.titular}
+            `.trim();
+        } catch (error) {
+            console.error('Error obteniendo datos bancarios:', error);
+            return 'Error al obtener datos bancarios';
+        }
+    }
+
+    /**
      * Reemplazar variables en texto
      */
-    reemplazarVariables(texto, datos) {
+    async reemplazarVariables(texto, datos) {
         if (!texto || !datos) return texto;
 
         let resultado = texto;
         
-        // Variables disponibles
+        // Variables básicas disponibles
         const variables = {
             nombreAlumno: datos.alumno?.nombre || datos.usuarioNombre || 'Estimado/a',
             emailAlumno: datos.alumno?.email || datos.usuarioEmail || '',
@@ -181,11 +209,17 @@ class EmailService {
             direccionSede: datos.sede?.direccion || ''
         };
 
-        // Reemplazar cada variable
+        // Reemplazar variables básicas
         Object.keys(variables).forEach(key => {
             const regex = new RegExp(`{{${key}}}`, 'g');
             resultado = resultado.replace(regex, variables[key]);
         });
+
+        // Manejar variable especial {{datosBancarios}}
+        if (resultado.includes('{{datosBancarios}}')) {
+            const datosBancarios = await this.getDatosBancarios();
+            resultado = resultado.replace(/{{datosBancarios}}/g, datosBancarios);
+        }
 
         return resultado;
     }
@@ -215,8 +249,8 @@ class EmailService {
             }
             
             // Procesar plantilla con variables
-            const asuntoFinal = this.reemplazarVariables(plantilla.asunto, datos);
-            const contenidoFinal = this.reemplazarVariables(plantilla.plantilla, datos);
+            const asuntoFinal = await this.reemplazarVariables(plantilla.asunto, datos);
+            const contenidoFinal = await this.reemplazarVariables(plantilla.plantilla, datos);
             
             const payload = {
                 tipo: 'email_personalizado', // Tipo fijo para Apps Script

@@ -1914,7 +1914,46 @@
                             </label>
                             <input type="text" id="plantilla-asunto-input" class="form-control-wide" required 
                                    maxlength="150" placeholder="Ej: Bienvenido {{nombreAlumno}} - Curso {{nombreCurso}}">
-                            <small class="form-text">Variables disponibles: {{nombreAlumno}}, {{nombreCurso}}, {{fechaCurso}}, {{horarioCurso}}, {{precioCurso}}, {{direccionSede}}</small>
+                            <small class="form-text">Variables disponibles: {{nombreAlumno}}, {{nombreCurso}}, {{fechaCurso}}, {{horarioCurso}}, {{precioCurso}}, {{direccionSede}}, {{datosBancarios}}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="config-form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-tags"></i> Variables Disponibles
+                        </h4>
+                        <div class="variables-info">
+                            <p class="form-text">Utiliza estas variables en el asunto y contenido del email. Se reemplazarán automáticamente:</p>
+                            <div class="variables-grid">
+                                <div class="variable-item">
+                                    <code>{{nombreAlumno}}</code>
+                                    <span>Nombre completo del alumno inscrito</span>
+                                </div>
+                                <div class="variable-item">
+                                    <code>{{nombreCurso}}</code>
+                                    <span>Nombre del curso</span>
+                                </div>
+                                <div class="variable-item">
+                                    <code>{{fechaCurso}}</code>
+                                    <span>Fecha del curso (formato: DD/MM/AAAA)</span>
+                                </div>
+                                <div class="variable-item">
+                                    <code>{{horarioCurso}}</code>
+                                    <span>Horario del curso</span>
+                                </div>
+                                <div class="variable-item">
+                                    <code>{{precioCurso}}</code>
+                                    <span>Precio del curso (formato: $X.XXX)</span>
+                                </div>
+                                <div class="variable-item">
+                                    <code>{{direccionSede}}</code>
+                                    <span>Dirección de la sede del curso</span>
+                                </div>
+                                <div class="variable-item">
+                                    <code>{{datosBancarios}}</code>
+                                    <span>Información completa de la cuenta bancaria activa (CVU, Alias, CUIT, Titular)</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
