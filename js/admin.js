@@ -3019,7 +3019,7 @@ class AdminManager {
             
             const capacidadMaxima = curso.capacidadMaxima || 999;
             // Contar inscriptos activos dinámicamente
-            const inscriptosActuales = inscripcionesPorCurso[curso.id]?.filter(i => 
+            const inscriptosActuales = inscripcionesCurso.filter(i => 
                 ['pendiente', 'pagado', 'confirmado'].includes(i.estado)
             ).length || 0;
             const porcentajeOcupacion = capacidadMaxima > 0 ? 
