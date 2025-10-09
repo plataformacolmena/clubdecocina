@@ -1282,7 +1282,7 @@ body {
 /* Modal específico para configuración de notificaciones */
 .modal__content--config {
     /* Tamaño optimizado */
-    width: min(90vw, 600px);
+    width: min(90vw, 800px);
     max-height: min(85vh, 700px);
     
     /* Layout moderno */
