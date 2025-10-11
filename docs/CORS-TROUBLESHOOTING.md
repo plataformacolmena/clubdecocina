@@ -18,6 +18,7 @@ Access to fetch at 'https://script.google.com/macros/s/[ID]/exec?test=true' from
 #### Paso 1.2: Verificar el Código
 - Asegúrate que el código tenga las funciones `doOptions()` y `doGet()` con headers CORS
 - **IMPORTANTE:** El código debe ser exactamente como está en `docs/gmail-apps-script.gs`
+- Esta versión incluye debugging detallado y solución optimizada para CORS
 
 #### Paso 1.3: Hacer un Nuevo Deployment
 1. **Crear nueva versión:**

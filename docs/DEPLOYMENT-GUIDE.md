@@ -10,10 +10,10 @@
 ### **2. Configurar el Proyecto**
 1. **Nombra el proyecto**: `Club-Cocina-Gmail-API`
 2. **Elimina** el código por defecto
-3. **⚠️ IMPORTANTE**: Usa el archivo `gmail-apps-script-fixed.gs` (versión corregida)
-4. **Copia y pega** todo el contenido del archivo corregido
+3. **⚠️ IMPORTANTE**: Usa el archivo `gmail-apps-script.gs` (versión optimizada)
+4. **Copia y pega** todo el contenido del archivo
 
-> **Nota**: Si tienes errores como "setHeader is not a function", usa la versión `gmail-apps-script-fixed.gs` que soluciona problemas de compatibilidad con Google Apps Script.
+> **Nota**: Esta versión incluye solución definitiva para problemas CORS con GitHub Pages y debugging mejorado.
 
 ### **3. Configurar Variables (IMPORTANTE)**
 Antes de desplegar, **edita estas líneas** en el script:
@@ -133,9 +133,9 @@ TypeError: ContentService.createTextOutput(...).setMimeType(...).setHeader is no
 ```
 
 **🔧 Solución:**
-- Usa el archivo `gmail-apps-script-fixed.gs` en lugar de `gmail-apps-script.gs`
+- Usa el archivo `gmail-apps-script.gs` (versión actual)
 - El error ocurre por encadenamiento incorrecto de métodos en Apps Script
-- La versión "fixed" elimina el encadenamiento problemático
+- La versión actual elimina el encadenamiento problemático y optimiza CORS
 
 ### **Error: "Access to fetch blocked by CORS"**
 ```
@@ -172,9 +172,9 @@ Script function not found: doGet
 ## �📞 **Soporte**
 
 Si tienes problemas:
-1. **Usa la versión corregida**: `gmail-apps-script-fixed.gs`
+1. **Usa la versión actual**: `gmail-apps-script.gs`
 2. **Verifica** que seguiste todos los pasos
-3. **Revisa** los logs en Apps Script (Ver → Registros)
+3. **Revisa** los logs en Apps Script (Ver → Registros) - incluye debugging detallado
 4. **Prueba** el URL directamente en el navegador
 5. **Consulta** CORS-TROUBLESHOOTING.md para errores de conexión
 6. **Redesplega** con nueva implementación si es necesario
