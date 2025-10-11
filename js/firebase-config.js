@@ -23,26 +23,10 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 // export const storage = getStorage(app); // DESHABILITADO - Plan Spark
 
-// Configuración de Google Drive (DESACTIVADA - usando Base64 en Firestore)
-// NOTA: Para reactivar Google Drive, cambiar useGoogleDrive a true y configurar OAuth2
-export const GOOGLE_DRIVE_CONFIG = {
-    // ID de la carpeta pública de Google Drive donde se subirían archivos
-    folderId: '12C9grSBITz6u2pGOwa9D14rnI9g8FEwC',
-    apiKey: 'AIzaSyBgzze_5LbojNAxZwSGd2zkMK-IpAL8eak',
-    // Carpetas específicas
-    folders: {
-        comprobantes: '1fSKK2BjOgy0so2gK2KJTuSqaYAS-o-Lp',
-        recetas: '1Py8bW-Mxzr7J41B-SFVvaFX7DMOy4IAx'
-    },
-    // PROBLEMA: Requiere OAuth2 para subir archivos, solo API Key no es suficiente
-    enabled: false
-};
-
 // Configuración de la aplicación
 export const APP_CONFIG = {
     currency: 'ARS',
     dateFormat: 'es-AR',
-    useGoogleDrive: false, // Desactivado - usando sistema Base64 en Firestore
     // Sistema de administradores dinámico (solo Firestore)
     adminSystem: {
         cacheExpiry: 5 * 60 * 1000, // Cache por 5 minutos
