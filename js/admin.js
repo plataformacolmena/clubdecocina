@@ -965,7 +965,7 @@ class AdminManager {
         try {
             const cursosQuery = query(
                 collection(db, 'cursos'),
-                orderBy('fecha', 'desc')
+                orderBy('fechaHora', 'desc')
             );
             
             const snapshot = await getDocs(cursosQuery);
@@ -976,12 +976,13 @@ class AdminManager {
                 cursos.push({
                     id: doc.id,
                     nombre: data.nombre || '',
-                    fecha: data.fecha || '',
+                    fecha: data.fechaHora ? data.fechaHora.toDate().toISOString() : '',
                     horario: data.horario || '',
-                    precio: data.precio || 0,
-                    cupos: data.cupos || 0,
+                    precio: data.costo || 0,
+                    cupos: data.capacidadMaxima || 0,
+                    inscriptos: data.inscriptos || 0,
                     instructor: data.instructor || '',
-                    sede: data.sede || '',
+                    sede: data.ubicacion || '',
                     estado: data.estado || 'activo',
                     descripcion: data.descripcion || '',
                     fechaCreacion: data.fechaCreacion ? data.fechaCreacion.toDate().toISOString() : '',
