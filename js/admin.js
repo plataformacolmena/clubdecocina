@@ -551,6 +551,10 @@ class AdminManager {
             }
         });
 
+        document.getElementById('sincronizar-sheet-btn')?.addEventListener('click', async () => {
+            await this.handleSincronizarSheet();
+        });
+
         document.getElementById('nueva-receta-btn')?.addEventListener('click', () => {
             this.showRecetaModal();
         });
@@ -856,6 +860,216 @@ class AdminManager {
         } catch (error) {
             console.error('Error removiendo admin:', error);
             window.authManager?.showMessage('Error: ' + error.message, 'error');
+        }
+    }
+
+    async handleSincronizarSheet() {
+        try {
+            // Mostrar confirmación
+            if (!confirm('¿Deseas sincronizar todos los datos con Google Sheets?\n\nEsto creará/actualizará el libro "Registros Club de Cocina" con los datos actuales de cursos e inscripciones.')) {
+                return;
+            }
+
+            // Mostrar loading
+            const loadingEl = document.createElement('div');
+            loadingEl.className = 'admin__loading-sync';
+            loadingEl.innerHTML = `
+                <div class="loading-sync">
+                    <div class="loading-sync__spinner"></div>
+                    <p>Sincronizando con Google Sheets...</p>
+                    <small>Esto puede tomar unos momentos</small>
+                </div>
+            `;
+            document.body.appendChild(loadingEl);
+
+            // Deshabilitar botón temporalmente
+            const btn = document.getElementById('sincronizar-sheet-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
+
+            // Obtener datos de Firestore
+            const [cursosData, inscripcionesData] = await Promise.all([
+                this.obtenerCursosParaSheet(),
+                this.obtenerInscripcionesParaSheet()
+            ]);
+
+            // Ejecutar sincronización usando el Apps Script existente
+            const resultado = await this.enviarDatosAlAppsScript({
+                tipo: 'sincronizar_sheets',
+                cursos: cursosData,
+                inscripciones: inscripcionesData,
+                nombreLibro: 'Registros Club de Cocina'
+            });
+
+            // Remover loading
+            document.body.removeChild(loadingEl);
+
+            // Restaurar botón
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-table"></i> Sincronizar a Sheet';
+
+            if (resultado.success) {
+                // Mostrar resultado exitoso
+                let mensaje = 'Sincronización completada exitosamente!\n\n';
+                
+                if (resultado.cursosSync?.registros) {
+                    mensaje += `📚 Cursos: ${resultado.cursosSync.registros} registros\n`;
+                }
+                if (resultado.inscripcionesSync?.registros) {
+                    mensaje += `👥 Inscripciones: ${resultado.inscripcionesSync.registros} registros\n`;
+                }
+                
+                if (resultado.spreadsheetUrl) {
+                    mensaje += '\n¿Deseas abrir el libro de Google Sheets?';
+                    if (confirm(mensaje)) {
+                        window.open(resultado.spreadsheetUrl, '_blank');
+                    }
+                } else {
+                    alert(mensaje);
+                }
+
+                window.authManager?.showMessage('Datos sincronizados con Google Sheets', 'success');
+
+            } else {
+                // Mostrar error
+                let errorMsg = 'Error en la sincronización:\n' + (resultado.error || 'Error desconocido');
+                
+                if (resultado.error?.includes('Apps Script no configurado')) {
+                    errorMsg += '\n\nVe a Configuración → Apps Script para configurar la URL.';
+                }
+                
+                alert(errorMsg);
+                window.authManager?.showMessage('Error sincronizando con Google Sheets', 'error');
+            }
+
+        } catch (error) {
+            // Limpiar UI en caso de error
+            const loadingEl = document.querySelector('.admin__loading-sync');
+            if (loadingEl) {
+                document.body.removeChild(loadingEl);
+            }
+
+            const btn = document.getElementById('sincronizar-sheet-btn');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-table"></i> Sincronizar a Sheet';
+            }
+
+            console.error('Error en handleSincronizarSheet:', error);
+            alert('Error inesperado durante la sincronización:\n' + error.message);
+            window.authManager?.showMessage('Error en sincronización', 'error');
+        }
+    }
+
+    async obtenerCursosParaSheet() {
+        try {
+            const cursosQuery = query(
+                collection(db, 'cursos'),
+                orderBy('fecha', 'desc')
+            );
+            
+            const snapshot = await getDocs(cursosQuery);
+            const cursos = [];
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                cursos.push({
+                    id: doc.id,
+                    nombre: data.nombre || '',
+                    fecha: data.fecha || '',
+                    horario: data.horario || '',
+                    precio: data.precio || 0,
+                    cupos: data.cupos || 0,
+                    instructor: data.instructor || '',
+                    sede: data.sede || '',
+                    estado: data.estado || 'activo',
+                    descripcion: data.descripcion || '',
+                    fechaCreacion: data.fechaCreacion ? data.fechaCreacion.toDate().toISOString() : '',
+                    fechaActualizacion: data.fechaActualizacion ? data.fechaActualizacion.toDate().toISOString() : ''
+                });
+            });
+
+            console.log(`📚 ${cursos.length} cursos obtenidos para sincronización`);
+            return cursos;
+
+        } catch (error) {
+            console.error('❌ Error obteniendo cursos:', error);
+            return [];
+        }
+    }
+
+    async obtenerInscripcionesParaSheet() {
+        try {
+            const inscripcionesQuery = query(
+                collection(db, 'inscripciones'),
+                orderBy('fechaInscripcion', 'desc')
+            );
+            
+            const snapshot = await getDocs(inscripcionesQuery);
+            const inscripciones = [];
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                inscripciones.push({
+                    id: doc.id,
+                    cursoId: data.cursoId || '',
+                    usuarioNombre: data.usuarioNombre || '',
+                    usuarioEmail: data.usuarioEmail || '',
+                    telefono: data.telefono || '',
+                    estado: data.estado || 'pendiente',
+                    fechaInscripcion: data.fechaInscripcion ? data.fechaInscripcion.toDate().toISOString() : '',
+                    metodoPago: data.metodoPago || '',
+                    montoAbonado: data.montoAbonado || 0,
+                    comprobante: data.comprobante ? 'Adjunto' : 'Sin comprobante',
+                    fechaConfirmacion: data.fechaConfirmacion ? data.fechaConfirmacion.toDate().toISOString() : '',
+                    notas: data.notas || ''
+                });
+            });
+
+            console.log(`👥 ${inscripciones.length} inscripciones obtenidas para sincronización`);
+            return inscripciones;
+
+        } catch (error) {
+            console.error('❌ Error obteniendo inscripciones:', error);
+            return [];
+        }
+    }
+
+    async enviarDatosAlAppsScript(payload) {
+        try {
+            // Obtener URL del Apps Script desde configuración
+            const configDoc = await getDoc(doc(db, 'configuraciones', 'apps_script'));
+            if (!configDoc.exists() || !configDoc.data().activo) {
+                throw new Error('Apps Script no configurado. Configure la URL en Configuración.');
+            }
+
+            const scriptUrl = configDoc.data().url;
+            
+            console.log('🔄 Enviando datos al Apps Script:', scriptUrl);
+
+            const response = await fetch(scriptUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain', // Para evitar preflight CORS
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('✅ Respuesta del Apps Script:', result);
+            
+            return result;
+
+        } catch (error) {
+            console.error('❌ Error comunicándose con Apps Script:', error);
+            return {
+                success: false,
+                error: error.message
+            };
         }
     }
 

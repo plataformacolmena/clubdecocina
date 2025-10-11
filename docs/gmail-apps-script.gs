@@ -109,8 +109,12 @@ function doPost(e) {
         resultado = enviarEmailTest(datos);
         break;
         
+      case 'sincronizar_sheets':
+        resultado = sincronizarConGoogleSheets(datos);
+        break;
+        
       default:
-        throw new Error(`Tipo de email no reconocido: ${tipoEmail}`);
+        throw new Error(`Tipo de operación no reconocido: ${tipoEmail}`);
     }
     
     console.log('Email procesado exitosamente:', resultado);
@@ -904,4 +908,389 @@ function testEmailManual() {
     console.error('❌ Error en test manual:', error);
     return { success: false, error: error.toString() };
   }
+}
+
+// ============================================================================
+// FUNCIONES DE GOOGLE SHEETS
+// ============================================================================
+
+/**
+ * Sincronizar datos con Google Sheets
+ */
+function sincronizarConGoogleSheets(datos) {
+  console.log('📊 === SINCRONIZACIÓN GOOGLE SHEETS ===');
+  console.log('Datos recibidos:', JSON.stringify(datos, null, 2));
+  
+  try {
+    const nombreLibro = datos.nombreLibro || 'Registros Club de Cocina';
+    
+    // 1. Verificar/crear el libro de Google Sheets
+    const spreadsheetResult = verificarOCrearLibro(nombreLibro);
+    if (!spreadsheetResult.success) {
+      throw new Error('No se pudo crear/acceder al libro de Google Sheets: ' + spreadsheetResult.error);
+    }
+    
+    const spreadsheetId = spreadsheetResult.spreadsheetId;
+    console.log('📚 Libro verificado/creado:', spreadsheetId);
+    
+    // 2. Sincronizar cursos
+    let cursosResult = { success: true, registros: 0 };
+    if (datos.cursos && datos.cursos.length > 0) {
+      cursosResult = sincronizarCursos(spreadsheetId, datos.cursos);
+    }
+    
+    // 3. Sincronizar inscripciones
+    let inscripcionesResult = { success: true, registros: 0 };
+    if (datos.inscripciones && datos.inscripciones.length > 0) {
+      inscripcionesResult = sincronizarInscripciones(spreadsheetId, datos.inscripciones);
+    }
+    
+    const resultado = {
+      success: true,
+      spreadsheetId: spreadsheetId,
+      spreadsheetUrl: `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`,
+      cursosSync: cursosResult,
+      inscripcionesSync: inscripcionesResult,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('✅ Sincronización completada:', resultado);
+    return resultado;
+    
+  } catch (error) {
+    console.error('❌ Error en sincronización Google Sheets:', error);
+    return {
+      success: false,
+      error: error.toString(),
+      timestamp: new Date().toISOString()
+    };
+  }
+}
+
+/**
+ * Verificar si existe el libro o crearlo
+ */
+function verificarOCrearLibro(nombreLibro) {
+  try {
+    console.log('📚 Verificando libro:', nombreLibro);
+    
+    // Buscar libro existente
+    const files = DriveApp.getFilesByName(nombreLibro);
+    let spreadsheet;
+    
+    if (files.hasNext()) {
+      // Libro encontrado
+      const file = files.next();
+      spreadsheet = SpreadsheetApp.openById(file.getId());
+      console.log('📖 Libro encontrado:', file.getId());
+      
+      // Verificar hojas
+      verificarHojas(spreadsheet, ['Cursos', 'Inscripciones']);
+    } else {
+      // Crear nuevo libro
+      spreadsheet = SpreadsheetApp.create(nombreLibro);
+      console.log('📝 Libro creado:', spreadsheet.getId());
+      
+      // Crear hojas
+      crearHojas(spreadsheet, ['Cursos', 'Inscripciones']);
+    }
+    
+    return {
+      success: true,
+      spreadsheetId: spreadsheet.getId(),
+      spreadsheetUrl: spreadsheet.getUrl(),
+      mensaje: 'Libro verificado/creado exitosamente'
+    };
+    
+  } catch (error) {
+    console.error('❌ Error verificando/creando libro:', error);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Verificar y crear hojas necesarias
+ */
+function verificarHojas(spreadsheet, hojasRequeridas) {
+  const hojasExistentes = spreadsheet.getSheets().map(sheet => sheet.getName());
+  
+  hojasRequeridas.forEach(nombreHoja => {
+    if (!hojasExistentes.includes(nombreHoja)) {
+      const nuevaHoja = spreadsheet.insertSheet(nombreHoja);
+      console.log('📄 Hoja creada:', nombreHoja);
+      configurarEncabezados(nuevaHoja, nombreHoja);
+    }
+  });
+  
+  // Eliminar hoja por defecto si existe y está vacía
+  try {
+    const hojaDefecto = spreadsheet.getSheetByName('Hoja 1');
+    if (hojaDefecto && spreadsheet.getSheets().length > 1) {
+      spreadsheet.deleteSheet(hojaDefecto);
+    }
+  } catch (e) {
+    // Hoja por defecto no existe o no se puede eliminar
+  }
+}
+
+/**
+ * Crear hojas iniciales
+ */
+function crearHojas(spreadsheet, hojas) {
+  // Eliminar hoja por defecto
+  const hojaDefecto = spreadsheet.getSheets()[0];
+  
+  hojas.forEach((nombreHoja, index) => {
+    let hoja;
+    if (index === 0) {
+      // Renombrar la primera hoja
+      hoja = hojaDefecto;
+      hoja.setName(nombreHoja);
+    } else {
+      // Crear nuevas hojas
+      hoja = spreadsheet.insertSheet(nombreHoja);
+    }
+    
+    configurarEncabezados(hoja, nombreHoja);
+  });
+}
+
+/**
+ * Configurar encabezados de las hojas
+ */
+function configurarEncabezados(hoja, nombreHoja) {
+  let encabezados;
+  
+  if (nombreHoja === 'Cursos') {
+    encabezados = [
+      'ID', 'Nombre', 'Fecha', 'Horario', 'Precio', 'Cupos',
+      'Instructor', 'Sede', 'Estado', 'Descripción',
+      'Fecha Creación', 'Fecha Actualización'
+    ];
+  } else if (nombreHoja === 'Inscripciones') {
+    encabezados = [
+      'ID', 'Curso ID', 'Nombre Alumno', 'Email', 'Teléfono',
+      'Estado', 'Fecha Inscripción', 'Método Pago', 'Monto Abonado',
+      'Comprobante', 'Fecha Confirmación', 'Notas'
+    ];
+  }
+  
+  if (encabezados) {
+    // Establecer encabezados
+    hoja.getRange(1, 1, 1, encabezados.length).setValues([encabezados]);
+    
+    // Formatear encabezados
+    const headerRange = hoja.getRange(1, 1, 1, encabezados.length);
+    headerRange.setBackground('#4285f4');
+    headerRange.setFontColor('#ffffff');
+    headerRange.setFontWeight('bold');
+    headerRange.setFontSize(11);
+    
+    // Autoajustar columnas
+    hoja.autoResizeColumns(1, encabezados.length);
+    
+    // Congelar fila de encabezados
+    hoja.setFrozenRows(1);
+  }
+}
+
+/**
+ * Sincronizar cursos
+ */
+function sincronizarCursos(spreadsheetId, cursosData) {
+  try {
+    console.log('📚 Sincronizando cursos...');
+    
+    const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    const hoja = spreadsheet.getSheetByName('Cursos');
+    
+    if (!hoja) {
+      throw new Error('Hoja "Cursos" no encontrada');
+    }
+    
+    // Limpiar datos existentes (mantener encabezados)
+    const lastRow = hoja.getLastRow();
+    if (lastRow > 1) {
+      hoja.getRange(2, 1, lastRow - 1, hoja.getLastColumn()).clearContent();
+    }
+    
+    // Preparar datos para insertar
+    const datosParaInsertar = cursosData.map(curso => [
+      curso.id,
+      curso.nombre,
+      curso.fecha,
+      curso.horario,
+      curso.precio,
+      curso.cupos,
+      curso.instructor,
+      curso.sede,
+      curso.estado,
+      curso.descripcion,
+      curso.fechaCreacion,
+      curso.fechaActualizacion
+    ]);
+    
+    // Insertar datos
+    if (datosParaInsertar.length > 0) {
+      hoja.getRange(2, 1, datosParaInsertar.length, datosParaInsertar[0].length)
+           .setValues(datosParaInsertar);
+      
+      // Formatear datos
+      formatearHojaCursos(hoja, datosParaInsertar.length);
+    }
+    
+    console.log('✅ Cursos sincronizados:', datosParaInsertar.length);
+    
+    return {
+      success: true,
+      registros: datosParaInsertar.length,
+      mensaje: 'Cursos sincronizados exitosamente'
+    };
+    
+  } catch (error) {
+    console.error('❌ Error sincronizando cursos:', error);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Sincronizar inscripciones
+ */
+function sincronizarInscripciones(spreadsheetId, inscripcionesData) {
+  try {
+    console.log('👥 Sincronizando inscripciones...');
+    
+    const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    const hoja = spreadsheet.getSheetByName('Inscripciones');
+    
+    if (!hoja) {
+      throw new Error('Hoja "Inscripciones" no encontrada');
+    }
+    
+    // Limpiar datos existentes (mantener encabezados)
+    const lastRow = hoja.getLastRow();
+    if (lastRow > 1) {
+      hoja.getRange(2, 1, lastRow - 1, hoja.getLastColumn()).clearContent();
+    }
+    
+    // Preparar datos para insertar
+    const datosParaInsertar = inscripcionesData.map(inscripcion => [
+      inscripcion.id,
+      inscripcion.cursoId,
+      inscripcion.usuarioNombre,
+      inscripcion.usuarioEmail,
+      inscripcion.telefono,
+      inscripcion.estado,
+      inscripcion.fechaInscripcion,
+      inscripcion.metodoPago,
+      inscripcion.montoAbonado,
+      inscripcion.comprobante,
+      inscripcion.fechaConfirmacion,
+      inscripcion.notas
+    ]);
+    
+    // Insertar datos
+    if (datosParaInsertar.length > 0) {
+      hoja.getRange(2, 1, datosParaInsertar.length, datosParaInsertar[0].length)
+           .setValues(datosParaInsertar);
+      
+      // Formatear datos
+      formatearHojaInscripciones(hoja, datosParaInsertar.length);
+    }
+    
+    console.log('✅ Inscripciones sincronizadas:', datosParaInsertar.length);
+    
+    return {
+      success: true,
+      registros: datosParaInsertar.length,
+      mensaje: 'Inscripciones sincronizadas exitosamente'
+    };
+    
+  } catch (error) {
+    console.error('❌ Error sincronizando inscripciones:', error);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Formatear hoja de cursos
+ */
+function formatearHojaCursos(hoja, numFilas) {
+  if (numFilas === 0) return;
+  
+  // Formatear precios (columna E)
+  const precioRange = hoja.getRange(2, 5, numFilas, 1);
+  precioRange.setNumberFormat('#,##0');
+  
+  // Formatear fechas (columna C)
+  const fechaRange = hoja.getRange(2, 3, numFilas, 1);
+  fechaRange.setNumberFormat('dd/mm/yyyy');
+  
+  // Alternar colores de filas
+  for (let i = 2; i <= numFilas + 1; i++) {
+    if (i % 2 === 0) {
+      hoja.getRange(i, 1, 1, hoja.getLastColumn()).setBackground('#f8f9fa');
+    }
+  }
+  
+  // Aplicar bordes
+  const dataRange = hoja.getRange(1, 1, numFilas + 1, hoja.getLastColumn());
+  dataRange.setBorder(true, true, true, true, true, true);
+}
+
+/**
+ * Formatear hoja de inscripciones
+ */
+function formatearHojaInscripciones(hoja, numFilas) {
+  if (numFilas === 0) return;
+  
+  // Formatear montos (columna I)
+  const montoRange = hoja.getRange(2, 9, numFilas, 1);
+  montoRange.setNumberFormat('#,##0');
+  
+  // Formatear fechas (columnas G y K)
+  const fechaInscripcionRange = hoja.getRange(2, 7, numFilas, 1);
+  fechaInscripcionRange.setNumberFormat('dd/mm/yyyy hh:mm');
+  
+  const fechaConfirmacionRange = hoja.getRange(2, 11, numFilas, 1);
+  fechaConfirmacionRange.setNumberFormat('dd/mm/yyyy hh:mm');
+  
+  // Colorear por estado (columna F)
+  for (let i = 2; i <= numFilas + 1; i++) {
+    const estadoCell = hoja.getRange(i, 6);
+    const estado = estadoCell.getValue();
+    
+    switch (estado) {
+      case 'confirmada':
+        estadoCell.setBackground('#d4edda').setFontColor('#155724');
+        break;
+      case 'pendiente':
+        estadoCell.setBackground('#fff3cd').setFontColor('#856404');
+        break;
+      case 'cancelada':
+        estadoCell.setBackground('#f8d7da').setFontColor('#721c24');
+        break;
+    }
+    
+    // Alternar colores de filas
+    if (i % 2 === 0) {
+      const rowRange = hoja.getRange(i, 1, 1, hoja.getLastColumn());
+      if (rowRange.getBackground() === '#ffffff') {
+        rowRange.setBackground('#f8f9fa');
+      }
+    }
+  }
+  
+  // Aplicar bordes
+  const dataRange = hoja.getRange(1, 1, numFilas + 1, hoja.getLastColumn());
+  dataRange.setBorder(true, true, true, true, true, true);
 }
