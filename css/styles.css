@@ -225,6 +225,13 @@ body {
     display: none;
 }
 
+/* Ocultar botones de Microsoft */
+#microsoft-login,
+#microsoft-register,
+.btn--microsoft {
+    display: none !important;
+}
+
 /* Sections */
 .section {
     padding: 4rem 0;
