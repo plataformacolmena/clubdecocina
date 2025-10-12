@@ -1604,6 +1604,25 @@ body {
         opacity: 1 !important;
     }
     
+    /* Mejorar espaciado en móvil para navegación */
+    .nav__list .nav__item {
+        text-align: center;
+        padding: 0.5rem 0;
+    }
+    
+    .nav__list .nav__link {
+        display: block;
+        padding: 0.75rem 1rem;
+        border-radius: var(--border-radius);
+        transition: all 0.3s ease;
+    }
+    
+    .nav__list .nav__link:hover,
+    .nav__list .nav__link.active {
+        background-color: var(--light-gray);
+        color: var(--primary-color);
+    }
+    
     /* Botón menú hamburguesa - oculto por ahora para simplicidad */
     .menu-toggle {
         display: none;

@@ -437,6 +437,7 @@ class AuthManager {
         const userName = document.getElementById('user-name');
         const userSections = document.querySelectorAll('.user-section');
         const adminSections = document.querySelectorAll('.admin-section');
+        const guestSections = document.querySelectorAll('.guest-section');
         
         if (isLoggedIn) {
             loginBtn?.classList.add('hidden');
@@ -451,6 +452,11 @@ class AuthManager {
             // Mostrar secciones de admin si es administrador
             adminSections.forEach(section => {
                 section.style.display = this.isAdmin ? 'block' : 'none';
+            });
+            
+            // Ocultar secciones de invitado
+            guestSections.forEach(section => {
+                section.style.display = 'none';
             });
             
             // Ocultar la sección home y mostrar cursos por defecto
@@ -471,6 +477,11 @@ class AuthManager {
             
             adminSections.forEach(section => {
                 section.style.display = 'none';
+            });
+            
+            // Mostrar secciones de invitado
+            guestSections.forEach(section => {
+                section.style.display = 'block';
             });
             
             // Mostrar solo la sección home
