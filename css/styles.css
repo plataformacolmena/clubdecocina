@@ -1558,62 +1558,55 @@ body {
     }
     
     .nav__auth {
+        display: flex !important;
         justify-content: center;
         width: 100%;
+        margin-top: 1rem;
+        padding: 1rem 0;
+        border-top: 1px solid var(--border-color);
     }
     
     .user-menu {
+        display: flex !important;
         justify-content: center;
         flex-wrap: wrap;
         gap: 0.5rem;
+        align-items: center;
     }
     
     #user-name {
         font-weight: 500;
         color: var(--text-dark);
+        background-color: var(--light-gray);
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        margin-right: 0.5rem;
     }
     
     #logout-btn {
-        margin-top: 0.5rem;
+        margin-top: 0;
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
     }
     
     /* Asegurar que login-btn también se vea bien en móvil */
     #login-btn {
         width: auto;
         min-width: 140px;
+        display: block !important;
     }
     
-    /* Botón menú hamburguesa */
+    /* Forzar visibilidad de elementos de auth en móvil */
+    #user-menu:not(.hidden),
+    #login-btn:not(.hidden) {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Botón menú hamburguesa - oculto por ahora para simplicidad */
     .menu-toggle {
-        display: block;
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        color: var(--primary-color);
-        cursor: pointer;
-        padding: 0.5rem;
-        margin-left: auto;
-    }
-    
-    /* Menú móvil colapsable */
-    .nav__menu {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background-color: var(--white);
-        box-shadow: var(--shadow);
-        transform: translateY(-10px);
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-        z-index: 1000;
-    }
-    
-    .nav__menu--active {
-        transform: translateY(0);
-        opacity: 1;
-        visibility: visible;
+        display: none;
     }
     
     .home .container {
