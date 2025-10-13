@@ -368,10 +368,18 @@ class InscripcionesManager {
             throw new Error('ARCHIVO_MUY_GRANDE|Archivo muy grande: máximo 1MB permitido. Reduzca el tamaño de la imagen o conviértala a JPG con menor calidad.');
         }
 
-        // Validar tipo de archivo
+        // Validar tipo de archivo (MIME type y extensión)
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf'];
+        
         if (!allowedTypes.includes(file.type)) {
             throw new Error('FORMATO_NO_VALIDO|Formato no válido: solo se permiten imágenes JPG, PNG, GIF, WebP o archivos PDF.');
+        }
+        
+        // Validación adicional de extensión
+        const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+        if (!allowedExtensions.includes(fileExtension)) {
+            throw new Error('FORMATO_NO_VALIDO|Extensión de archivo no válida. Solo: .jpg, .png, .gif, .webp, .pdf');
         }
 
         console.log(`📤 Convirtiendo archivo ${file.name} (${(file.size / 1024).toFixed(1)}KB) a Base64...`);

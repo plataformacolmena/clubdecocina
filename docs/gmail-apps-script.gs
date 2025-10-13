@@ -49,9 +49,34 @@ const CONFIG = {
 // FUNCIONES PRINCIPALES (ENDPOINTS)
 // ============================================================================
 
+// Rate limiting simple (en memoria)
+const rateLimitCache = {};
+const RATE_LIMIT_REQUESTS = 10; // máximo 10 requests por minuto
+const RATE_LIMIT_WINDOW = 60000; // 1 minuto
+
+function checkRateLimit(clientId) {
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW;
+  
+  if (!rateLimitCache[clientId]) {
+    rateLimitCache[clientId] = [];
+  }
+  
+  // Limpiar requests antiguas
+  rateLimitCache[clientId] = rateLimitCache[clientId].filter(time => time > windowStart);
+  
+  // Verificar límite
+  if (rateLimitCache[clientId].length >= RATE_LIMIT_REQUESTS) {
+    return false;
+  }
+  
+  // Agregar request actual
+  rateLimitCache[clientId].push(now);
+  return true;
+}
+
 /**
- * Manejar peticiones POST (endpoint principal)
- * Maneja tanto application/json como text/plain para evitar preflight CORS
+ * Endpoint principal que maneja todas las requests
  */
 function doPost(e) {
   // Log de debugging
@@ -62,6 +87,15 @@ function doPost(e) {
   
   try {
     // Parsear datos de la petición
+    // Rate limiting básico
+    const clientId = e.parameter?.source || 'unknown';
+    if (!checkRateLimit(clientId)) {
+      return createCORSResponse({ 
+        success: false, 
+        error: 'Rate limit exceeded. Max 10 requests per minute.' 
+      }, 429);
+    }
+    
     if (!e?.postData?.contents) {
       throw new Error('No se recibieron datos en la petición');
     }

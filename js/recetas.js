@@ -334,14 +334,21 @@ class RecetasManager {
     createCommentHTML(comment) {
         const fecha = new Date(comment.fecha.seconds * 1000).toLocaleDateString('es-AR');
         
+        // Función para escapar HTML y prevenir XSS
+        const escapeHtml = (text) => {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        };
+        
         return `
             <div class="comment">
                 <div class="comment-header">
-                    <strong>${comment.usuarioNombre}</strong>
+                    <strong>${escapeHtml(comment.usuarioNombre)}</strong>
                     <span class="comment-date">${fecha}</span>
                 </div>
                 <div class="comment-content">
-                    <p>${comment.texto}</p>
+                    <p>${escapeHtml(comment.texto)}</p>
                 </div>
             </div>
         `;
