@@ -1031,7 +1031,7 @@ class ConfiguracionManager {
                     1. Redespliega el Apps Script como "Web App"<br>
                     2. Configura acceso como "Cualquier persona"<br>
                     3. Verifica que la URL termine en /exec<br>
-                    4. Consulta la guía: <a href="docs/CORS-TROUBLESHOOTING.md" target="_blank">CORS Troubleshooting</a>
+                    4. Consulta la guía completa en el README.md (sección Troubleshooting)
                 `);
             } else if (error.message.includes('CORS')) {
                 this.showError(`
