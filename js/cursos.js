@@ -260,10 +260,6 @@ class CursosManager {
                             </button>
                         `
                     ) : ''}
-                    <button class="btn btn--outline ver-detalles-btn" data-curso-id="${curso.id}">
-                        <i class="fas fa-info-circle"></i>
-                        Ver Detalles
-                    </button>
                 </div>
             </div>
         `;
