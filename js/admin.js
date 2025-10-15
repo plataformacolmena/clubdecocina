@@ -1358,6 +1358,12 @@ class AdminManager {
     }
 
     switchTab(tabId) {
+        // Limpiar managers de pestañas anteriores
+        if (tabId !== 'cuentas-admin' && this.contabilidadManager) {
+            this.contabilidadManager.destroy();
+            this.contabilidadManager = null;
+        }
+
         // Actualizar botones activos
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('active');

@@ -124,52 +124,63 @@ export class ContabilidadManager {
 
     async loadContabilidad() {
         try {
-            console.log('📊 Cargando datos de contabilidad...');
+            console.log('📊 Configurando contabilidad con snapshots en tiempo real...');
             window.authManager?.showLoading();
 
-            // Cargar movimientos
+            // Configurar snapshot para movimientos (esto también renderiza la tabla)
             await this.loadMovimientos();
-            
-            // Calcular estadísticas
-            await this.updateFinancialStats();
-            
-            // Renderizar tabla
-            this.renderMovimientosTable();
 
-            console.log('✅ Contabilidad cargada correctamente');
+            console.log('✅ Contabilidad configurada con actualizaciones en tiempo real');
 
         } catch (error) {
-            console.error('❌ Error cargando contabilidad:', error);
-            window.authManager?.showMessage('Error al cargar contabilidad', 'error');
+            console.error('❌ Error configurando contabilidad:', error);
+            window.authManager?.showMessage('Error al configurar contabilidad', 'error');
         } finally {
             window.authManager?.hideLoading();
         }
     }
 
-    async loadMovimientos() {
+    setupMovimientosSnapshot() {
         try {
             const movimientosRef = collection(db, 'movimientos');
             const q = query(movimientosRef, orderBy('fecha', 'desc'));
-            const snapshot = await getDocs(q);
             
-            this.movimientos = [];
-            snapshot.forEach((doc) => {
-                this.movimientos.push({ 
-                    id: doc.id, 
-                    ...doc.data(),
-                    // Convertir timestamp a Date si es necesario
-                    fecha: doc.data().fecha?.seconds ? 
-                        new Date(doc.data().fecha.seconds * 1000) : 
-                        new Date(doc.data().fecha)
+            // Configurar snapshot en tiempo real
+            this.movimientosUnsubscribe = onSnapshot(q, (snapshot) => {
+                console.log('🔄 Actualizando movimientos en tiempo real...');
+                
+                this.movimientos = [];
+                snapshot.forEach((doc) => {
+                    this.movimientos.push({ 
+                        id: doc.id, 
+                        ...doc.data(),
+                        // Convertir timestamp a Date si es necesario
+                        fecha: doc.data().fecha?.seconds ? 
+                            new Date(doc.data().fecha.seconds * 1000) : 
+                            new Date(doc.data().fecha)
+                    });
                 });
-            });
 
-            console.log(`📋 ${this.movimientos.length} movimientos cargados`);
+                console.log(`📋 ${this.movimientos.length} movimientos actualizados`);
+                
+                // Actualizar la tabla automáticamente
+                this.applyFilters();
+                this.updateFinancialStats();
+                
+            }, (error) => {
+                console.error('❌ Error en snapshot de movimientos:', error);
+                window.authManager?.showMessage('Error de conexión con contabilidad', 'error');
+            });
             
         } catch (error) {
-            console.error('Error cargando movimientos:', error);
+            console.error('Error configurando snapshot de movimientos:', error);
             throw error;
         }
+    }
+
+    async loadMovimientos() {
+        // Método mantenido para compatibilidad y carga inicial
+        this.setupMovimientosSnapshot();
     }
 
     async updateFinancialStats() {
@@ -333,7 +344,7 @@ export class ContabilidadManager {
             }
             
             this.hideMovimientoModal();
-            await this.loadContabilidad(); // Recargar datos
+            // Los datos se actualizarán automáticamente via snapshot
             
         } catch (error) {
             console.error('Error guardando movimiento:', error);
@@ -589,7 +600,7 @@ export class ContabilidadManager {
             await deleteDoc(doc(db, 'movimientos', movimientoId));
             
             window.authManager?.showMessage('Movimiento eliminado correctamente', 'success');
-            await this.loadContabilidad(); // Recargar datos
+            // Los datos se actualizarán automáticamente via snapshot
             
         } catch (error) {
             console.error('Error eliminando movimiento:', error);
@@ -620,6 +631,18 @@ export class ContabilidadManager {
             
         } catch (error) {
             console.error('❌ Error registrando ingreso automático:', error);
+        }
+    }
+
+    // Método para limpiar listeners y desuscribirse de snapshots
+    destroy() {
+        try {
+            if (this.movimientosUnsubscribe) {
+                this.movimientosUnsubscribe();
+                console.log('✅ Snapshot de movimientos desuscrito');
+            }
+        } catch (error) {
+            console.error('Error al desuscribir snapshots:', error);
         }
     }
 }
