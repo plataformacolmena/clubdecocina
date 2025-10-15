@@ -7,6 +7,7 @@ import AdminManager from './admin.js';
 import NotasManager from './notas.js';
 import ConfiguracionManager from './configuracion.js';
 import ConfiguracionesInitializer from './init-configuraciones.js';
+import { systemLogger } from './system-logger.js';
 
 class App {
     constructor() {

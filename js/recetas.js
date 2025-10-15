@@ -1,5 +1,6 @@
 // Módulo de gestión de recetas
 import { db } from './firebase-config.js';
+import { systemLogger } from './system-logger.js';
 import {
     collection,
     addDoc,
@@ -381,9 +382,25 @@ class RecetasManager {
             await this.loadComentarios();
             this.renderRecetas();
 
+            // Logging de comentario agregado
+            const receta = this.recetas.find(r => r.id === recetaId);
+            await systemLogger.logRecipe('recipe_comment_added', {
+                recetaId: recetaId,
+                recetaTitulo: receta?.titulo,
+                comentarioTexto: commentText.substring(0, 100), // Primeros 100 caracteres
+                success: true
+            });
+
         } catch (error) {
             console.error('Error adding comment:', error);
             window.authManager.showMessage('Error al agregar comentario', 'error');
+            
+            // Logging de error en comentario
+            await systemLogger.logRecipe('recipe_comment_error', {
+                recetaId: recetaId,
+                error: error.message,
+                success: false
+            });
         }
     }
 
@@ -423,9 +440,25 @@ class RecetasManager {
             // Re-renderizar solo esta receta
             this.renderRecetas();
 
+            // Logging de acción de like
+            await systemLogger.logRecipe(userLiked ? 'recipe_unlike' : 'recipe_like', {
+                recetaId: recetaId,
+                recetaTitulo: receta.titulo,
+                accion: userLiked ? 'unlike' : 'like',
+                totalLikes: receta.likes ? receta.likes.length : 0,
+                success: true
+            });
+
         } catch (error) {
             console.error('Error toggling like:', error);
             window.authManager.showMessage('Error al procesar like', 'error');
+            
+            // Logging de error
+            await systemLogger.logRecipe('recipe_like_error', {
+                recetaId: recetaId,
+                error: error.message,
+                success: false
+            });
         }
     }
 

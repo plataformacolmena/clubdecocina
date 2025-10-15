@@ -1,5 +1,6 @@
 // Módulo de administración
 import { db, APP_CONFIG, auth } from './firebase-config.js';
+import { systemLogger } from './system-logger.js';
 import {
     collection,
     addDoc,
@@ -2106,7 +2107,21 @@ class AdminManager {
         try {
             window.authManager.showLoading();
             
+            // Obtener datos de la inscripción antes de eliminarla
+            const inscripcion = this.inscripciones.find(i => i.id === inscripcionId);
+            
             await deleteDoc(doc(db, 'inscripciones', inscripcionId));
+            
+            // Logging de eliminación de inscripción
+            await this.logSystemAction('delete_inscription', {
+                inscripcionId: inscripcionId,
+                usuarioEmail: inscripcion?.usuarioEmail,
+                usuarioNombre: inscripcion?.usuarioNombre,
+                cursoId: inscripcion?.cursoId,
+                cursoNombre: inscripcion?.cursoNombre,
+                estadoAnterior: inscripcion?.estado,
+                success: true
+            });
             
             window.authManager.showMessage('Inscripción eliminada exitosamente', 'success');
             // Las actualizaciones se manejan automáticamente con onSnapshot
@@ -2114,6 +2129,13 @@ class AdminManager {
         } catch (error) {
             console.error('Error deleting inscripcion:', error);
             window.authManager.showMessage('Error al eliminar inscripción', 'error');
+            
+            // Logging de error en eliminación
+            await this.logSystemAction('delete_inscription_error', {
+                inscripcionId: inscripcionId,
+                error: error.message,
+                success: false
+            });
         } finally {
             window.authManager.hideLoading();
         }
@@ -2813,19 +2835,12 @@ class AdminManager {
     // Sistema de logging mejorado
     async logSystemAction(action, details = {}) {
         try {
-            const logEntry = {
-                action,
-                details,
-                timestamp: new Date(),
-                userEmail: auth.currentUser?.email || 'sistema',
-                userType: await window.authManager?.adminManager?.isUserAdmin(auth.currentUser?.email) ? 'admin' : 'alumno',
+            // Usar el sistema de logging centralizado
+            await systemLogger.logAdmin(action, {
+                ...details,
                 sessionId: this.getSessionId(),
-                userAgent: navigator.userAgent,
-                url: window.location.href
-            };
-
-            // Guardar en Firestore
-            await addDoc(collection(db, 'system_logs'), logEntry);
+                adminAction: true
+            });
             
             console.log(`📝 Acción registrada: ${action}`, details);
 

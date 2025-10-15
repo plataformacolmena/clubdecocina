@@ -1,5 +1,6 @@
 // Módulo de gestión de cursos
 import { db, APP_CONFIG } from './firebase-config.js';
+import { systemLogger } from './system-logger.js';
 import {
     collection,
     addDoc,
@@ -309,6 +310,17 @@ class CursosManager {
 
             const inscripcionRef = await addDoc(collection(db, 'inscripciones'), inscripcionData);
 
+            // Logging de inscripción exitosa
+            await systemLogger.logInscription('new_inscription', {
+                inscripcionId: inscripcionRef.id,
+                cursoId: cursoId,
+                cursoNombre: curso.nombre,
+                usuarioEmail: inscripcionData.usuarioEmail,
+                usuarioNombre: inscripcionData.usuarioNombre,
+                costo: curso.costo,
+                success: true
+            });
+
             // Ya no necesitamos actualizar manualmente el contador
             // El sistema ahora calcula dinámicamente los inscriptos activos
 
@@ -335,6 +347,14 @@ class CursosManager {
             this.mostrarInformacionPago(curso);
             
         } catch (error) {
+            // Logging de inscripción fallida
+            await systemLogger.logInscription('inscription_failed', {
+                cursoId: cursoId,
+                cursoNombre: curso?.nombre,
+                error: error.message,
+                success: false
+            });
+            
             console.error('Error en inscripción:', error);
             window.authManager.showMessage(error.message, 'error');
         } finally {

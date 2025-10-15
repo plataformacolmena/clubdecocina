@@ -1,5 +1,6 @@
 // Módulo de autenticación
 import { auth, db, APP_CONFIG } from './firebase-config.js';
+import { systemLogger } from './system-logger.js';
 import { 
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -314,9 +315,25 @@ class AuthManager {
         try {
             this.showLoading();
             await signInWithEmailAndPassword(auth, email, password);
+            
+            // Logging del login exitoso
+            await systemLogger.logAuth('login', {
+                email: email,
+                method: 'email_password',
+                success: true
+            });
+            
             this.hideLoginModal();
             this.showMessage('¡Bienvenido de vuelta!', 'success');
         } catch (error) {
+            // Logging del login fallido
+            await systemLogger.logAuth('login_failed', {
+                email: email,
+                method: 'email_password',
+                error: error.code || error.message,
+                success: false
+            });
+            
             this.handleAuthError(error);
         } finally {
             this.hideLoading();
@@ -349,9 +366,27 @@ class AuthManager {
             // Crear documento de usuario con información adicional
             await this.createUserDocument(userCredential.user, { phone });
             
+            // Logging del registro exitoso
+            await systemLogger.logAuth('register', {
+                email: email,
+                name: name,
+                method: 'email_password',
+                userId: userCredential.user.uid,
+                success: true
+            });
+            
             this.hideRegisterModal();
             this.showMessage('¡Cuenta creada exitosamente!', 'success');
         } catch (error) {
+            // Logging del registro fallido
+            await systemLogger.logAuth('register_failed', {
+                email: email,
+                name: name,
+                method: 'email_password',
+                error: error.code || error.message,
+                success: false
+            });
+            
             this.handleAuthError(error);
         } finally {
             this.hideLoading();
@@ -363,10 +398,27 @@ class AuthManager {
         
         try {
             this.showLoading();
-            await signInWithPopup(auth, provider);
+            const result = await signInWithPopup(auth, provider);
+            
+            // Logging del login con Google exitoso
+            await systemLogger.logAuth('login', {
+                email: result.user.email,
+                name: result.user.displayName,
+                method: 'google',
+                userId: result.user.uid,
+                success: true
+            });
+            
             this.hideAllModals();
             this.showMessage('¡Autenticación exitosa con Google!', 'success');
         } catch (error) {
+            // Logging del login con Google fallido
+            await systemLogger.logAuth('login_failed', {
+                method: 'google',
+                error: error.code || error.message,
+                success: false
+            });
+            
             this.handleAuthError(error);
         } finally {
             this.hideLoading();
@@ -378,10 +430,27 @@ class AuthManager {
         
         try {
             this.showLoading();
-            await signInWithPopup(auth, provider);
+            const result = await signInWithPopup(auth, provider);
+            
+            // Logging del login con Microsoft exitoso
+            await systemLogger.logAuth('login', {
+                email: result.user.email,
+                name: result.user.displayName,
+                method: 'microsoft',
+                userId: result.user.uid,
+                success: true
+            });
+            
             this.hideAllModals();
             this.showMessage('¡Autenticación exitosa con Microsoft!', 'success');
         } catch (error) {
+            // Logging del login con Microsoft fallido
+            await systemLogger.logAuth('login_failed', {
+                method: 'microsoft',
+                error: error.code || error.message,
+                success: false
+            });
+            
             this.handleAuthError(error);
         } finally {
             this.hideLoading();
@@ -390,9 +459,24 @@ class AuthManager {
 
     async logout() {
         try {
+            const userEmail = auth.currentUser?.email;
+            
             await signOut(auth);
+            
+            // Logging del logout exitoso
+            await systemLogger.logAuth('logout', {
+                email: userEmail,
+                success: true
+            });
+            
             this.showMessage('Sesión cerrada correctamente', 'success');
         } catch (error) {
+            // Logging del logout fallido
+            await systemLogger.logAuth('logout_failed', {
+                error: error.code || error.message,
+                success: false
+            });
+            
             this.showMessage('Error al cerrar sesión', 'error');
         }
     }

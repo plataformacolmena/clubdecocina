@@ -1,5 +1,6 @@
 // Módulo de gestión de notas con Kanban
 import { db, auth } from './firebase-config.js';
+import { systemLogger } from './system-logger.js';
 import {
     collection,
     addDoc,
@@ -442,16 +443,11 @@ class NotasManager {
 
     async logActivity(message) {
         try {
-            const user = auth.currentUser;
-            if (!user) return;
-
-            const logsRef = collection(db, 'logs');
-            await addDoc(logsRef, {
-                message: `[NOTAS] ${message}`,
-                type: 'notas',
-                userId: user.uid,
-                userName: user.displayName || user.email,
-                timestamp: serverTimestamp()
+            // Usar el sistema centralizado de logging
+            await systemLogger.logNotes('note_action', { 
+                message: message,
+                userId: auth.currentUser?.uid,
+                userName: auth.currentUser?.displayName || auth.currentUser?.email
             });
         } catch (error) {
             console.error('Error registrando actividad:', error);
