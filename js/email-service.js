@@ -47,33 +47,57 @@ class EmailService {
      */
     async loadConfigurations() {
         try {
-            // Cargar configuración de Apps Script
-            const scriptDoc = await getDoc(doc(db, 'configuraciones', 'apps_script'));
-            if (scriptDoc.exists()) {
-                this.scriptConfig = scriptDoc.data();
+            // Verificar si el usuario es admin antes de cargar configuraciones admin
+            const isAdmin = window.authManager && window.authManager.isAdmin;
+            
+            if (isAdmin) {
+                // Solo cargar configuraciones admin si el usuario es admin
+                try {
+                    const scriptDoc = await getDoc(doc(db, 'configuraciones', 'apps_script'));
+                    if (scriptDoc.exists()) {
+                        this.scriptConfig = scriptDoc.data();
+                    }
+                } catch (error) {
+                    console.warn('⚠️ No se pudo cargar configuración de Apps Script:', error);
+                }
+
+                // Cargar email del admin principal
+                try {
+                    this.adminEmail = await this.getAdminPrincipalEmail();
+                } catch (error) {
+                    console.warn('⚠️ No se pudo cargar email del admin principal:', error);
+                }
+            } else {
+                console.log('ℹ️ EmailService inicializado en modo limitado para usuario no admin');
             }
 
-            // Cargar configuración de envío
-            const envioDoc = await getDoc(doc(db, 'configuraciones', 'envio'));
-            if (envioDoc.exists()) {
-                this.envioConfig = envioDoc.data();
+            // Cargar configuración de envío (pública)
+            try {
+                const envioDoc = await getDoc(doc(db, 'configuraciones', 'envio'));
+                if (envioDoc.exists()) {
+                    this.envioConfig = envioDoc.data();
+                }
+            } catch (error) {
+                console.warn('⚠️ No se pudo cargar configuración de envío:', error);
             }
 
-            // Cargar email del admin principal
-            this.adminEmail = await this.getAdminPrincipalEmail();
+            // Solo verificar configuraciones críticas para admins
+            if (isAdmin) {
+                if (!this.scriptConfig?.url || !this.scriptConfig?.activo) {
+                    console.warn('⚠️ Apps Script no configurado o desactivado');
+                }
 
-            // Verificar que tenemos las configuraciones necesarias
-            if (!this.scriptConfig?.url || !this.scriptConfig?.activo) {
-                throw new Error('Apps Script no configurado o desactivado');
-            }
-
-            if (!this.adminEmail) {
-                console.warn('⚠️ No se encontró email del admin principal');
+                if (!this.adminEmail) {
+                    console.warn('⚠️ No se encontró email del admin principal');
+                }
             }
 
         } catch (error) {
             console.error('Error cargando configuraciones de email:', error);
-            throw error;
+            // No lanzar error para usuarios no admin
+            if (window.authManager && window.authManager.isAdmin) {
+                throw error;
+            }
         }
     }
 
