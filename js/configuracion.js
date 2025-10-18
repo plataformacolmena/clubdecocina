@@ -178,21 +178,13 @@ class ConfiguracionManager {
                 this.loadRecordatoriosConfiguration()
             ];
             
-            // Configuraciones de admin (solo si es admin)
-            const adminConfigurations = [];
-            if (window.authManager?.isCurrentUserAdmin()) {
-                console.log('👑 Usuario admin - cargando configuraciones administrativas');
-                adminConfigurations.push(
-                    this.loadProfesoresConfiguration(),
-                    this.loadScriptsConfiguration(),
-                    this.loadPlantillasEmail()
-                );
-            } else {
-                console.log('👤 Usuario regular - omitiendo configuraciones administrativas');
-                // Inicializar datos por defecto para evitar errores
-                this.profesoresData = [];
-                this.plantillasEmail = [];
-            }
+            // Cargar configuraciones admin si el usuario es admin
+            // Nota: Las funciones individuales ya verifican permisos internamente
+            const adminConfigurations = [
+                this.loadProfesoresConfiguration(),
+                this.loadScriptsConfiguration(),
+                this.loadPlantillasEmail()
+            ];
             
             // Cargar configuraciones básicas (críticas para el funcionamiento)
             await Promise.all(basicConfigurations);
@@ -1234,6 +1226,13 @@ class ConfiguracionManager {
      */
     async loadPlantillasEmail() {
         try {
+            // Verificar permisos de admin antes de acceder a datos sensibles
+            if (!window.authManager?.isCurrentUserAdmin()) {
+                console.log('👤 Usuario no-admin: omitiendo carga de plantillas email');
+                this.plantillasEmail = [];
+                return;
+            }
+            
             console.log('📧 Cargando plantillas de email...');
             
             const plantillasRef = collection(db, 'plantillas_email');
@@ -1433,7 +1432,9 @@ class ConfiguracionManager {
 
             // Cerrar modal y recargar
             this.cerrarModalPlantilla();
-            await this.loadPlantillasEmail();
+            if (window.authManager?.isCurrentUserAdmin()) {
+                await this.loadPlantillasEmail();
+            }
 
         } catch (error) {
             console.error('❌ Error guardando plantilla:', error);
@@ -1481,7 +1482,9 @@ class ConfiguracionManager {
             });
 
             this.showSuccess(`Plantilla ${nuevoEstado ? 'activada' : 'desactivada'} correctamente`);
-            await this.loadPlantillasEmail();
+            if (window.authManager?.isCurrentUserAdmin()) {
+                await this.loadPlantillasEmail();
+            }
 
         } catch (error) {
             console.error('❌ Error cambiando estado de plantilla:', error);
@@ -1500,7 +1503,9 @@ class ConfiguracionManager {
         try {
             await deleteDoc(doc(db, 'plantillas_email', plantillaId));
             this.showSuccess('Plantilla eliminada correctamente');
-            await this.loadPlantillasEmail();
+            if (window.authManager?.isCurrentUserAdmin()) {
+                await this.loadPlantillasEmail();
+            }
 
         } catch (error) {
             console.error('❌ Error eliminando plantilla:', error);
