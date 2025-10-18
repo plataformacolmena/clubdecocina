@@ -27,9 +27,13 @@ service cloud.firestore {
     
     // Reglas para inscripciones - ADMINISTRADORES CON PERMISOS COMPLETOS
     match /inscripciones/{inscripcionId} {
-      allow read: if request.auth != null && 
-        (resource.data.usuarioId == request.auth.uid || 
-         exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
+      // Permitir lectura para conteo de inscripciones por curso (todos los usuarios autenticados)
+      // o para el propio usuario o administradores
+      allow read: if request.auth != null && (
+        resource.data.usuarioId == request.auth.uid || 
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email)) ||
+        true  // Permitir lectura para conteo de inscripciones
+      );
       allow create: if request.auth != null && 
         (request.resource.data.usuarioId == request.auth.uid ||
          exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
@@ -90,6 +94,12 @@ service cloud.firestore {
     match /configuraciones/{configId} {
       allow read: if request.auth != null && configId in ['sede', 'envio', 'recordatorios'];
       allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+    
+    // Reglas para CONFIGURACIONES ADMIN - solo administradores
+    match /configuraciones/{configId} {
+      allow read, write: if request.auth != null && configId == 'apps_script' &&
         exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
     }
     

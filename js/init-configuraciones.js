@@ -61,18 +61,30 @@ class ConfiguracionesInitializer {
             const sedeSnap = await getDoc(sedeRef);
             
             if (!sedeSnap.exists()) {
-                const sedeData = {
-                    direccion: 'Av. Corrientes 1234, CABA, Argentina',
-                    email: 'contacto@clubcolmena.com.ar',
-                    created: new Date(),
-                    updated: new Date()
-                };
-                
-                await setDoc(sedeRef, sedeData);
-                console.log('✅ Configuración de sede creada');
+                // Solo intentar crear si no existe y el usuario es admin
+                if (window.authManager && window.authManager.isAdmin) {
+                    const sedeData = {
+                        direccion: 'Av. Corrientes 1234, CABA, Argentina',
+                        email: 'contacto@clubcolmena.com.ar',
+                        created: new Date(),
+                        updated: new Date()
+                    };
+                    
+                    await setDoc(sedeRef, sedeData);
+                    console.log('✅ Configuración de sede creada');
+                } else {
+                    console.log('ℹ️ Configuración de sede no existe - requiere admin para crear');
+                }
+            } else {
+                console.log('✅ Configuración de sede ya existe');
             }
         } catch (error) {
-            console.error('Error inicializando sede:', error);
+            // Si es error de permisos y el documento no se puede leer, es normal para usuarios no admin
+            if (error.code === 'permission-denied') {
+                console.log('ℹ️ Sin permisos para verificar configuración de sede - esto es normal para usuarios no admin');
+            } else {
+                console.error('Error inicializando sede:', error);
+            }
         }
     }
 
@@ -86,29 +98,41 @@ class ConfiguracionesInitializer {
             const envioSnap = await getDoc(envioRef);
             
             if (!envioSnap.exists()) {
-                const envioData = {
-                    // Una sola configuración de eventos unificada
-                    eventosNotificacion: {
-                        nuevaInscripcion: true,
-                        cancelacionCurso: true,
-                        pagoRecibido: true,
-                        confirmacionInscripcion: true
-                    },
-                    configuracionGeneral: {
-                        emailRemitente: 'noreply@clubcolmena.com.ar',
-                        nombreRemitente: 'Club de Cocina Colmena',
-                        firmaEmail: 'Equipo Club de Cocina Colmena',
-                        urlLogo: 'https://clubcolmena.com.ar/logo.png'
-                    },
-                    created: new Date(),
-                    updated: new Date()
-                };
-                
-                await setDoc(envioRef, envioData);
-                console.log('✅ Configuración de envío creada');
+                // Solo intentar crear si no existe y el usuario es admin
+                if (window.authManager && window.authManager.isAdmin) {
+                    const envioData = {
+                        // Una sola configuración de eventos unificada
+                        eventosNotificacion: {
+                            nuevaInscripcion: true,
+                            cancelacionCurso: true,
+                            pagoRecibido: true,
+                            confirmacionInscripcion: true
+                        },
+                        configuracionGeneral: {
+                            emailRemitente: 'noreply@clubcolmena.com.ar',
+                            nombreRemitente: 'Club de Cocina Colmena',
+                            firmaEmail: 'Equipo Club de Cocina Colmena',
+                            urlLogo: 'https://clubcolmena.com.ar/logo.png'
+                        },
+                        created: new Date(),
+                        updated: new Date()
+                    };
+                    
+                    await setDoc(envioRef, envioData);
+                    console.log('✅ Configuración de envío creada');
+                } else {
+                    console.log('ℹ️ Configuración de envío no existe - requiere admin para crear');
+                }
+            } else {
+                console.log('✅ Configuración de envío ya existe');
             }
         } catch (error) {
-            console.error('Error inicializando configuración de envío:', error);
+            // Si es error de permisos y el documento no se puede leer, es normal para usuarios no admin
+            if (error.code === 'permission-denied') {
+                console.log('ℹ️ Sin permisos para verificar configuración de envío - esto es normal para usuarios no admin');
+            } else {
+                console.error('Error inicializando configuración de envío:', error);
+            }
         }
     }
 
@@ -118,29 +142,41 @@ class ConfiguracionesInitializer {
             const recordatoriosSnap = await getDoc(recordatoriosRef);
             
             if (!recordatoriosSnap.exists()) {
-                const recordatoriosData = {
-                    diasAntes: 1,
-                    horario: '10:00',
-                    activo: true,
-                    diasSemana: ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'],
-                    configuracionAvanzada: {
-                        reenviarSiNoLeido: true,
-                        horasReenvio: 2,
-                        maxReintentos: 3
-                    },
-                    templateEmail: {
-                        asunto: 'Recordatorio: Curso mañana en Club Colmena',
-                        mensaje: 'Te recordamos que mañana tienes tu curso programado. ¡Te esperamos!'
-                    },
-                    created: new Date(),
-                    updated: new Date()
-                };
-                
-                await setDoc(recordatoriosRef, recordatoriosData);
-                console.log('✅ Configuración de recordatorios creada');
+                // Solo intentar crear si no existe y el usuario es admin
+                if (window.authManager && window.authManager.isAdmin) {
+                    const recordatoriosData = {
+                        diasAntes: 1,
+                        horario: '10:00',
+                        activo: true,
+                        diasSemana: ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'],
+                        configuracionAvanzada: {
+                            reenviarSiNoLeido: true,
+                            horasReenvio: 2,
+                            maxReintentos: 3
+                        },
+                        templateEmail: {
+                            asunto: 'Recordatorio: Curso mañana en Club Colmena',
+                            mensaje: 'Te recordamos que mañana tienes tu curso programado. ¡Te esperamos!'
+                        },
+                        created: new Date(),
+                        updated: new Date()
+                    };
+                    
+                    await setDoc(recordatoriosRef, recordatoriosData);
+                    console.log('✅ Configuración de recordatorios creada');
+                } else {
+                    console.log('ℹ️ Configuración de recordatorios no existe - requiere admin para crear');
+                }
+            } else {
+                console.log('✅ Configuración de recordatorios ya existe');
             }
         } catch (error) {
-            console.error('Error inicializando configuración de recordatorios:', error);
+            // Si es error de permisos y el documento no se puede leer, es normal para usuarios no admin
+            if (error.code === 'permission-denied') {
+                console.log('ℹ️ Sin permisos para verificar configuración de recordatorios - esto es normal para usuarios no admin');
+            } else {
+                console.error('Error inicializando configuración de recordatorios:', error);
+            }
         }
     }
 }

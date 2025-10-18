@@ -178,27 +178,29 @@ class ConfiguracionManager {
                 this.loadRecordatoriosConfiguration()
             ];
             
-            // Cargar configuraciones admin si el usuario es admin
-            // Nota: Las funciones individuales ya verifican permisos internamente
-            const adminConfigurations = [
-                this.loadProfesoresConfiguration(),
-                this.loadScriptsConfiguration(),
-                this.loadPlantillasEmail()
-            ];
-            
             // Cargar configuraciones básicas (críticas para el funcionamiento)
             await Promise.all(basicConfigurations);
             console.log('✅ Configuraciones básicas cargadas');
             
-            // Cargar configuraciones de admin si aplica
-            if (adminConfigurations.length > 0) {
+            // Cargar configuraciones de admin SOLO si el usuario es admin
+            const isUserAdmin = window.authManager && window.authManager.isAdmin;
+            if (isUserAdmin) {
+                console.log('👑 Usuario admin detectado, cargando configuraciones administrativas...');
                 try {
+                    const adminConfigurations = [
+                        this.loadProfesoresConfiguration(),
+                        this.loadScriptsConfiguration(),
+                        this.loadPlantillasEmail()
+                    ];
+                    
                     await Promise.all(adminConfigurations);
                     console.log('✅ Configuraciones administrativas cargadas');
                 } catch (adminError) {
                     console.warn('⚠️ Error en configuraciones administrativas:', adminError);
                     // No fallar completamente si solo las configs de admin fallan
                 }
+            } else {
+                console.log('👤 Usuario regular detectado, omitiendo configuraciones administrativas');
             }
             
             console.log('✅ Configuraciones del sistema inicializadas correctamente');
