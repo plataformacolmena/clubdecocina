@@ -269,10 +269,6 @@ class CursosManager {
                             <i class="fas fa-users"></i>
                             <span>${inscriptosActuales}/${curso.capacidadMaxima} inscriptos</span>
                         </div>
-                        <div class="card__info-item" style="color: red; font-weight: bold;">
-                            <i class="fas fa-bug"></i>
-                            <span>DEBUG: ${inscriptosActuales} activos | ${disponibles} libres</span>
-                        </div>
                         <div class="card__info-item">
                             <i class="fas fa-check-circle"></i>
                             <span>${disponibles} cupos disponibles</span>
