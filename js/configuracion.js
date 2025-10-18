@@ -169,20 +169,49 @@ class ConfiguracionManager {
                 await this.waitForFirebase();
             }
 
-            console.log('📋 Cargando todas las configuraciones...');
+            console.log('📋 Cargando configuraciones del sistema...');
             
-            await Promise.all([
+            // Configuraciones básicas que todos los usuarios necesitan
+            const basicConfigurations = [
                 this.loadSedeConfiguration(),
-                this.loadProfesoresConfiguration(),
-                this.loadScriptsConfiguration(),
                 this.loadEnvioConfiguration(),
-                this.loadRecordatoriosConfiguration(),
-                this.loadPlantillasEmail()
-            ]);
+                this.loadRecordatoriosConfiguration()
+            ];
             
-            console.log('✅ Todas las configuraciones cargadas exitosamente');
+            // Configuraciones de admin (solo si es admin)
+            const adminConfigurations = [];
+            if (window.authManager?.isCurrentUserAdmin()) {
+                console.log('👑 Usuario admin - cargando configuraciones administrativas');
+                adminConfigurations.push(
+                    this.loadProfesoresConfiguration(),
+                    this.loadScriptsConfiguration(),
+                    this.loadPlantillasEmail()
+                );
+            } else {
+                console.log('👤 Usuario regular - omitiendo configuraciones administrativas');
+                // Inicializar datos por defecto para evitar errores
+                this.profesoresData = [];
+                this.plantillasEmail = [];
+            }
+            
+            // Cargar configuraciones básicas (críticas para el funcionamiento)
+            await Promise.all(basicConfigurations);
+            console.log('✅ Configuraciones básicas cargadas');
+            
+            // Cargar configuraciones de admin si aplica
+            if (adminConfigurations.length > 0) {
+                try {
+                    await Promise.all(adminConfigurations);
+                    console.log('✅ Configuraciones administrativas cargadas');
+                } catch (adminError) {
+                    console.warn('⚠️ Error en configuraciones administrativas:', adminError);
+                    // No fallar completamente si solo las configs de admin fallan
+                }
+            }
+            
+            console.log('✅ Configuraciones del sistema inicializadas correctamente');
         } catch (error) {
-            console.error('❌ Error al cargar configuraciones:', error);
+            console.error('❌ Error crítico al cargar configuraciones básicas:', error);
             this.showError('Error al cargar las configuraciones del sistema: ' + error.message);
         }
     }
