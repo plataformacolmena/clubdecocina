@@ -155,11 +155,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         while (attempts < maxAttempts) {
             try {
-                if (window.authManager && 
-                    window.authManager.currentUser && 
-                    window.authManager.isCurrentUserAdmin()) {
-                    
-                    console.log('🔧 Iniciando ConfiguracionesInitializer...');
+                // ConfiguracionesInitializer debe ejecutarse para TODOS los usuarios autenticados
+                // porque crea configuraciones básicas (sede, envío, recordatorios) que todos necesitan
+                if (window.authManager && window.authManager.currentUser) {
+                    console.log('🔧 Iniciando ConfiguracionesInitializer para usuario autenticado...');
                     new ConfiguracionesInitializer();
                     return;
                 }
@@ -168,13 +167,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
             } catch (error) {
-                console.warn('Error verificando admin status:', error);
+                console.warn('Error verificando estado de autenticación:', error);
                 attempts++;
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
         }
         
-        console.log('⚠️ No se pudo inicializar ConfiguracionesInitializer - usuario no admin o no autenticado');
+        console.log('⚠️ No se pudo inicializar ConfiguracionesInitializer - usuario no autenticado');
     };
     
     waitForAdminAndInit();
