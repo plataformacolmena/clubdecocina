@@ -120,7 +120,9 @@ class CursosManager {
             
             // Si ya hay cursos cargados y no se fuerza la recarga, solo renderizar
             if (this.cursos.length > 0 && !forceReload) {
-                this.renderCursos();
+                this.showCursosLoading();
+                await this.renderCursos();
+                this.hideCursosLoading();
                 return;
             }
             
@@ -141,7 +143,7 @@ class CursosManager {
                 });
             });
             
-            this.renderCursos();
+            await this.renderCursos();
             
         } catch (error) {
             console.error('Error loading cursos:', error);
@@ -215,6 +217,8 @@ class CursosManager {
 
         // Configurar listeners en tiempo real para inscripciones
         this.setupInscripcionListeners();
+        
+        console.log(`✅ Renderizado completo de ${cursos.length} cursos`);
     }
 
     async createCursoCard(curso) {
@@ -581,6 +585,7 @@ class CursosManager {
 
     // Métodos para manejar el spinner de carga de cursos
     showCursosLoading() {
+        console.log('🔄 Mostrando spinner de carga de cursos...');
         const cursosGrid = document.getElementById('cursos-grid');
         const cursosLoading = document.getElementById('cursos-loading');
         
@@ -589,6 +594,7 @@ class CursosManager {
     }
 
     hideCursosLoading() {
+        console.log('✅ Ocultando spinner de carga de cursos');
         const cursosGrid = document.getElementById('cursos-grid');
         const cursosLoading = document.getElementById('cursos-loading');
         
