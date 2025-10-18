@@ -23,6 +23,13 @@ class CursosManager {
     // Método para contar inscriptos activos dinámicamente
     async contarInscriptosActivos(cursoId) {
         try {
+            // Verificar que Firebase esté listo
+            if (!db) {
+                console.error('❌ Firebase no inicializado para contar inscriptos');
+                return 0;
+            }
+            
+            console.log(`🔢 Contando inscriptos para curso: ${cursoId}`);
             const q = query(
                 collection(db, 'inscripciones'),
                 where('cursoId', '==', cursoId),
@@ -30,9 +37,22 @@ class CursosManager {
             );
             
             const querySnapshot = await getDocs(q);
-            return querySnapshot.size;
+            const count = querySnapshot.size;
+            console.log(`✅ Curso ${cursoId}: ${count} inscriptos activos encontrados`);
+            
+            // Debug: mostrar detalles de inscripciones
+            if (count > 0) {
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    console.log(`   - ${data.nombreCompleto || 'Sin nombre'} (${data.estado})`);
+                });
+            } else {
+                console.log(`   ℹ️ No se encontraron inscripciones activas para curso ${cursoId}`);
+            }
+            
+            return count;
         } catch (error) {
-            console.error('Error contando inscriptos activos:', error);
+            console.error('❌ Error contando inscriptos activos:', error);
             return 0;
         }
     }
@@ -148,7 +168,27 @@ class CursosManager {
             return;
         }
 
-        cursosGrid.innerHTML = await Promise.all(cursos.map(curso => this.createCursoCard(curso))).then(cards => cards.join(''));
+        // Renderizar tarjetas de forma más robusta
+        console.log(`🎯 Renderizando ${cursos.length} cursos...`);
+        
+        const cards = [];
+        for (const curso of cursos) {
+            try {
+                const card = await this.createCursoCard(curso);
+                cards.push(card);
+            } catch (error) {
+                console.error(`❌ Error al crear tarjeta para curso ${curso.nombre}:`, error);
+                // Crear una tarjeta de error como fallback
+                cards.push(`
+                    <div class="card" style="border: 2px solid red;">
+                        <h3>${curso.nombre}</h3>
+                        <p style="color: red;">Error al cargar datos del curso</p>
+                    </div>
+                `);
+            }
+        }
+        
+        cursosGrid.innerHTML = cards.join('');
         
         // Agregar event listeners a los botones de inscripción
         cursosGrid.querySelectorAll('.inscribirse-btn').forEach(btn => {
@@ -160,6 +200,8 @@ class CursosManager {
     }
 
     async createCursoCard(curso) {
+        console.log(`🃏 Creando tarjeta para curso: "${curso.nombre}" (ID: ${curso.id})`);
+        
         const fechaFormatted = new Date(curso.fechaHora.seconds * 1000).toLocaleString('es-AR', {
             weekday: 'long',
             year: 'numeric',
@@ -174,6 +216,14 @@ class CursosManager {
         const disponibles = curso.capacidadMaxima - inscriptosActuales;
         const estaCompleto = disponibles <= 0;
         const yaTermino = new Date(curso.fechaHora.seconds * 1000) < new Date();
+        
+        console.log(`📊 Tarjeta curso "${curso.nombre}":`, {
+            inscriptosActuales: inscriptosActuales,
+            tipoInscriptos: typeof inscriptosActuales,
+            capacidadMaxima: curso.capacidadMaxima,
+            disponibles: disponibles,
+            estaCompleto: estaCompleto
+        });
 
         // Verificar si el usuario actual está inscrito en este curso
         let estaInscrito = false;
@@ -218,6 +268,10 @@ class CursosManager {
                         <div class="card__info-item">
                             <i class="fas fa-users"></i>
                             <span>${inscriptosActuales}/${curso.capacidadMaxima} inscriptos</span>
+                        </div>
+                        <div class="card__info-item" style="color: red; font-weight: bold;">
+                            <i class="fas fa-bug"></i>
+                            <span>DEBUG: ${inscriptosActuales} activos | ${disponibles} libres</span>
                         </div>
                         <div class="card__info-item">
                             <i class="fas fa-check-circle"></i>
@@ -473,6 +527,42 @@ class CursosManager {
     // Método para obtener curso por ID (usado por otros módulos)
     getCursoById(cursoId) {
         return this.cursos.find(curso => curso.id === cursoId);
+    }
+
+    // Función de debug para probar desde consola
+    async debugContarInscriptos(cursoId) {
+        console.log('🔧 FUNCIÓN DEBUG - Contando inscriptos para:', cursoId);
+        try {
+            const result = await this.contarInscriptosActivos(cursoId);
+            console.log('🔧 RESULTADO DEBUG:', result);
+            return result;
+        } catch (error) {
+            console.error('🔧 ERROR DEBUG:', error);
+            return null;
+        }
+    }
+
+    // Función para ver todos los cursos disponibles
+    debugVerCursos() {
+        console.log('🔧 CURSOS CARGADOS:', this.cursos);
+        return this.cursos;
+    }
+
+    // Función para ver todas las inscripciones
+    async debugVerInscripciones() {
+        try {
+            console.log('🔧 OBTENIENDO TODAS LAS INSCRIPCIONES...');
+            const querySnapshot = await getDocs(collection(db, 'inscripciones'));
+            const inscripciones = [];
+            querySnapshot.forEach(doc => {
+                inscripciones.push({ id: doc.id, ...doc.data() });
+            });
+            console.log('🔧 INSCRIPCIONES ENCONTRADAS:', inscripciones);
+            return inscripciones;
+        } catch (error) {
+            console.error('🔧 ERROR AL OBTENER INSCRIPCIONES:', error);
+            return [];
+        }
     }
 }
 
