@@ -11,12 +11,14 @@ import {
     query,
     orderBy,
     where,
-    limit
+    limit,
+    onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
 class CursosManager {
     constructor() {
         this.cursos = [];
+        this.inscripcionListeners = new Map(); // Mapa de listeners activos por curso
         this.setupEventListeners();
     }
 
@@ -99,10 +101,23 @@ class CursosManager {
             this.loadCursos(true); // Forzar recarga al hacer click en el menú
             window.authManager.showSection('cursos');
         });
+
+        // Limpiar listeners cuando se cambie de sección
+        document.addEventListener('sectionChanged', (e) => {
+            if (e.detail.previousSection === 'cursos') {
+                console.log('🔌 Limpiando listeners al salir de sección cursos');
+                this.clearInscripcionListeners();
+            }
+        });
     }
 
     async loadCursos(forceReload = false) {
         try {
+            // Limpiar listeners existentes antes de recargar
+            if (forceReload) {
+                this.clearInscripcionListeners();
+            }
+            
             // Si ya hay cursos cargados y no se fuerza la recarga, solo renderizar
             if (this.cursos.length > 0 && !forceReload) {
                 this.renderCursos();
@@ -197,6 +212,9 @@ class CursosManager {
                 this.inscribirseACurso(cursoId);
             });
         });
+
+        // Configurar listeners en tiempo real para inscripciones
+        this.setupInscripcionListeners();
     }
 
     async createCursoCard(curso) {
@@ -576,6 +594,83 @@ class CursosManager {
         
         if (cursosLoading) cursosLoading.style.display = 'none';
         if (cursosGrid) cursosGrid.style.display = 'grid';
+    }
+
+    // Configurar listeners en tiempo real para inscripciones
+    setupInscripcionListeners() {
+        // Limpiar listeners existentes
+        this.clearInscripcionListeners();
+        
+        this.cursos.forEach(curso => {
+            const q = query(
+                collection(db, 'inscripciones'),
+                where('cursoId', '==', curso.id),
+                where('estado', 'in', ['pendiente', 'pagado', 'confirmado'])
+            );
+            
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const inscriptosActuales = snapshot.size;
+                const disponibles = curso.capacidadMaxima - inscriptosActuales;
+                const estaCompleto = disponibles <= 0;
+                
+                // Actualizar el botón específico de este curso
+                this.updateCursoButton(curso.id, estaCompleto, inscriptosActuales, disponibles);
+            }, (error) => {
+                console.error(`Error en listener de inscripciones para curso ${curso.id}:`, error);
+            });
+            
+            this.inscripcionListeners.set(curso.id, unsubscribe);
+        });
+        
+        console.log(`📡 Configurados ${this.inscripcionListeners.size} listeners de inscripciones en tiempo real`);
+    }
+
+    // Limpiar todos los listeners de inscripciones
+    clearInscripcionListeners() {
+        this.inscripcionListeners.forEach((unsubscribe, cursoId) => {
+            unsubscribe();
+            console.log(`🔌 Desconectado listener para curso ${cursoId}`);
+        });
+        this.inscripcionListeners.clear();
+    }
+
+    // Actualizar botón específico de un curso cuando cambian las inscripciones
+    updateCursoButton(cursoId, estaCompleto, inscriptosActuales, disponibles) {
+        const cursoCard = document.querySelector(`[data-curso-id="${cursoId}"]`)?.closest('.curso-card');
+        if (!cursoCard) return;
+        
+        // Actualizar contador de inscriptos
+        const contadorElement = cursoCard.querySelector('.card__info-item span');
+        if (contadorElement && contadorElement.textContent.includes('inscriptos')) {
+            const curso = this.cursos.find(c => c.id === cursoId);
+            if (curso) {
+                contadorElement.textContent = `${inscriptosActuales}/${curso.capacidadMaxima} inscriptos`;
+            }
+        }
+        
+        // Actualizar información de cupos disponibles
+        const disponiblesElement = cursoCard.querySelector('.card__info-item:last-child span');
+        if (disponiblesElement && disponiblesElement.textContent.includes('cupos')) {
+            disponiblesElement.textContent = `${disponibles} cupos disponibles`;
+        }
+        
+        // Actualizar estado del botón
+        const button = cursoCard.querySelector('.inscribirse-btn');
+        if (button) {
+            if (estaCompleto) {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-times"></i> Curso Completo';
+                button.classList.remove('btn--primary');
+                button.classList.add('btn--secondary');
+            } else {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-user-plus"></i> Inscribirse';
+                button.classList.remove('btn--secondary');
+                button.classList.add('btn--primary');
+            }
+        }
+        
+        console.log(`🔄 Actualizado botón curso ${cursoId}: ${inscriptosActuales} inscriptos, ${disponibles} disponibles`);
     }
 }
 
