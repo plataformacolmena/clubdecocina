@@ -109,7 +109,7 @@ class CursosManager {
                 return;
             }
             
-            window.authManager.showLoading();
+            this.showCursosLoading();
             
             const q = query(
                 collection(db, 'cursos'),
@@ -132,7 +132,7 @@ class CursosManager {
             console.error('Error loading cursos:', error);
             window.authManager.showMessage('Error al cargar los cursos', 'error');
         } finally {
-            window.authManager.hideLoading();
+            this.hideCursosLoading();
         }
     }
 
@@ -559,6 +559,23 @@ class CursosManager {
             console.error('🔧 ERROR AL OBTENER INSCRIPCIONES:', error);
             return [];
         }
+    }
+
+    // Métodos para manejar el spinner de carga de cursos
+    showCursosLoading() {
+        const cursosGrid = document.getElementById('cursos-grid');
+        const cursosLoading = document.getElementById('cursos-loading');
+        
+        if (cursosGrid) cursosGrid.style.display = 'none';
+        if (cursosLoading) cursosLoading.style.display = 'flex';
+    }
+
+    hideCursosLoading() {
+        const cursosGrid = document.getElementById('cursos-grid');
+        const cursosLoading = document.getElementById('cursos-loading');
+        
+        if (cursosLoading) cursosLoading.style.display = 'none';
+        if (cursosGrid) cursosGrid.style.display = 'grid';
     }
 }
 

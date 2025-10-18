@@ -1522,6 +1522,21 @@ body {
     animation: spin 1s linear infinite;
 }
 
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    gap: 1rem;
+}
+
+.loading-spinner p {
+    color: var(--text-color);
+    font-size: 1rem;
+    margin: 0;
+}
+
 /* Animations */
 @keyframes fadeIn {
     from { opacity: 0; }
