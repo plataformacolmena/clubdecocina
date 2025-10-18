@@ -37,23 +37,6 @@ class CursosManager {
         }
     }
 
-    // Método para contar inscriptos activos dinámicamente
-    async contarInscriptosActivos(cursoId) {
-        try {
-            const q = query(
-                collection(db, 'inscripciones'),
-                where('cursoId', '==', cursoId),
-                where('estado', 'in', ['pendiente', 'pagado', 'confirmado'])
-            );
-            
-            const querySnapshot = await getDocs(q);
-            return querySnapshot.size;
-        } catch (error) {
-            console.error('Error contando inscriptos activos:', error);
-            return 0;
-        }
-    }
-
     // Método utilitario para sincronizar contador legacy (opcional)
     async sincronizarContadorCurso(cursoId) {
         try {
