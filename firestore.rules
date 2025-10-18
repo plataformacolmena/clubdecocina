@@ -84,6 +84,13 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
     }
     
+    // Reglas para logs del sistema unificados - todos los usuarios pueden escribir logs
+    match /system_logs/{logId} {
+      allow create: if request.auth != null;  // Todos pueden crear logs
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));  // Solo admins pueden leer
+    }
+    
     // Reglas para logs de seguridad admin - SOLO ADMINISTRADORES
     match /admin_security_logs/{logId} {
       allow read, write: if request.auth != null && 

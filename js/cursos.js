@@ -44,7 +44,7 @@ class CursosManager {
             if (count > 0) {
                 querySnapshot.forEach(doc => {
                     const data = doc.data();
-                    console.log(`   - ${data.nombreCompleto || 'Sin nombre'} (${data.estado})`);
+                    console.log(`   - ${data.usuarioNombre || 'Sin nombre'} (${data.estado})`);
                 });
             } else {
                 console.log(`   ℹ️ No se encontraron inscripciones activas para curso ${cursoId}`);
