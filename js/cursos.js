@@ -187,23 +187,25 @@ class CursosManager {
 
         // Renderizar tarjetas de forma más robusta
         console.log(`🎯 Renderizando ${cursos.length} cursos...`);
+        console.log(`⚡ Ejecutando creación de tarjetas en PARALELO...`);
         
-        const cards = [];
-        for (const curso of cursos) {
+        // Ejecutar todas las creaciones de tarjetas en paralelo para mejor rendimiento
+        const cardPromises = cursos.map(async (curso) => {
             try {
-                const card = await this.createCursoCard(curso);
-                cards.push(card);
+                return await this.createCursoCard(curso);
             } catch (error) {
                 console.error(`❌ Error al crear tarjeta para curso ${curso.nombre}:`, error);
                 // Crear una tarjeta de error como fallback
-                cards.push(`
+                return `
                     <div class="card" style="border: 2px solid red;">
                         <h3>${curso.nombre}</h3>
                         <p style="color: red;">Error al cargar datos del curso</p>
                     </div>
-                `);
+                `;
             }
-        }
+        });
+        
+        const cards = await Promise.all(cardPromises);
         
         cursosGrid.innerHTML = cards.join('');
         
@@ -233,32 +235,31 @@ class CursosManager {
             minute: '2-digit'
         });
 
-        // Calcular inscriptos dinámicamente contando inscripciones activas
-        const inscriptosActuales = await this.contarInscriptosActivos(curso.id);
+        // Ejecutar consultas en paralelo para mejor rendimiento
+        const [inscriptosActuales, inscripcionInfo] = await Promise.all([
+            this.contarInscriptosActivos(curso.id),
+            window.authManager.getCurrentUser() 
+                ? this.verificarInscripcionCompleta(curso.id).catch(error => {
+                    console.log('Error verificando inscripción:', error);
+                    return { inscrito: false, estado: '' };
+                })
+                : Promise.resolve({ inscrito: false, estado: '' })
+        ]);
+        
         const disponibles = curso.capacidadMaxima - inscriptosActuales;
         const estaCompleto = disponibles <= 0;
         const yaTermino = new Date(curso.fechaHora.seconds * 1000) < new Date();
+        const estaInscrito = inscripcionInfo.inscrito;
+        const estadoInscripcion = inscripcionInfo.estado || '';
         
         console.log(`📊 Tarjeta curso "${curso.nombre}":`, {
             inscriptosActuales: inscriptosActuales,
             tipoInscriptos: typeof inscriptosActuales,
             capacidadMaxima: curso.capacidadMaxima,
             disponibles: disponibles,
-            estaCompleto: estaCompleto
+            estaCompleto: estaCompleto,
+            estaInscrito: estaInscrito
         });
-
-        // Verificar si el usuario actual está inscrito en este curso
-        let estaInscrito = false;
-        let estadoInscripcion = '';
-        if (window.authManager.getCurrentUser()) {
-            try {
-                const inscripcionInfo = await this.verificarInscripcionCompleta(curso.id);
-                estaInscrito = inscripcionInfo.inscrito;
-                estadoInscripcion = inscripcionInfo.estado || '';
-            } catch (error) {
-                console.log('Error verificando inscripción:', error);
-            }
-        }
 
         return `
             <div class="card curso-card ${estaInscrito ? 'curso-card--inscrito' : ''}">
