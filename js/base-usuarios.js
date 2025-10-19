@@ -29,23 +29,35 @@ class BaseUsuariosManager {
         if (this.initialized) return;
         
         // Botón de actualizar
-        document.getElementById('refresh-base-usuarios-btn')?.addEventListener('click', () => {
-            this.cargarBaseUsuarios();
-        });
+        const refreshBtn = document.getElementById('refresh-base-usuarios-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.cargarBaseUsuarios();
+            });
+        }
 
         // Botón de exportar
-        document.getElementById('export-base-usuarios-btn')?.addEventListener('click', () => {
-            this.exportarCSV();
-        });
+        const exportBtn = document.getElementById('export-base-usuarios-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.exportarCSV();
+            });
+        }
 
         // Filtros
-        document.getElementById('filter-email-usuario')?.addEventListener('input', (e) => {
-            this.aplicarFiltros();
-        });
+        const emailFilterEl = document.getElementById('filter-email-usuario');
+        if (emailFilterEl) {
+            emailFilterEl.addEventListener('input', (e) => {
+                this.aplicarFiltros();
+            });
+        }
 
-        document.getElementById('filter-estado-usuario')?.addEventListener('change', (e) => {
-            this.aplicarFiltros();
-        });
+        const estadoFilterEl = document.getElementById('filter-estado-usuario');
+        if (estadoFilterEl) {
+            estadoFilterEl.addEventListener('change', (e) => {
+                this.aplicarFiltros();
+            });
+        }
 
         // Ordenamiento por columnas
         document.querySelectorAll('#base-usuarios-table th[data-sort]').forEach(th => {
@@ -113,8 +125,11 @@ class BaseUsuariosManager {
 
     // Aplicar filtros
     aplicarFiltros() {
-        const emailFilter = document.getElementById('filter-email-usuario')?.value.toLowerCase() || '';
-        const estadoFilter = document.getElementById('filter-estado-usuario')?.value || '';
+        const emailFilterEl = document.getElementById('filter-email-usuario');
+        const emailFilter = emailFilterEl ? emailFilterEl.value.toLowerCase() : '';
+        
+        const estadoFilterEl = document.getElementById('filter-estado-usuario');
+        const estadoFilter = estadoFilterEl ? estadoFilterEl.value : '';
 
         this.filteredUsuarios = this.usuarios.filter(usuario => {
             const matchEmail = !emailFilter || 
@@ -216,10 +231,17 @@ class BaseUsuariosManager {
         const verificados = this.usuarios.filter(u => u.emailVerified).length;
         const filtrados = this.filteredUsuarios.length;
 
-        document.getElementById('total-usuarios')?.textContent = totalUsuarios;
-        document.getElementById('usuarios-admins')?.textContent = admins;
-        document.getElementById('usuarios-verificados')?.textContent = verificados;
-        document.getElementById('usuarios-filtrados')?.textContent = filtrados;
+        const totalUsuariosEl = document.getElementById('total-usuarios');
+        if (totalUsuariosEl) totalUsuariosEl.textContent = totalUsuarios;
+        
+        const usuariosAdminsEl = document.getElementById('usuarios-admins');
+        if (usuariosAdminsEl) usuariosAdminsEl.textContent = admins;
+        
+        const usuariosVerificadosEl = document.getElementById('usuarios-verificados');
+        if (usuariosVerificadosEl) usuariosVerificadosEl.textContent = verificados;
+        
+        const usuariosFiltradosEl = document.getElementById('usuarios-filtrados');
+        if (usuariosFiltradosEl) usuariosFiltradosEl.textContent = filtrados;
     }
 
     // Formatear fechas
@@ -445,7 +467,7 @@ class BaseUsuariosManager {
     // Mostrar mensajes
     showMessage(message, type = 'info') {
         // Usar el sistema de notificaciones del authManager si está disponible
-        if (window.authManager?.showMessage) {
+        if (window.authManager && window.authManager.showMessage) {
             window.authManager.showMessage(message, type);
         } else {
             // Fallback a alert si no está disponible
