@@ -5,6 +5,8 @@ import {
     collection,
     addDoc,
     getDocs,
+    getDoc,
+    setDoc,
     doc,
     updateDoc,
     deleteDoc,
@@ -322,6 +324,220 @@ class CursosManager {
         `;
     }
 
+    // Validar que el usuario tenga teléfono registrado
+    async validarTelefono() {
+        try {
+            const userEmail = window.authManager.getCurrentUser().email;
+            
+            // Verificar si el usuario ya tiene teléfono en base_inscriptos
+            const inscriptoRef = doc(db, 'base_inscriptos', userEmail);
+            const inscriptoDoc = await getDoc(inscriptoRef);
+            
+            if (inscriptoDoc.exists()) {
+                const inscriptoData = inscriptoDoc.data();
+                if (inscriptoData.telefono && inscriptoData.telefono.trim() !== '') {
+                    console.log('✅ Usuario ya tiene teléfono registrado:', inscriptoData.telefono);
+                    return inscriptoData.telefono;
+                }
+            }
+            
+            // Si no tiene teléfono, mostrar modal para pedirlo
+            console.log('📱 Solicitando teléfono al usuario...');
+            const telefono = await this.mostrarModalTelefono();
+            
+            if (telefono) {
+                // Guardar teléfono en base_inscriptos
+                await this.guardarTelefonoEnBase(userEmail, telefono);
+                return telefono;
+            }
+            
+            return null; // Usuario canceló
+            
+        } catch (error) {
+            console.error('❌ Error validando teléfono:', error);
+            return null;
+        }
+    }
+
+    // Mostrar modal para solicitar teléfono
+    async mostrarModalTelefono() {
+        return new Promise((resolve) => {
+            // Crear modal dinámicamente
+            const modalHTML = `
+                <div id="telefono-modal" class="modal-overlay" style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 10000;
+                ">
+                    <div class="modal-content" style="
+                        background: white;
+                        padding: 30px;
+                        border-radius: 10px;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                        max-width: 400px;
+                        width: 90%;
+                    ">
+                        <h3 style="margin-top: 0; color: #333; text-align: center;">
+                            📱 Necesitamos tu teléfono
+                        </h3>
+                        <p style="color: #666; text-align: center; margin-bottom: 20px;">
+                            Para completar tu inscripción, necesitamos tu número de teléfono para contactarte.
+                        </p>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">
+                                Número de teléfono:
+                            </label>
+                            <input 
+                                type="tel" 
+                                id="telefono-input" 
+                                placeholder="+56 9 1234 5678"
+                                style="
+                                    width: 100%;
+                                    padding: 10px;
+                                    border: 2px solid #ddd;
+                                    border-radius: 5px;
+                                    font-size: 16px;
+                                    box-sizing: border-box;
+                                "
+                            />
+                            <small style="color: #999; font-size: 12px;">
+                                Incluye código de país (ej: +56 para Chile)
+                            </small>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button 
+                                id="telefono-cancelar" 
+                                style="
+                                    padding: 10px 20px;
+                                    border: 2px solid #ddd;
+                                    background: white;
+                                    border-radius: 5px;
+                                    cursor: pointer;
+                                "
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                id="telefono-guardar" 
+                                style="
+                                    padding: 10px 20px;
+                                    border: none;
+                                    background: #007bff;
+                                    color: white;
+                                    border-radius: 5px;
+                                    cursor: pointer;
+                                "
+                            >
+                                Guardar y Continuar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Insertar modal en el DOM
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            const modal = document.getElementById('telefono-modal');
+            const input = document.getElementById('telefono-input');
+            const cancelarBtn = document.getElementById('telefono-cancelar');
+            const guardarBtn = document.getElementById('telefono-guardar');
+            
+            // Enfocar input
+            setTimeout(() => input.focus(), 100);
+            
+            // Validación de teléfono
+            const validarTelefono = (telefono) => {
+                const regex = /^\+?[\d\s\-\(\)]{8,}$/;
+                return regex.test(telefono.trim());
+            };
+            
+            // Eventos
+            cancelarBtn.onclick = () => {
+                modal.remove();
+                resolve(null);
+            };
+            
+            guardarBtn.onclick = () => {
+                const telefono = input.value.trim();
+                if (!telefono) {
+                    alert('Por favor ingresa tu teléfono');
+                    input.focus();
+                    return;
+                }
+                
+                if (!validarTelefono(telefono)) {
+                    alert('Por favor ingresa un teléfono válido (mínimo 8 dígitos, puede incluir código de país)');
+                    input.focus();
+                    return;
+                }
+                
+                modal.remove();
+                resolve(telefono);
+            };
+            
+            // Enter para guardar
+            input.onkeypress = (e) => {
+                if (e.key === 'Enter') {
+                    guardarBtn.click();
+                }
+            };
+            
+            // Escape para cancelar
+            document.onkeydown = (e) => {
+                if (e.key === 'Escape') {
+                    cancelarBtn.click();
+                }
+            };
+        });
+    }
+
+    // Guardar teléfono en base_inscriptos
+    async guardarTelefonoEnBase(email, telefono) {
+        try {
+            const inscriptoRef = doc(db, 'base_inscriptos', email);
+            const inscriptoDoc = await getDoc(inscriptoRef);
+            
+            if (inscriptoDoc.exists()) {
+                // Actualizar registro existente
+                await updateDoc(inscriptoRef, {
+                    telefono: telefono,
+                    fechaActualizacion: new Date()
+                });
+            } else {
+                // Crear nuevo registro básico
+                const userData = window.authManager.getCurrentUser();
+                await setDoc(inscriptoRef, {
+                    email: email,
+                    nombre: userData.displayName || userData.email,
+                    telefono: telefono,
+                    totalCursos: 0,
+                    cursosConfirmados: 0,
+                    cursosDetalle: [],
+                    fechaRegistro: new Date(),
+                    fechaActualizacion: new Date(),
+                    montoTotal: 0,
+                    activo: true
+                });
+            }
+            
+            console.log('✅ Teléfono guardado en base_inscriptos:', telefono);
+            
+        } catch (error) {
+            console.error('❌ Error guardando teléfono:', error);
+            throw error;
+        }
+    }
+
     async inscribirseACurso(cursoId) {
         if (!window.authManager.getCurrentUser()) {
             window.authManager.showMessage('Debes iniciar sesión para inscribirte', 'error');
@@ -350,11 +566,19 @@ class CursosManager {
                 throw new Error('Ya estás inscripto en este curso');
             }
 
+            // 🆕 VALIDAR TELÉFONO ANTES DE INSCRIBIRSE
+            const telefono = await this.validarTelefono();
+            if (!telefono) {
+                // Usuario canceló el modal o hubo error
+                throw new Error('Inscripción cancelada: teléfono requerido');
+            }
+
             // Crear la inscripción
             const inscripcionData = {
                 usuarioId: window.authManager.getCurrentUser().uid,
                 usuarioEmail: window.authManager.getCurrentUser().email,
                 usuarioNombre: window.authManager.getCurrentUser().displayName || window.authManager.getCurrentUser().email,
+                telefono: telefono, // 🆕 CAMPO TELÉFONO VALIDADO
                 cursoId: cursoId,
                 cursoNombre: curso.nombre,
                 costo: curso.costo,
