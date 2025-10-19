@@ -299,6 +299,7 @@ class ColumnManager {
         this.defaultColumns = {
             inscripto: true,
             email: true,
+            telefono: true, // 🆕 Columna teléfono
             curso: true,
             fechaCurso: true,
             fechaInscripcion: true,
@@ -1857,6 +1858,7 @@ class AdminManager {
                     </div>
                 </td>
                 <td>${inscripcion.usuarioEmail}</td>
+                <td>${inscripcion.telefono || 'No disponible'}</td>
                 <td>${inscripcion.cursoNombre}</td>
                 <td>${fechaCurso}</td>
                 <td>${fechaInscripcion}</td>
