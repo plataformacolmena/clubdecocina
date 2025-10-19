@@ -335,13 +335,24 @@ class CursosManager {
             
             if (inscriptoDoc.exists()) {
                 const inscriptoData = inscriptoDoc.data();
-                if (inscriptoData.telefono && inscriptoData.telefono.trim() !== '') {
-                    console.log('✅ Usuario ya tiene teléfono registrado:', inscriptoData.telefono);
-                    return inscriptoData.telefono;
+                const telefono = inscriptoData.telefono;
+                
+                // Validar que el teléfono existe y no es un valor placeholder
+                if (telefono && 
+                    telefono.trim() !== '' && 
+                    telefono.toLowerCase() !== 'no disponible' &&
+                    telefono.toLowerCase() !== 'n/a' &&
+                    telefono !== '-' &&
+                    telefono !== 'null' &&
+                    telefono !== 'undefined') {
+                    console.log('✅ Usuario ya tiene teléfono registrado:', telefono);
+                    return telefono;
+                } else if (telefono) {
+                    console.log('⚠️ Usuario tiene teléfono no válido:', telefono, '- solicitando nuevo teléfono');
                 }
             }
             
-            // Si no tiene teléfono, mostrar modal para pedirlo
+            // Si no tiene teléfono válido, mostrar modal para pedirlo
             console.log('📱 Solicitando teléfono al usuario...');
             const telefono = await this.mostrarModalTelefono();
             
