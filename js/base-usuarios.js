@@ -38,6 +38,17 @@ class BaseInscriptosManager {
             });
         }
 
+        // Botón de consolidar
+        const consolidarBtn = document.getElementById('consolidar-base-usuarios-btn');
+        if (consolidarBtn) {
+            consolidarBtn.addEventListener('click', async () => {
+                if (confirm('¿Estás seguro de que quieres consolidar todos los datos desde inscripciones? Esto puede tomar unos momentos.')) {
+                    await this.consolidarDatosIniciales();
+                    await this.cargarBaseInscriptos();
+                }
+            });
+        }
+
         // Botón de exportar
         const exportBtn = document.getElementById('export-base-usuarios-btn');
         if (exportBtn) {
@@ -138,10 +149,10 @@ class BaseInscriptosManager {
             const snapshot = await getDocs(baseInscriptosQuery);
             
             if (snapshot.empty) {
-                console.log('📝 Colección base_inscriptos no existe, creando desde inscripciones...');
+                console.log('📝 Colección base_inscriptos vacía, creando desde inscripciones...');
                 await this.consolidarDatosIniciales();
             } else {
-                console.log('✅ Colección base_inscriptos existe');
+                console.log(`✅ Colección base_inscriptos existe con ${snapshot.size} registros`);
             }
         } catch (error) {
             console.error('❌ Error verificando colección:', error);
