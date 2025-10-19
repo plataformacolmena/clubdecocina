@@ -883,6 +883,9 @@ class AdminManager {
             // Activar el tab
             await window.baseInscriptosManager.activateTab();
             
+            // Cargar los datos de la colección base_inscriptos
+            await window.baseInscriptosManager.cargarBaseInscriptos();
+            
             console.log('✅ Base de inscriptos cargada');
             
         } catch (error) {

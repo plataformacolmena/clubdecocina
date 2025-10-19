@@ -34,7 +34,7 @@ class BaseInscriptosManager {
         const refreshBtn = document.getElementById('refresh-base-usuarios-btn');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => {
-                this.cargarBaseUsuarios();
+                this.cargarBaseInscriptos();
             });
         }
 
@@ -573,7 +573,7 @@ class BaseInscriptosManager {
             });
 
             this.showMessage('Usuario eliminado exitosamente', 'success');
-            this.cargarBaseUsuarios(); // Recargar la lista
+            this.cargarBaseInscriptos(); // Recargar la lista
 
         } catch (error) {
             console.error('Error eliminando usuario:', error);
