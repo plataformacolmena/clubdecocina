@@ -3693,3 +3693,196 @@ body {
 #sincronizar-sheet-btn:disabled .fa-spinner {
     animation: spin 1s linear infinite;
 }
+
+/* ===== BASE DE USUARIOS STYLES ===== */
+.filters-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.user-info-cell {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.user-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.user-badge--admin {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: white;
+}
+
+.user-badge--user {
+    background: linear-gradient(135deg, #74b9ff, #0984e3);
+    color: white;
+}
+
+.user-badge--verified {
+    background: linear-gradient(135deg, #00b894, #00a085);
+    color: white;
+}
+
+.user-badge--unverified {
+    background: linear-gradient(135deg, #fdcb6e, #e17055);
+    color: white;
+}
+
+.provider-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.provider--google {
+    background: #fff2f2;
+    color: #db4437;
+    border: 1px solid #fdd8d6;
+}
+
+.provider--microsoft {
+    background: #f0f8ff;
+    color: #0078d4;
+    border: 1px solid #c7e0f4;
+}
+
+.provider--email, .provider--password {
+    background: #f8f9fa;
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.action-btn.edit {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.action-btn.edit:hover {
+    background: #1976d2;
+    color: white;
+}
+
+.action-btn.view {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.action-btn.view:hover {
+    background: #7b1fa2;
+    color: white;
+}
+
+.action-btn.delete {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.action-btn.delete:hover {
+    background: #d32f2f;
+    color: white;
+}
+
+.loading-container {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+    color: #666;
+}
+
+.admin-table th[data-sort] {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+}
+
+.admin-table th[data-sort]:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.admin-table th[data-sort]:after {
+    content: '\f0dc';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    margin-left: 0.5rem;
+    opacity: 0.5;
+}
+
+.admin-table th.sort-asc:after {
+    content: '\f0de';
+    opacity: 1;
+}
+
+.admin-table th.sort-desc:after {
+    content: '\f0dd';
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .filters-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .user-info-cell {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .action-buttons {
+        flex-wrap: wrap;
+    }
+}

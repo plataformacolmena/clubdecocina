@@ -603,6 +603,8 @@ class AdminManager {
                     this.loadAdministratorsTab();
                 } else if (targetTab === 'estado-cursos-admin') {
                     this.loadEstadoCursosTab();
+                } else if (targetTab === 'base-usuarios-admin') {
+                    this.loadBaseUsuariosTab();
                 }
             });
         });
@@ -861,6 +863,30 @@ class AdminManager {
         } catch (error) {
             console.error('Error removiendo admin:', error);
             window.authManager?.showMessage('Error: ' + error.message, 'error');
+        }
+    }
+
+    // ============================================
+    // GESTIÓN DE BASE DE USUARIOS
+    // ============================================
+
+    async loadBaseUsuariosTab() {
+        try {
+            console.log('👥 Cargando Base de Usuarios...');
+            
+            // Inicializar el manager si no existe
+            if (!window.baseUsuariosManager) {
+                console.error('❌ BaseUsuariosManager no está disponible');
+                return;
+            }
+            
+            // Activar el tab
+            await window.baseUsuariosManager.activateTab();
+            
+            console.log('✅ Base de usuarios cargada');
+            
+        } catch (error) {
+            console.error('❌ Error cargando base de usuarios:', error);
         }
     }
 

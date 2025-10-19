@@ -127,6 +127,9 @@
                     <button class="tab-btn" data-tab="administradores-admin">
                         <i class="fas fa-users-cog"></i> Administradores
                     </button>
+                    <button class="tab-btn" data-tab="base-usuarios-admin">
+                        <i class="fas fa-users"></i> Base de Usuarios
+                    </button>
                     <button class="tab-btn" data-tab="notas-admin">
                         <i class="fas fa-sticky-note"></i> Notas
                     </button>
@@ -680,6 +683,124 @@
                                 <div class="stat-number" id="recent-logins">0</div>
                                 <div class="stat-label">Accesos Recientes (7d)</div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Base de Datos de Usuarios -->
+                <div id="base-usuarios-admin" class="tab-content">
+                    <div class="admin__header">
+                        <h3>
+                            <i class="fas fa-users"></i> Base de Datos de Usuarios
+                        </h3>
+                        <p class="text-muted">Gestión completa de usuarios registrados en el sistema</p>
+                        
+                        <div class="admin__actions">
+                            <button id="refresh-base-usuarios-btn" class="btn btn--primary">
+                                <i class="fas fa-sync-alt"></i> Actualizar
+                            </button>
+                            <button id="export-base-usuarios-btn" class="btn btn--secondary">
+                                <i class="fas fa-download"></i> Exportar CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Estadísticas -->
+                    <div class="admin__section">
+                        <h4><i class="fas fa-chart-bar"></i> Estadísticas</h4>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-number" id="total-usuarios">0</div>
+                                <div class="stat-label">Total Usuarios</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="usuarios-admins">0</div>
+                                <div class="stat-label">Administradores</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="usuarios-verificados">0</div>
+                                <div class="stat-label">Email Verificado</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="usuarios-filtrados">0</div>
+                                <div class="stat-label">Resultados Filtrados</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="admin__section">
+                        <h4><i class="fas fa-filter"></i> Filtros de Búsqueda</h4>
+                        <div class="filters-row">
+                            <div class="form-group">
+                                <label for="filter-email-usuario">Email o Nombre</label>
+                                <input 
+                                    type="text" 
+                                    id="filter-email-usuario" 
+                                    class="form-control" 
+                                    placeholder="Buscar por email o nombre..."
+                                >
+                            </div>
+                            <div class="form-group">
+                                <label for="filter-estado-usuario">Estado</label>
+                                <select id="filter-estado-usuario" class="form-control">
+                                    <option value="">Todos los estados</option>
+                                    <option value="admin">Solo Administradores</option>
+                                    <option value="user">Solo Usuarios</option>
+                                    <option value="verified">Email Verificado</option>
+                                    <option value="unverified">Email Sin Verificar</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading -->
+                    <div id="base-usuarios-loading" class="loading-container" style="display: none;">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        <p>Cargando base de usuarios...</p>
+                    </div>
+
+                    <!-- Tabla de usuarios -->
+                    <div class="admin__section">
+                        <h4><i class="fas fa-table"></i> Lista de Usuarios</h4>
+                        <div class="table-container">
+                            <table id="base-usuarios-table" class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="displayName">
+                                            <i class="fas fa-user"></i> Usuario
+                                        </th>
+                                        <th data-sort="isAdmin">
+                                            <i class="fas fa-user-tag"></i> Tipo
+                                        </th>
+                                        <th data-sort="emailVerified">
+                                            <i class="fas fa-envelope-circle-check"></i> Estado Email
+                                        </th>
+                                        <th data-sort="telefono">
+                                            <i class="fas fa-phone"></i> Teléfono
+                                        </th>
+                                        <th data-sort="provider">
+                                            <i class="fas fa-sign-in-alt"></i> Proveedor
+                                        </th>
+                                        <th data-sort="createdAt">
+                                            <i class="fas fa-calendar-plus"></i> Registro
+                                        </th>
+                                        <th data-sort="lastLogin">
+                                            <i class="fas fa-clock"></i> Último Login
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-cogs"></i> Acciones
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="base-usuarios-tbody">
+                                    <tr>
+                                        <td colspan="8" style="text-align: center; padding: 40px;">
+                                            <i class="fas fa-info-circle"></i> Haz clic en "Actualizar" para cargar los usuarios
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -2012,6 +2133,7 @@
     <script type="module" src="js/recetas.js"></script>
     <script type="module" src="js/notas.js"></script>
     <script type="module" src="js/contabilidad.js"></script>
+    <script type="module" src="js/base-usuarios.js"></script>
     <script type="module" src="js/admin.js"></script>
     <!-- init-configuraciones.js se carga desde app.js para evitar duplicación -->
     <script type="module" src="js/email-diagnostic.js"></script>
