@@ -197,11 +197,11 @@ class BaseUsuariosManager {
                             <button class="action-btn view" onclick="window.baseUsuariosManager.verDetallesUsuario('${usuario.id}')" title="Ver detalles">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            ${!usuario.isAdmin ? `
-                                <button class="action-btn delete" onclick="window.baseUsuariosManager.eliminarUsuario('${usuario.id}')" title="Eliminar usuario">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            ` : ''}
+                            ${!usuario.isAdmin ? 
+                                '<button class="action-btn delete" onclick="window.baseUsuariosManager.eliminarUsuario(\'' + usuario.id + '\')" title="Eliminar usuario">' +
+                                    '<i class="fas fa-trash"></i>' +
+                                '</button>' 
+                                : ''}
                         </div>
                     </td>
                 </tr>
