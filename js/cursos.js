@@ -366,6 +366,21 @@ class CursosManager {
 
             const inscripcionRef = await addDoc(collection(db, 'inscripciones'), inscripcionData);
 
+            // Actualizar base_inscriptos con nueva inscripción
+            try {
+                if (window.baseInscriptosManager) {
+                    await window.baseInscriptosManager.actualizarInscripto(
+                        inscripcionData.usuarioEmail,
+                        { ...inscripcionData, id: inscripcionRef.id },
+                        curso
+                    );
+                    console.log('✅ Base de inscriptos actualizada con nueva inscripción');
+                }
+            } catch (baseError) {
+                console.error('⚠️ Error actualizando base_inscriptos:', baseError);
+                // No detener el proceso principal por este error
+            }
+
             // Logging de inscripción exitosa
             await systemLogger.logInscription('new_inscription', {
                 inscripcionId: inscripcionRef.id,

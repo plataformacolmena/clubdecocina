@@ -867,26 +867,26 @@ class AdminManager {
     }
 
     // ============================================
-    // GESTIÓN DE BASE DE USUARIOS
+    // GESTIÓN DE BASE DE INSCRIPTOS
     // ============================================
 
     async loadBaseUsuariosTab() {
         try {
-            console.log('👥 Cargando Base de Usuarios...');
+            console.log('👥 Cargando Base de Inscriptos...');
             
             // Inicializar el manager si no existe
-            if (!window.baseUsuariosManager) {
-                console.error('❌ BaseUsuariosManager no está disponible');
+            if (!window.baseInscriptosManager) {
+                console.error('❌ BaseInscriptosManager no está disponible');
                 return;
             }
             
             // Activar el tab
-            await window.baseUsuariosManager.activateTab();
+            await window.baseInscriptosManager.activateTab();
             
-            console.log('✅ Base de usuarios cargada');
+            console.log('✅ Base de inscriptos cargada');
             
         } catch (error) {
-            console.error('❌ Error cargando base de usuarios:', error);
+            console.error('❌ Error cargando base de inscriptos:', error);
         }
     }
 
@@ -2697,6 +2697,33 @@ class AdminManager {
                 fechaActualizacion: new Date(),
                 actualizadoPor: auth.currentUser.email
             });
+
+            // Actualizar base_inscriptos cuando cambie estado de inscripción
+            try {
+                const inscripcion = this.inscripciones.find(i => i.id === inscripcionId);
+                if (inscripcion && window.baseInscriptosManager) {
+                    // Obtener datos del curso
+                    const curso = this.cursos.find(c => c.id === inscripcion.cursoId);
+                    
+                    // Actualizar inscripción con nuevo estado
+                    const inscripcionActualizada = {
+                        ...inscripcion,
+                        estado: newStatus,
+                        fechaActualizacion: new Date()
+                    };
+                    
+                    await window.baseInscriptosManager.actualizarInscripto(
+                        inscripcion.usuarioEmail, 
+                        inscripcionActualizada, 
+                        curso
+                    );
+                    
+                    console.log('✅ Base de inscriptos actualizada');
+                }
+            } catch (baseError) {
+                console.error('⚠️ Error actualizando base_inscriptos:', baseError);
+                // No detener el proceso principal por este error
+            }
 
             // Enviar emails según el nuevo estado
             if (window.emailService) {
