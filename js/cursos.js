@@ -324,40 +324,49 @@ class CursosManager {
         `;
     }
 
-    // Validar que el usuario tenga teléfono registrado
+    // Validar que el usuario tenga teléfono registrado con manejo mejorado de permisos
     async validarTelefono() {
         try {
             const userEmail = window.authManager.getCurrentUser().email;
             
-            // Verificar si el usuario ya tiene teléfono en base_inscriptos
-            const inscriptoRef = doc(db, 'base_inscriptos', userEmail);
-            const inscriptoDoc = await getDoc(inscriptoRef);
-            
-            if (inscriptoDoc.exists()) {
-                const inscriptoData = inscriptoDoc.data();
-                const telefono = inscriptoData.telefono;
+            // Intentar verificar si el usuario ya tiene teléfono en base_inscriptos
+            try {
+                const inscriptoRef = doc(db, 'base_inscriptos', userEmail);
+                const inscriptoDoc = await getDoc(inscriptoRef);
                 
-                // Validar que el teléfono existe y no es un valor placeholder
-                if (telefono && 
-                    telefono.trim() !== '' && 
-                    telefono.toLowerCase() !== 'no disponible' &&
-                    telefono.toLowerCase() !== 'n/a' &&
-                    telefono !== '-' &&
-                    telefono !== 'null' &&
-                    telefono !== 'undefined') {
-                    console.log('✅ Usuario ya tiene teléfono registrado:', telefono);
-                    return telefono;
-                } else if (telefono) {
-                    console.log('⚠️ Usuario tiene teléfono no válido:', telefono, '- solicitando nuevo teléfono');
+                if (inscriptoDoc.exists()) {
+                    const inscriptoData = inscriptoDoc.data();
+                    const telefono = inscriptoData.telefono;
+                    
+                    // Validar que el teléfono existe y no es un valor placeholder
+                    if (telefono && 
+                        telefono.trim() !== '' && 
+                        telefono.toLowerCase() !== 'no disponible' &&
+                        telefono.toLowerCase() !== 'n/a' &&
+                        telefono !== '-' &&
+                        telefono !== 'null' &&
+                        telefono !== 'undefined') {
+                        console.log('✅ Usuario ya tiene teléfono registrado:', telefono);
+                        return telefono;
+                    } else if (telefono) {
+                        console.log('⚠️ Usuario tiene teléfono no válido:', telefono, '- solicitando nuevo teléfono');
+                    }
                 }
+            } catch (permissionError) {
+                if (permissionError.code === 'permission-denied') {
+                    console.log('⚠️ Sin permisos para leer base_inscriptos, solicitando teléfono directamente');
+                } else {
+                    console.log('⚠️ Error accediendo a base_inscriptos:', permissionError.message);
+                }
+                // Continuar pidiendo teléfono sin fallar
             }
             
-            // Si no tiene teléfono válido, mostrar modal para pedirlo
+            // Si no tiene teléfono válido o no se pudo verificar, mostrar modal para pedirlo
             console.log('📱 Solicitando teléfono al usuario...');
             const telefono = await this.mostrarModalTelefono();
             
             if (telefono) {
-                // Guardar teléfono en base_inscriptos
+                // Intentar guardar teléfono en base_inscriptos (con manejo de errores)
                 await this.guardarTelefonoEnBase(userEmail, telefono);
                 return telefono;
             }
@@ -512,7 +521,7 @@ class CursosManager {
         });
     }
 
-    // Guardar teléfono en base_inscriptos
+    // Guardar teléfono en base_inscriptos con manejo mejorado de permisos
     async guardarTelefonoEnBase(email, telefono) {
         try {
             const inscriptoRef = doc(db, 'base_inscriptos', email);
@@ -544,8 +553,13 @@ class CursosManager {
             console.log('✅ Teléfono guardado en base_inscriptos:', telefono);
             
         } catch (error) {
-            console.error('❌ Error guardando teléfono:', error);
-            throw error;
+            // Manejo mejorado de errores: no fallar si no hay permisos
+            if (error.code === 'permission-denied') {
+                console.log('⚠️ Sin permisos para guardar en base_inscriptos, teléfono se guardará solo en inscripción');
+            } else {
+                console.error('❌ Error guardando teléfono:', error);
+            }
+            // No lanzar error para que el proceso de inscripción continúe
         }
     }
 
@@ -556,11 +570,13 @@ class CursosManager {
             return;
         }
 
+        let curso = null; // Declarar fuera del try para que sea accesible en catch
+
         try {
             window.authManager.showLoading();
             
             // Verificar que el curso existe y tiene cupo
-            const curso = this.cursos.find(c => c.id === cursoId);
+            curso = this.cursos.find(c => c.id === cursoId);
             if (!curso) {
                 throw new Error('Curso no encontrado');
             }
