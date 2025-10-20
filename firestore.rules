@@ -60,9 +60,10 @@ service cloud.firestore {
          exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
     }
     
-    // Reglas para cuentas bancarias - SOLO ADMINISTRADORES
+    // Reglas para cuentas bancarias - LECTURA PÚBLICA, ESCRITURA SOLO ADMINISTRADORES
     match /bankAccounts/{accountId} {
-      allow read, write: if request.auth != null && 
+      allow read: if request.auth != null;  // Todos los usuarios autenticados pueden leer
+      allow write: if request.auth != null && 
         exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
     }
     
