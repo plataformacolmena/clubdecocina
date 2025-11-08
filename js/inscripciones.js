@@ -138,13 +138,6 @@ class InscripcionesManager {
                         <i class="fas fa-info-circle"></i>
                         Datos de Pago
                     </button>
-                    ${inscripcion.estado === 'pendiente' ? `
-                        <button class="btn btn--outline btn--danger cancelar-inscripcion-btn" 
-                                data-inscripcion-id="${inscripcion.id}">
-                            <i class="fas fa-times"></i>
-                            Cancelar Inscripción
-                        </button>
-                    ` : ''}
                 </div>
             </div>
         `;
@@ -181,14 +174,6 @@ class InscripcionesManager {
             btn.addEventListener('click', (e) => {
                 const inscripcionId = e.target.dataset.inscripcionId;
                 this.showEditInscripcionModal(inscripcionId);
-            });
-        });
-
-        // Botones de cancelar inscripción
-        document.querySelectorAll('.cancelar-inscripcion-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const inscripcionId = e.target.dataset.inscripcionId;
-                this.cancelInscripcion(inscripcionId);
             });
         });
     }
@@ -631,43 +616,6 @@ class InscripcionesManager {
         } catch (error) {
             console.error('Error updating inscripcion:', error);
             window.authManager.showMessage('Error al actualizar inscripción', 'error');
-        } finally {
-            window.authManager.hideLoading();
-        }
-    }
-
-    async cancelInscripcion(inscripcionId) {
-        if (!confirm('¿Estás seguro de cancelar esta inscripción? Esta acción no se puede deshacer.')) return;
-
-        try {
-            window.authManager.showLoading();
-            
-            await updateDoc(doc(db, 'inscripciones', inscripcionId), {
-                estado: 'cancelado',
-                fechaCancelacion: new Date(),
-                canceladoPor: 'usuario'
-            });
-            
-            // Notificar cancelación al admin si está habilitado
-            if (window.emailService) {
-                try {
-                    const emailResult = await window.emailService.procesarInscripcion(inscripcionId, 'cancelar', 'Cancelado por el usuario');
-                    if (emailResult.success) {
-                        console.log('✅ Notificación de cancelación enviada');
-                    } else {
-                        console.log('⚠️ Notificación de cancelación no enviada:', emailResult.reason);
-                    }
-                } catch (emailError) {
-                    console.error('Error enviando notificación de cancelación:', emailError);
-                }
-            }
-            
-            window.authManager.showMessage('Inscripción cancelada exitosamente', 'success');
-            await this.loadInscripciones();
-            
-        } catch (error) {
-            console.error('Error canceling inscripcion:', error);
-            window.authManager.showMessage('Error al cancelar inscripción', 'error');
         } finally {
             window.authManager.hideLoading();
         }
