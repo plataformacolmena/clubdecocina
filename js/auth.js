@@ -192,7 +192,7 @@ class AdminManager {
     // Limpiar cache (útil para pruebas o actualizaciones forzadas)
     clearCache() {
         this.adminCache.clear();
-        console.log('🧹 Cache de administradores limpiado');
+        // console.log removed
     }
 
     // Obtener estadísticas del cache (para debugging)
@@ -731,7 +731,7 @@ class AuthManager {
                 lastLogin: serverTimestamp()
             });
         } catch (error) {
-            console.log('Error actualizando último login admin:', error);
+            // console.log removed
             // No es crítico, continuar sin error
         }
     }

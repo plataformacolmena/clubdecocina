@@ -273,7 +273,7 @@ class InscripcionesManager {
         try {
             window.authManager.showLoading();
             
-            console.log(`📤 Iniciando subida de comprobante: ${file.name}`);
+            // console.log removed
 
             // Sistema Base64 simplificado - Sin Google Drive
             const fileData = await this.uploadToFirestoreBase64(file, inscripcionId);
@@ -293,16 +293,16 @@ class InscripcionesManager {
                 estado: 'pagado'
             });
 
-            console.log(`✅ Comprobante guardado en Firestore para inscripción: ${inscripcionId}`);
+            // console.log removed
 
             // Enviar notificación de pago recibido al admin
             if (window.emailService) {
                 try {
                     const emailResult = await window.emailService.procesarInscripcion(inscripcionId, 'pago_recibido');
                     if (emailResult.success) {
-                        console.log('✅ Notificación de pago enviada al admin');
+                        // console.log removed
                     } else {
-                        console.log('⚠️ Notificación de pago no enviada:', emailResult.reason);
+                        // console.log removed
                     }
                 } catch (emailError) {
                     console.error('Error enviando notificación de pago:', emailError);
@@ -367,7 +367,7 @@ class InscripcionesManager {
             throw new Error('FORMATO_NO_VALIDO|Extensión de archivo no válida. Solo: .jpg, .png, .gif, .webp, .pdf');
         }
 
-        console.log(`📤 Convirtiendo archivo ${file.name} (${(file.size / 1024).toFixed(1)}KB) a Base64...`);
+        // console.log removed
 
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -385,7 +385,7 @@ class InscripcionesManager {
                         storageMethod: 'firestore-base64'
                     };
                     
-                    console.log(`✅ Archivo convertido exitosamente: ${file.name}`);
+                    // console.log removed
                     
                     // Retornar objeto con datos y metadata
                     resolve({

@@ -13,7 +13,7 @@ class ConfiguracionesInitializer {
 
     async initializeDefaults() {
         try {
-            console.log('🔧 Inicializando configuraciones por defecto...');
+            // console.log removed
             
             // Verificar que Firebase esté disponible
             await this.waitForFirebase();
@@ -24,7 +24,7 @@ class ConfiguracionesInitializer {
                 this.initializeRecordatoriosConfig()
             ]);
             
-            console.log('✅ Configuraciones inicializadas correctamente');
+            // console.log removed
             
         } catch (error) {
             console.error('❌ Error inicializando configuraciones:', error);
@@ -38,12 +38,12 @@ class ConfiguracionesInitializer {
         while (attempts < maxAttempts) {
             try {
                 if (db && typeof db === 'object' && db.type === 'firestore') {
-                    console.log('✅ Firebase listo para inicializador');
+                    // console.log removed
                     return true;
                 }
                 
                 attempts++;
-                console.log(`⏳ Esperando Firebase (${attempts}/${maxAttempts})...`);
+                // console.log removed
                 await new Promise(resolve => setTimeout(resolve, 250));
                 
             } catch (error) {
@@ -71,17 +71,17 @@ class ConfiguracionesInitializer {
                     };
                     
                     await setDoc(sedeRef, sedeData);
-                    console.log('✅ Configuración de sede creada');
+                    // console.log removed
                 } else {
-                    console.log('ℹ️ Configuración de sede no existe - requiere admin para crear');
+                    // console.log removed
                 }
             } else {
-                console.log('✅ Configuración de sede ya existe');
+                // console.log removed
             }
         } catch (error) {
             // Si es error de permisos y el documento no se puede leer, es normal para usuarios no admin
             if (error.code === 'permission-denied') {
-                console.log('ℹ️ Sin permisos para verificar configuración de sede - esto es normal para usuarios no admin');
+                // console.log removed
             } else {
                 console.error('Error inicializando sede:', error);
             }
@@ -119,17 +119,17 @@ class ConfiguracionesInitializer {
                     };
                     
                     await setDoc(envioRef, envioData);
-                    console.log('✅ Configuración de envío creada');
+                    // console.log removed
                 } else {
-                    console.log('ℹ️ Configuración de envío no existe - requiere admin para crear');
+                    // console.log removed
                 }
             } else {
-                console.log('✅ Configuración de envío ya existe');
+                // console.log removed
             }
         } catch (error) {
             // Si es error de permisos y el documento no se puede leer, es normal para usuarios no admin
             if (error.code === 'permission-denied') {
-                console.log('ℹ️ Sin permisos para verificar configuración de envío - esto es normal para usuarios no admin');
+                // console.log removed
             } else {
                 console.error('Error inicializando configuración de envío:', error);
             }
@@ -163,17 +163,17 @@ class ConfiguracionesInitializer {
                     };
                     
                     await setDoc(recordatoriosRef, recordatoriosData);
-                    console.log('✅ Configuración de recordatorios creada');
+                    // console.log removed
                 } else {
-                    console.log('ℹ️ Configuración de recordatorios no existe - requiere admin para crear');
+                    // console.log removed
                 }
             } else {
-                console.log('✅ Configuración de recordatorios ya existe');
+                // console.log removed
             }
         } catch (error) {
             // Si es error de permisos y el documento no se puede leer, es normal para usuarios no admin
             if (error.code === 'permission-denied') {
-                console.log('ℹ️ Sin permisos para verificar configuración de recordatorios - esto es normal para usuarios no admin');
+                // console.log removed
             } else {
                 console.error('Error inicializando configuración de recordatorios:', error);
             }
@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // ConfiguracionesInitializer debe ejecutarse para TODOS los usuarios autenticados
                 // porque crea configuraciones básicas (sede, envío, recordatorios) que todos necesitan
                 if (window.authManager && window.authManager.currentUser) {
-                    console.log('🔧 Iniciando ConfiguracionesInitializer para usuario autenticado...');
+                    // console.log removed
                     new ConfiguracionesInitializer();
                     return;
                 }
@@ -203,13 +203,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
             } catch (error) {
-                console.warn('Error verificando estado de autenticación:', error);
+                // console.warn removed
                 attempts++;
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
         }
         
-        console.log('⚠️ No se pudo inicializar ConfiguracionesInitializer - usuario no autenticado');
+        // console.log removed
     };
     
     waitForAdminAndInit();

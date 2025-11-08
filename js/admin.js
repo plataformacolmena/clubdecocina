@@ -625,11 +625,11 @@ class AdminManager {
 
     async loadAdministratorsTab() {
         try {
-            console.log('📋 Cargando gestión de administradores...');
+            // console.log removed
             
             // Asegurar que authManager esté disponible
             if (!window.authManager) {
-                console.log('⏳ Esperando authManager...');
+                // console.log removed
                 // Esperar un poco y reintentar
                 setTimeout(() => this.loadAdministratorsTab(), 500);
                 return;
@@ -644,7 +644,7 @@ class AdminManager {
             // Actualizar estadísticas
             await this.updateAdminsStats();
             
-            console.log('✅ Gestión de administradores cargada');
+            // console.log removed
             
         } catch (error) {
             console.error('❌ Error cargando administradores:', error);
@@ -654,7 +654,7 @@ class AdminManager {
 
     async loadAdminsList() {
         try {
-            console.log('🔄 Cargando lista de administradores...');
+            // console.log removed
             
             // Verificar si authManager existe
             if (!window.authManager) {
@@ -662,12 +662,12 @@ class AdminManager {
                 throw new Error('AuthManager no inicializado');
             }
             
-            console.log('✅ AuthManager disponible, obteniendo lista...');
+            // console.log removed
             const admins = await window.authManager.getAdminList();
-            console.log('📋 Administradores obtenidos:', admins);
+            // console.log removed
             
             this.renderAdminsTable(admins);
-            console.log('✅ Tabla renderizada');
+            // console.log removed
             
         } catch (error) {
             console.error('❌ Error obteniendo lista de administradores:', error);
@@ -802,29 +802,29 @@ class AdminManager {
     }
 
     async handleAddAdmin() {
-        console.log('🔄 Iniciando proceso de agregar administrador...');
+        // console.log removed
         
         const emailInput = document.getElementById('new-admin-email');
         const email = emailInput.value.trim();
         
-        console.log('📧 Email ingresado:', email);
+        // console.log removed
 
         if (!email) {
-            console.log('❌ Email vacío');
+            // console.log removed
             window.authManager?.showMessage('Ingresa un email válido', 'error');
             return;
         }
 
         if (!this.isValidEmail(email)) {
-            console.log('❌ Formato de email inválido');
+            // console.log removed
             window.authManager?.showMessage('El formato del email no es válido', 'error');
             return;
         }
 
         try {
-            console.log('🔄 Llamando addNewAdmin...');
+            // console.log removed
             const result = await window.authManager.addNewAdmin(email);
-            console.log('📋 Resultado:', result);
+            // console.log removed
             
             if (result.success) {
                 window.authManager?.showMessage('Administrador agregado exitosamente', 'success');
@@ -873,7 +873,7 @@ class AdminManager {
 
     async loadBaseUsuariosTab() {
         try {
-            console.log('👥 Cargando Base de Inscriptos...');
+            // console.log removed
             
             // Inicializar el manager si no existe
             if (!window.baseInscriptosManager) {
@@ -887,7 +887,7 @@ class AdminManager {
             // Cargar los datos de la colección base_inscriptos
             await window.baseInscriptosManager.cargarBaseInscriptos();
             
-            console.log('✅ Base de inscriptos cargada');
+            // console.log removed
             
         } catch (error) {
             console.error('❌ Error cargando base de inscriptos:', error);
@@ -1021,7 +1021,7 @@ class AdminManager {
                 });
             });
 
-            console.log(`📚 ${cursos.length} cursos obtenidos para sincronización`);
+            // console.log removed
             return cursos;
 
         } catch (error) {
@@ -1058,7 +1058,7 @@ class AdminManager {
                 });
             });
 
-            console.log(`👥 ${inscripciones.length} inscripciones obtenidas para sincronización`);
+            // console.log removed
             return inscripciones;
 
         } catch (error) {
@@ -1077,7 +1077,7 @@ class AdminManager {
 
             const scriptUrl = configDoc.data().url;
             
-            console.log('🔄 Enviando datos al Apps Script:', scriptUrl);
+            // console.log removed
 
             const response = await fetch(scriptUrl, {
                 method: 'POST',
@@ -1092,7 +1092,7 @@ class AdminManager {
             }
 
             const result = await response.json();
-            console.log('✅ Respuesta del Apps Script:', result);
+            // console.log removed
             
             return result;
 
@@ -1214,7 +1214,7 @@ class AdminManager {
                 };
                 
                 await addDoc(accountsRef, initialAccount);
-                console.log('✅ Cuenta bancaria inicial creada');
+                // console.log removed
             }
         } catch (error) {
             console.error('Error en migración de cuenta bancaria:', error);
@@ -1241,7 +1241,7 @@ class AdminManager {
             // Configurar listener para inscripciones
             const inscripcionesQuery = query(collection(db, 'inscripciones'), orderBy('fechaInscripcion', 'desc'));
             this.inscripcionesListener = onSnapshot(inscripcionesQuery, (snapshot) => {
-                console.log('📧 Actualizaciones en inscripciones detectadas');
+                // console.log removed
                 this.handleInscripcionesUpdate(snapshot);
             }, (error) => {
                 console.error('Error en listener de inscripciones:', error);
@@ -1267,7 +1267,7 @@ class AdminManager {
             // Configurar listener para cursos
             const cursosQuery = query(collection(db, 'cursos'));
             this.cursosListener = onSnapshot(cursosQuery, (snapshot) => {
-                console.log('📚 Actualizaciones en cursos detectadas');
+                // console.log removed
                 this.handleCursosUpdate(snapshot);
             }, (error) => {
                 console.error('Error en listener de cursos:', error);
@@ -1300,7 +1300,7 @@ class AdminManager {
             this.renderEstadoCursos();
         }
         
-        console.log(`✅ Tabla de inscripciones actualizada: ${this.inscripciones.length} registros`);
+        // console.log removed
     }
 
     handleCursosUpdate(snapshot) {
@@ -1327,7 +1327,7 @@ class AdminManager {
             this.renderEstadoCursos();
         }
         
-        console.log(`✅ Datos de cursos actualizados: ${Object.keys(cursosMap).length} cursos`);
+        // console.log removed
     }
 
     enrichInscripcionesWithCursos() {
@@ -1362,7 +1362,7 @@ class AdminManager {
             this.cursosListener();
             this.cursosListener = null;
         }
-        console.log('🧹 Listeners de admin limpiados');
+        // console.log removed
     }
 
     async loadAdminRecetas() {
@@ -1423,12 +1423,12 @@ class AdminManager {
 
     initializeContabilidadManager() {
         if (!this.contabilidadManager) {
-            console.log('🔄 Inicializando ContabilidadManager...');
+            // console.log removed
             
             // Verificar que ContabilidadManager esté disponible
             if (window.ContabilidadManager) {
                 this.contabilidadManager = new window.ContabilidadManager();
-                console.log('✅ ContabilidadManager inicializado');
+                // console.log removed
             } else {
                 console.error('❌ ContabilidadManager no está disponible');
                 setTimeout(() => this.initializeContabilidadManager(), 500);
@@ -2065,9 +2065,9 @@ class AdminManager {
                 try {
                     const emailResult = await window.emailService.procesarInscripcion(inscripcionId, 'confirmar');
                     if (emailResult.success) {
-                        console.log('✅ Email de confirmación enviado');
+                        // console.log removed
                     } else {
-                        console.log('⚠️ Email no enviado:', emailResult.reason);
+                        // console.log removed
                     }
                 } catch (emailError) {
                     console.error('Error enviando email de confirmación:', emailError);
@@ -2416,7 +2416,7 @@ class AdminManager {
 
     async uploadRecetaPDF(file) {
         try {
-            console.log(`� Subiendo PDF de receta: ${file.name}`);
+            // console.log removed
             
             // Sistema Base64 para PDFs de recetas - Compatible con Firebase Spark
             
@@ -2436,7 +2436,7 @@ class AdminManager {
                     try {
                         const base64Data = e.target.result;
                         
-                        console.log(`✅ PDF de receta convertido: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`);
+                        // console.log removed
                         
                         // Para recetas, retornamos directamente la data URL
                         resolve(base64Data);
@@ -2510,7 +2510,7 @@ class AdminManager {
                 filterCurso.value = currentValue;
             }
             
-            console.log(`🔄 Filtros actualizados: ${cursosNombres.length} cursos disponibles`);
+            // console.log removed
         }
     }
 
@@ -2645,7 +2645,7 @@ class AdminManager {
             link.click();
             document.body.removeChild(link);
             
-            console.log(`✅ Descarga iniciada: ${fileName}`);
+            // console.log removed
             
             // Mostrar mensaje de éxito
             window.authManager?.showMessage('Descarga iniciada correctamente', 'success');
@@ -2723,7 +2723,7 @@ class AdminManager {
                         curso
                     );
                     
-                    console.log('✅ Base de inscriptos actualizada');
+                    // console.log removed
                 }
             } catch (baseError) {
                 console.error('⚠️ Error actualizando base_inscriptos:', baseError);
@@ -2745,9 +2745,9 @@ class AdminManager {
                     }
                     
                     if (emailResult?.success) {
-                        console.log('✅ Email enviado por cambio de estado');
+                        // console.log removed
                     } else if (emailResult) {
-                        console.log('⚠️ Email no enviado:', emailResult.reason);
+                        // console.log removed
                     }
                 } catch (emailError) {
                     console.error('Error enviando email por cambio de estado:', emailError);
@@ -2900,7 +2900,7 @@ class AdminManager {
                 adminAction: true
             });
             
-            console.log(`📝 Acción registrada: ${action}`, details);
+            // console.log removed
 
         } catch (error) {
             console.error('Error registrando acción:', error);
@@ -2922,7 +2922,7 @@ class AdminManager {
     
     async loadSystemLogs(filters = {}) {
         try {
-            console.log('📊 Cargando logs del sistema...');
+            // console.log removed
             
             let logsQuery = collection(db, 'system_logs');
             const constraints = [];
@@ -2963,7 +2963,7 @@ class AdminManager {
             this.renderLogsTable(logs);
             this.updateLogsStats(logs);
             
-            console.log(`✅ ${logs.length} logs cargados`);
+            // console.log removed
 
         } catch (error) {
             console.error('❌ Error cargando logs:', error);
@@ -3228,11 +3228,11 @@ class AdminManager {
     
     initializeNotasManager() {
         if (!this.notasManager && window.notasManager) {
-            console.log('🔄 Inicializando gestor de notas...');
+            // console.log removed
             this.notasManager = window.notasManager;
             // Llamar init() para cargar las notas y configurar el Kanban
             this.notasManager.init();
-            console.log('✅ Gestor de notas inicializado y cargado');
+            // console.log removed
         } else if (!window.notasManager) {
             console.error('❌ NotasManager no está disponible');
         }
@@ -3243,7 +3243,7 @@ class AdminManager {
     // ============================================
     
     loadEstadoCursosTab() {
-        console.log('📊 Cargando tab Estado de Cursos');
+        // console.log removed
         this.renderEstadoCursos();
     }
     
@@ -3715,7 +3715,7 @@ window.bankAccountManager = new BankAccountManager();
 
 // Importar módulo de configuraciones
 import('./configuracion.js').then(({ default: ConfiguracionManager }) => {
-    console.log('✅ Módulo de configuraciones cargado');
+    // console.log removed
 }).catch(error => {
     console.error('❌ Error cargando módulo de configuraciones:', error);
 });

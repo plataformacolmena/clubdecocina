@@ -81,7 +81,7 @@ class BaseInscriptosManager {
         });
 
         this.initialized = true;
-        console.log('✅ Base Usuarios Manager inicializado');
+        // console.log removed
     }
 
     // Cargar todos los inscriptos consolidados de la colección base_inscriptos
@@ -90,7 +90,7 @@ class BaseInscriptosManager {
             this.isLoading = true;
             this.showLoading();
 
-            console.log('🔄 Cargando base de datos de inscriptos...');
+            // console.log removed
 
             // Verificar si la colección existe, sino crearla
             await this.verificarYCrearColeccion();
@@ -127,7 +127,7 @@ class BaseInscriptosManager {
                 });
             });
 
-            console.log(`✅ Cargados ${this.inscriptos.length} inscriptos`);
+            // console.log removed
             
             this.filteredInscriptos = [...this.inscriptos];
             this.renderTabla();
@@ -149,10 +149,10 @@ class BaseInscriptosManager {
             const snapshot = await getDocs(baseInscriptosQuery);
             
             if (snapshot.empty) {
-                console.log('📝 Colección base_inscriptos vacía, creando desde inscripciones...');
+                // console.log removed
                 await this.consolidarDatosIniciales();
             } else {
-                console.log(`✅ Colección base_inscriptos existe con ${snapshot.size} registros`);
+                // console.log removed
             }
         } catch (error) {
             console.error('❌ Error verificando colección:', error);
@@ -162,7 +162,7 @@ class BaseInscriptosManager {
     // Consolidar datos iniciales desde todas las inscripciones
     async consolidarDatosIniciales() {
         try {
-            console.log('🔄 Procesando todas las inscripciones para crear base_inscriptos...');
+            // console.log removed
             
             // Obtener todas las inscripciones
             const inscripcionesQuery = query(
@@ -195,17 +195,17 @@ class BaseInscriptosManager {
                 inscripcionesPorEmail.get(email).push(inscripcion);
             });
 
-            console.log(`📊 Procesando ${inscripcionesPorEmail.size} inscriptos únicos...`);
+            // console.log removed
 
             // Crear documentos consolidados
             for (const [email, inscripciones] of inscripcionesPorEmail) {
                 const datosConsolidados = this.consolidarDatosInscripto(email, inscripciones, cursosMap);
                 
                 await setDoc(doc(db, 'base_inscriptos', email), datosConsolidados);
-                console.log(`✅ Creado registro para: ${email}`);
+                // console.log removed
             }
 
-            console.log('🎉 Consolidación inicial completada');
+            // console.log removed
             
         } catch (error) {
             console.error('❌ Error en consolidación inicial:', error);
@@ -463,7 +463,7 @@ class BaseInscriptosManager {
                 minute: '2-digit'
             });
         } catch (error) {
-            console.warn('Error formateando fecha:', error);
+            // console.warn removed
             return 'Fecha inválida';
         }
     }
@@ -806,7 +806,7 @@ class BaseInscriptosManager {
                 await setDoc(inscriptoRef, datosConsolidados);
             }
             
-            console.log(`✅ Inscripto ${email} actualizado en base_inscriptos`);
+            // console.log removed
             
         } catch (error) {
             console.error('❌ Error actualizando inscripto:', error);

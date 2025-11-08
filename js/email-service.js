@@ -35,7 +35,7 @@ class EmailService {
         try {
             await this.loadConfigurations();
             this.initialized = true;
-            console.log('✅ EmailService inicializado correctamente');
+            // console.log removed
         } catch (error) {
             console.error('❌ Error inicializando EmailService:', error);
             this.initialized = false;
@@ -58,17 +58,17 @@ class EmailService {
                         this.scriptConfig = scriptDoc.data();
                     }
                 } catch (error) {
-                    console.warn('⚠️ No se pudo cargar configuración de Apps Script:', error);
+                    // console.warn removed
                 }
 
                 // Cargar email del admin principal
                 try {
                     this.adminEmail = await this.getAdminPrincipalEmail();
                 } catch (error) {
-                    console.warn('⚠️ No se pudo cargar email del admin principal:', error);
+                    // console.warn removed
                 }
             } else {
-                console.log('ℹ️ EmailService inicializado en modo limitado para usuario no admin');
+                // console.log removed
             }
 
             // Cargar configuración de envío (pública)
@@ -78,17 +78,17 @@ class EmailService {
                     this.envioConfig = envioDoc.data();
                 }
             } catch (error) {
-                console.warn('⚠️ No se pudo cargar configuración de envío:', error);
+                // console.warn removed
             }
 
             // Solo verificar configuraciones críticas para admins
             if (isAdmin) {
                 if (!this.scriptConfig?.url || !this.scriptConfig?.activo) {
-                    console.warn('⚠️ Apps Script no configurado o desactivado');
+                    // console.warn removed
                 }
 
                 if (!this.adminEmail) {
-                    console.warn('⚠️ No se encontró email del admin principal');
+                    // console.warn removed
                 }
             }
 
@@ -114,15 +114,12 @@ class EmailService {
             
             const snapshot = await getDocs(q);
             
-            console.log(`🔍 DEBUG: Encontrados ${snapshot.docs.length} documentos en colección admins`);
+            // console.log removed
             
             if (!snapshot.empty) {
                 // Debug: mostrar estructura de los documentos
                 snapshot.docs.forEach((doc, index) => {
-                    console.log(`🔍 DEBUG Admin ${index}:`, {
-                        id: doc.id,
-                        data: doc.data()
-                    });
+                // Debug admin info removed
                 });
                 
                 // Obtener todos los admins activos y ordenar en JavaScript (sin índice)
@@ -139,11 +136,11 @@ class EmailService {
                 });
                 
                 const adminPrincipal = adminsActivos[0];
-                console.log(`📧 Admin principal encontrado: ${adminPrincipal.email}`);
+                // console.log removed
                 return adminPrincipal.email;
             }
             
-            console.warn('⚠️ No se encontró ningún admin activo');
+            // console.warn removed
             return null;
         } catch (error) {
             console.error('Error obteniendo admin principal:', error);
@@ -174,7 +171,7 @@ class EmailService {
             
             if (!snapshot.empty) {
                 const plantilla = snapshot.docs[0].data();
-                console.log(`📧 Plantilla personalizada encontrada para tipo: ${tipo}`);
+                // console.log removed
                 return plantilla;
             }
             
@@ -191,7 +188,7 @@ class EmailService {
     async getDatosBancarios() {
         try {
             if (!window.bankAccountManager) {
-                console.warn('⚠️ BankAccountManager no disponible');
+                // console.warn removed
                 return 'Datos bancarios no configurados';
             }
 
@@ -260,7 +257,7 @@ Titular: ${cuenta.titular}
 
             // Verificar configuración
             if (!this.scriptConfig?.url || !this.scriptConfig?.activo) {
-                console.log('📧 Apps Script desactivado, email no enviado');
+                // console.log removed
                 return { success: false, reason: 'Apps Script desactivado' };
             }
 
@@ -268,7 +265,7 @@ Titular: ${cuenta.titular}
             const plantilla = await this.getPlantillaByTipo(tipo);
             
             if (!plantilla) {
-                console.log(`❌ Plantilla no generada para tipo: ${tipo}`);
+                // console.log removed
                 return { success: false, reason: 'Plantilla no generada' };
             }
             
@@ -284,10 +281,10 @@ Titular: ${cuenta.titular}
                 timestamp: new Date().toISOString()
             };
             
-            console.log(`📧 Enviando email con plantilla: ${tipo}`);
+            // console.log removed
 
-            console.log(`📧 Enviando email tipo: ${tipo}`);
-            console.log('📋 Datos del email:', JSON.stringify(payload, null, 2));
+            // console.log removed
+            // console.log removed
 
             // Realizar petición al Apps Script (evitando preflight CORS)
             // Usar text/plain para que sea "simple request" sin preflight
@@ -306,7 +303,7 @@ Titular: ${cuenta.titular}
             const result = await response.json();
             
             if (result.success) {
-                console.log('✅ Email enviado exitosamente:', result);
+                // console.log removed
                 return { success: true, data: result };
             } else {
                 throw new Error(result.error || 'Error desconocido en Apps Script');
@@ -332,24 +329,24 @@ Titular: ${cuenta.titular}
     async enviarEmailUnificado(tipoEvento, datos, emailAlumno) {
         // Verificar si el evento está habilitado
         if (!this.isNotificationEnabled(tipoEvento)) {
-            console.log(`📧 Evento ${tipoEvento} deshabilitado en configuración`);
+            // console.log removed
             return { success: false, reason: 'Evento deshabilitado' };
         }
 
         const results = [];
 
         // Enviar al alumno
-        console.log(`📧 Enviando ${tipoEvento} al alumno: ${emailAlumno}`);
+        // console.log removed
         const alumnoResult = await this.sendEmail(tipoEvento, datos, emailAlumno);
         results.push({ destinatario: 'alumno', email: emailAlumno, ...alumnoResult });
 
         // Enviar al admin principal (si existe)
         if (this.adminEmail) {
-            console.log(`📧 Enviando ${tipoEvento} al admin: ${this.adminEmail}`);
+            // console.log removed
             const adminResult = await this.sendEmail(tipoEvento, datos, this.adminEmail);
             results.push({ destinatario: 'admin', email: this.adminEmail, ...adminResult });
         } else {
-            console.warn('⚠️ No se pudo enviar al admin: email no configurado');
+            // console.warn removed
             results.push({ destinatario: 'admin', email: null, success: false, reason: 'Admin email no configurado' });
         }
 
@@ -560,7 +557,7 @@ Titular: ${cuenta.titular}
             }
 
             const result = await response.json();
-            console.log('✅ Test de conexión exitoso:', result);
+            // console.log removed
             return { success: true, data: result };
 
         } catch (error) {

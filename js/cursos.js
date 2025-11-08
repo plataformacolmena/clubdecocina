@@ -33,7 +33,7 @@ class CursosManager {
                 return 0;
             }
             
-            console.log(`🔢 Contando inscriptos para curso: ${cursoId}`);
+            // console.log removed
             const q = query(
                 collection(db, 'inscripciones'),
                 where('cursoId', '==', cursoId),
@@ -42,16 +42,16 @@ class CursosManager {
             
             const querySnapshot = await getDocs(q);
             const count = querySnapshot.size;
-            console.log(`✅ Curso ${cursoId}: ${count} inscriptos activos encontrados`);
+            // console.log removed
             
             // Debug: mostrar detalles de inscripciones
             if (count > 0) {
                 querySnapshot.forEach(doc => {
                     const data = doc.data();
-                    console.log(`   - ${data.usuarioNombre || 'Sin nombre'} (${data.estado})`);
+                    // console.log removed
                 });
             } else {
-                console.log(`   ℹ️ No se encontraron inscripciones activas para curso ${cursoId}`);
+                // console.log removed
             }
             
             return count;
@@ -70,7 +70,7 @@ class CursosManager {
                 inscriptos: inscriptosReales,
                 ultimaSincronizacion: new Date()
             });
-            console.log(`✅ Contador sincronizado para curso ${cursoId}: ${inscriptosReales} inscriptos`);
+            // console.log removed
         } catch (error) {
             console.error('Error sincronizando contador:', error);
         }
@@ -79,11 +79,11 @@ class CursosManager {
     // Método para sincronizar todos los contadores (migración)
     async sincronizarTodosLosContadores() {
         try {
-            console.log('🔄 Iniciando sincronización de contadores...');
+            // console.log removed
             for (const curso of this.cursos) {
                 await this.sincronizarContadorCurso(curso.id);
             }
-            console.log('✅ Sincronización completa');
+            // console.log removed
             window.authManager?.showMessage('Contadores sincronizados exitosamente', 'success');
         } catch (error) {
             console.error('Error en sincronización masiva:', error);
@@ -107,7 +107,7 @@ class CursosManager {
         // Limpiar listeners cuando se cambie de sección
         document.addEventListener('sectionChanged', (e) => {
             if (e.detail.previousSection === 'cursos') {
-                console.log('🔌 Limpiando listeners al salir de sección cursos');
+                // console.log removed
                 this.clearInscripcionListeners();
             }
         });
@@ -188,8 +188,8 @@ class CursosManager {
         }
 
         // Renderizar tarjetas de forma más robusta
-        console.log(`🎯 Renderizando ${cursos.length} cursos...`);
-        console.log(`⚡ Ejecutando creación de tarjetas en PARALELO...`);
+        // console.log removed
+        // console.log removed
         
         // Ejecutar todas las creaciones de tarjetas en paralelo para mejor rendimiento
         const cardPromises = cursos.map(async (curso) => {
@@ -222,11 +222,11 @@ class CursosManager {
         // Configurar listeners en tiempo real para inscripciones
         this.setupInscripcionListeners();
         
-        console.log(`✅ Renderizado completo de ${cursos.length} cursos`);
+        // console.log removed
     }
 
     async createCursoCard(curso) {
-        console.log(`🃏 Creando tarjeta para curso: "${curso.nombre}" (ID: ${curso.id})`);
+        // console.log removed
         
         const fechaFormatted = new Date(curso.fechaHora.seconds * 1000).toLocaleString('es-AR', {
             weekday: 'long',
@@ -242,7 +242,7 @@ class CursosManager {
             this.contarInscriptosActivos(curso.id),
             window.authManager.getCurrentUser() 
                 ? this.verificarInscripcionCompleta(curso.id).catch(error => {
-                    console.log('Error verificando inscripción:', error);
+                    // console.log removed
                     return { inscrito: false, estado: '' };
                 })
                 : Promise.resolve({ inscrito: false, estado: '' })
@@ -346,23 +346,23 @@ class CursosManager {
                         telefono !== '-' &&
                         telefono !== 'null' &&
                         telefono !== 'undefined') {
-                        console.log('✅ Usuario ya tiene teléfono registrado:', telefono);
+                        // console.log removed
                         return telefono;
                     } else if (telefono) {
-                        console.log('⚠️ Usuario tiene teléfono no válido:', telefono, '- solicitando nuevo teléfono');
+                        // console.log removed
                     }
                 }
             } catch (permissionError) {
                 if (permissionError.code === 'permission-denied') {
-                    console.log('⚠️ Sin permisos para leer base_inscriptos, solicitando teléfono directamente');
+                    // console.log removed
                 } else {
-                    console.log('⚠️ Error accediendo a base_inscriptos:', permissionError.message);
+                    // console.log removed
                 }
                 // Continuar pidiendo teléfono sin fallar
             }
             
             // Si no tiene teléfono válido o no se pudo verificar, mostrar modal para pedirlo
-            console.log('📱 Solicitando teléfono al usuario...');
+            // console.log removed
             const telefono = await this.mostrarModalTelefono();
             
             if (telefono) {
@@ -550,12 +550,12 @@ class CursosManager {
                 });
             }
             
-            console.log('✅ Teléfono guardado en base_inscriptos:', telefono);
+            // console.log removed
             
         } catch (error) {
             // Manejo mejorado de errores: no fallar si no hay permisos
             if (error.code === 'permission-denied') {
-                console.log('⚠️ Sin permisos para guardar en base_inscriptos, teléfono se guardará solo en inscripción');
+                // console.log removed
             } else {
                 console.error('❌ Error guardando teléfono:', error);
             }
@@ -625,7 +625,7 @@ class CursosManager {
                         { ...inscripcionData, id: inscripcionRef.id },
                         curso
                     );
-                    console.log('✅ Base de inscriptos actualizada con nueva inscripción');
+                    // console.log removed
                 }
             } catch (baseError) {
                 console.error('⚠️ Error actualizando base_inscriptos:', baseError);
@@ -651,9 +651,9 @@ class CursosManager {
                 try {
                     const emailResult = await window.emailService.procesarInscripcion(inscripcionRef.id, 'nueva');
                     if (emailResult.success) {
-                        console.log('✅ Notificación de nueva inscripción enviada al admin');
+                        // console.log removed
                     } else {
-                        console.log('⚠️ Notificación de nueva inscripción no enviada:', emailResult.reason);
+                        // console.log removed
                     }
                 } catch (emailError) {
                     console.error('Error enviando notificación de nueva inscripción:', emailError);
@@ -816,10 +816,10 @@ class CursosManager {
 
     // Función de debug para probar desde consola
     async debugContarInscriptos(cursoId) {
-        console.log('🔧 FUNCIÓN DEBUG - Contando inscriptos para:', cursoId);
+        // console.log removed
         try {
             const result = await this.contarInscriptosActivos(cursoId);
-            console.log('🔧 RESULTADO DEBUG:', result);
+            // console.log removed
             return result;
         } catch (error) {
             console.error('🔧 ERROR DEBUG:', error);
@@ -829,20 +829,20 @@ class CursosManager {
 
     // Función para ver todos los cursos disponibles
     debugVerCursos() {
-        console.log('🔧 CURSOS CARGADOS:', this.cursos);
+        // console.log removed
         return this.cursos;
     }
 
     // Función para ver todas las inscripciones
     async debugVerInscripciones() {
         try {
-            console.log('🔧 OBTENIENDO TODAS LAS INSCRIPCIONES...');
+            // console.log removed
             const querySnapshot = await getDocs(collection(db, 'inscripciones'));
             const inscripciones = [];
             querySnapshot.forEach(doc => {
                 inscripciones.push({ id: doc.id, ...doc.data() });
             });
-            console.log('🔧 INSCRIPCIONES ENCONTRADAS:', inscripciones);
+            // console.log removed
             return inscripciones;
         } catch (error) {
             console.error('🔧 ERROR AL OBTENER INSCRIPCIONES:', error);
@@ -852,7 +852,7 @@ class CursosManager {
 
     // Métodos para manejar el spinner de carga de cursos
     showCursosLoading() {
-        console.log('🔄 Mostrando spinner de carga de cursos...');
+        // console.log removed
         const cursosGrid = document.getElementById('cursos-grid');
         const cursosLoading = document.getElementById('cursos-loading');
         
@@ -861,7 +861,7 @@ class CursosManager {
     }
 
     hideCursosLoading() {
-        console.log('✅ Ocultando spinner de carga de cursos');
+        // console.log removed
         const cursosGrid = document.getElementById('cursos-grid');
         const cursosLoading = document.getElementById('cursos-loading');
         
@@ -895,14 +895,14 @@ class CursosManager {
             this.inscripcionListeners.set(curso.id, unsubscribe);
         });
         
-        console.log(`📡 Configurados ${this.inscripcionListeners.size} listeners de inscripciones en tiempo real`);
+        // console.log removed
     }
 
     // Limpiar todos los listeners de inscripciones
     clearInscripcionListeners() {
         this.inscripcionListeners.forEach((unsubscribe, cursoId) => {
             unsubscribe();
-            console.log(`🔌 Desconectado listener para curso ${cursoId}`);
+            // console.log removed
         });
         this.inscripcionListeners.clear();
     }
@@ -943,7 +943,7 @@ class CursosManager {
             }
         }
         
-        console.log(`🔄 Actualizado botón curso ${cursoId}: ${inscriptosActuales} inscriptos, ${disponibles} disponibles`);
+        // console.log removed
     }
 }
 

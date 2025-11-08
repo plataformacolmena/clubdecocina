@@ -9,7 +9,7 @@ import {
 class SystemLogger {
     constructor() {
         this.sessionId = this.getSessionId();
-        console.log('📋 SystemLogger inicializado');
+        // console.log removed
     }
 
     // Generar o recuperar ID de sesión
@@ -67,7 +67,7 @@ class SystemLogger {
             // Usar colección unificada 'system_logs'
             await addDoc(collection(db, 'system_logs'), logEntry);
             
-            console.log(`📝 [${action}] ${userEmail} (${userType})`, details);
+            // console.log removed
 
         } catch (error) {
             console.error('Error en SystemLogger:', error);

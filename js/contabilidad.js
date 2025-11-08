@@ -32,7 +32,7 @@ export class ContabilidadManager {
         // Inicializar event listeners
         this.setupEventListeners();
         
-        console.log('✅ ContabilidadManager inicializado');
+        // console.log removed
     }
 
     setupEventListeners() {
@@ -124,13 +124,13 @@ export class ContabilidadManager {
 
     async loadContabilidad() {
         try {
-            console.log('📊 Configurando contabilidad con snapshots en tiempo real...');
+            // console.log removed
             window.authManager?.showLoading();
 
             // Configurar snapshot para movimientos (esto también renderiza la tabla)
             await this.loadMovimientos();
 
-            console.log('✅ Contabilidad configurada con actualizaciones en tiempo real');
+            // console.log removed
 
         } catch (error) {
             console.error('❌ Error configurando contabilidad:', error);
@@ -147,7 +147,7 @@ export class ContabilidadManager {
             
             // Configurar snapshot en tiempo real
             this.movimientosUnsubscribe = onSnapshot(q, (snapshot) => {
-                console.log('🔄 Actualizando movimientos en tiempo real...');
+                // console.log removed
                 
                 this.movimientos = [];
                 snapshot.forEach((doc) => {
@@ -161,7 +161,7 @@ export class ContabilidadManager {
                     });
                 });
 
-                console.log(`📋 ${this.movimientos.length} movimientos actualizados`);
+                // console.log removed
                 
                 // Actualizar la tabla automáticamente
                 this.applyFilters();
@@ -627,7 +627,7 @@ export class ContabilidadManager {
             };
 
             await addDoc(collection(db, 'movimientos'), ingresoData);
-            console.log('✅ Ingreso automático registrado:', ingresoData);
+            // console.log removed
             
         } catch (error) {
             console.error('❌ Error registrando ingreso automático:', error);
@@ -639,7 +639,7 @@ export class ContabilidadManager {
         try {
             if (this.movimientosUnsubscribe) {
                 this.movimientosUnsubscribe();
-                console.log('✅ Snapshot de movimientos desuscrito');
+                // console.log removed
             }
         } catch (error) {
             console.error('Error al desuscribir snapshots:', error);

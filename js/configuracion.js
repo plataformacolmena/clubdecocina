@@ -38,17 +38,17 @@ class ConfiguracionManager {
     }
 
     async waitForFirebaseAndInit() {
-        console.log('🔄 Esperando inicialización de Firebase...');
+        // console.log removed
         
         // Verificar que Firebase esté disponible
         await this.waitForFirebase();
         
-        console.log('✅ Firebase listo, configurando autenticación...');
+        // console.log removed
         
         // Configurar autenticación
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                console.log('👤 Usuario autenticado:', user.email);
+                // console.log removed
                 this.currentUser = user;
                 this.setupEventListeners();
                 
@@ -57,7 +57,7 @@ class ConfiguracionManager {
                 
                 await this.loadAllConfigurations();
             } else {
-                console.log('❌ Usuario no autenticado');
+                // console.log removed
             }
         });
     }
@@ -70,22 +70,22 @@ class ConfiguracionManager {
             try {
                 // Verificar que db esté disponible y sea una instancia válida
                 if (db && typeof db === 'object' && db.type === 'firestore') {
-                    console.log('✅ Firestore inicializado correctamente');
+                    // console.log removed
                     this.isFirebaseReady = true;
                     return true;
                 }
                 
                 // Si db existe pero no tiene el tipo correcto
                 if (db) {
-                    console.log('⚠️ db existe pero no es instancia válida:', typeof db, db);
+                    // console.log removed
                 }
                 
                 attempts++;
-                console.log(`⏳ Intento ${attempts}/${maxAttempts} - Esperando Firebase...`);
+                // console.log removed
                 await this.delay(250);
                 
             } catch (error) {
-                console.warn(`❌ Error verificando Firebase (intento ${attempts}):`, error.message);
+                // console.warn removed
                 attempts++;
                 await this.delay(250);
             }
@@ -165,11 +165,11 @@ class ConfiguracionManager {
         try {
             // Verificar que Firebase esté listo antes de continuar
             if (!this.isFirebaseReady) {
-                console.log('⚠️ Firebase no está listo, esperando...');
+                // console.log removed
                 await this.waitForFirebase();
             }
 
-            console.log('📋 Cargando configuraciones del sistema...');
+            // console.log removed
             
             // Configuraciones básicas que todos los usuarios necesitan
             const basicConfigurations = [
@@ -180,12 +180,12 @@ class ConfiguracionManager {
             
             // Cargar configuraciones básicas (críticas para el funcionamiento)
             await Promise.all(basicConfigurations);
-            console.log('✅ Configuraciones básicas cargadas');
+            // console.log removed
             
             // Cargar configuraciones de admin SOLO si el usuario es admin
             const isUserAdmin = window.authManager && window.authManager.isAdmin;
             if (isUserAdmin) {
-                console.log('👑 Usuario admin detectado, cargando configuraciones administrativas...');
+                // console.log removed
                 try {
                     const adminConfigurations = [
                         this.loadProfesoresConfiguration(),
@@ -194,16 +194,16 @@ class ConfiguracionManager {
                     ];
                     
                     await Promise.all(adminConfigurations);
-                    console.log('✅ Configuraciones administrativas cargadas');
+                    // console.log removed
                 } catch (adminError) {
-                    console.warn('⚠️ Error en configuraciones administrativas:', adminError);
+                    // console.warn removed
                     // No fallar completamente si solo las configs de admin fallan
                 }
             } else {
-                console.log('👤 Usuario regular detectado, omitiendo configuraciones administrativas');
+                // console.log removed
             }
             
-            console.log('✅ Configuraciones del sistema inicializadas correctamente');
+            // console.log removed
         } catch (error) {
             console.error('❌ Error crítico al cargar configuraciones básicas:', error);
             this.showError('Error al cargar las configuraciones del sistema: ' + error.message);
@@ -214,14 +214,14 @@ class ConfiguracionManager {
         try {
             this.validateFirebaseReady('loadSedeConfiguration');
             
-            console.log('📍 Cargando configuración de sede...');
+            // console.log removed
             const sedeDoc = await getDoc(doc(db, 'configuraciones', 'sede'));
             
             if (sedeDoc.exists()) {
                 this.sedeData = sedeDoc.data();
-                console.log('✅ Configuración de sede cargada:', this.sedeData.direccion);
+                // console.log removed
             } else {
-                console.log('⚠️ No existe configuración de sede, creando por defecto...');
+                // console.log removed
                 // Configuración por defecto
                 this.sedeData = {
                     direccion: 'Dirección no configurada',
@@ -246,7 +246,7 @@ class ConfiguracionManager {
         try {
             this.validateFirebaseReady('loadProfesoresConfiguration');
             
-            console.log('👨‍🏫 Cargando profesores...');
+            // console.log removed
             const profesoresSnapshot = await getDocs(collection(db, 'profesores'));
             this.profesoresData = [];
             
@@ -257,7 +257,7 @@ class ConfiguracionManager {
                 });
             });
             
-            console.log(`✅ ${this.profesoresData.length} profesores cargados`);
+            // console.log removed
             this.renderProfesoresTable();
         } catch (error) {
             console.error('❌ Error al cargar profesores:', error);
@@ -269,14 +269,14 @@ class ConfiguracionManager {
         try {
             this.validateFirebaseReady('loadScriptsConfiguration');
             
-            console.log('� Cargando configuración de Apps Script...');
+            // console.log removed
             const scriptDoc = await getDoc(doc(db, 'configuraciones', 'apps_script'));
             
             if (scriptDoc.exists()) {
                 this.scriptConfig = scriptDoc.data();
-                console.log('✅ Configuración de Apps Script cargada');
+                // console.log removed
             } else {
-                console.log('⚠️ No existe configuración de Apps Script, creando por defecto...');
+                // console.log removed
                 this.scriptConfig = {
                     nombre: 'Gmail API Universal',
                     url: 'https://script.google.com/macros/s/TU_SCRIPT_ID_AQUI/exec',
@@ -307,14 +307,14 @@ class ConfiguracionManager {
         try {
             this.validateFirebaseReady('loadEnvioConfiguration');
             
-            console.log('📬 Cargando configuración de envío...');
+            // console.log removed
             const envioDoc = await getDoc(doc(db, 'configuraciones', 'envio'));
             
             if (envioDoc.exists()) {
                 this.envioConfig = envioDoc.data();
-                console.log('✅ Configuración de envío cargada');
+                // console.log removed
             } else {
-                console.log('⚠️ No existe configuración de envío, creando por defecto...');
+                // console.log removed
                 this.envioConfig = {
                     eventosNotificacion: {
                         nuevaInscripcion: true,
@@ -336,14 +336,14 @@ class ConfiguracionManager {
         try {
             this.validateFirebaseReady('loadRecordatoriosConfiguration');
             
-            console.log('⏰ Cargando configuración de recordatorios...');
+            // console.log removed
             const recordatoriosDoc = await getDoc(doc(db, 'configuraciones', 'recordatorios'));
             
             if (recordatoriosDoc.exists()) {
                 this.recordatoriosConfig = recordatoriosDoc.data();
-                console.log('✅ Configuración de recordatorios cargada');
+                // console.log removed
             } else {
-                console.log('⚠️ No existe configuración de recordatorios, creando por defecto...');
+                // console.log removed
                 this.recordatoriosConfig = {
                     diasAntes: 1,
                     horario: '11:00',
@@ -499,11 +499,11 @@ class ConfiguracionManager {
         try {
             this.validateFirebaseReady('saveSedeConfiguration');
             
-            console.log('💾 Guardando configuración de sede...');
+            // console.log removed
             await setDoc(doc(db, 'configuraciones', 'sede'), data);
             this.sedeData = data;
             this.renderSedeDisplay();
-            console.log('✅ Configuración de sede guardada exitosamente');
+            // console.log removed
             this.showSuccess('Configuración de sede guardada correctamente');
         } catch (error) {
             console.error('❌ Error al guardar configuración de sede:', error);
@@ -515,11 +515,11 @@ class ConfiguracionManager {
         try {
             this.validateFirebaseReady('saveEnvioConfiguration');
             
-            console.log('💾 Guardando configuración de envío...');
+            // console.log removed
             await setDoc(doc(db, 'configuraciones', 'envio'), data);
             this.envioConfig = data;
             this.renderEnvioDisplay();
-            console.log('✅ Configuración de envío guardada exitosamente');
+            // console.log removed
             this.showSuccess('Configuración de envío guardada correctamente');
         } catch (error) {
             console.error('❌ Error al guardar configuración de envío:', error);
@@ -531,7 +531,7 @@ class ConfiguracionManager {
         try {
             this.validateFirebaseReady('saveScriptConfiguration');
             
-            console.log('💾 Guardando configuración de Apps Script...');
+            // console.log removed
             
             await setDoc(doc(db, 'configuraciones', 'apps_script'), {
                 ...data,
@@ -541,7 +541,7 @@ class ConfiguracionManager {
             this.scriptConfig = { ...data, updated: new Date() };
             this.renderScriptDisplay();
             
-            console.log('✅ Configuración de Apps Script guardada exitosamente');
+            // console.log removed
             this.showSuccess('Configuración de Apps Script actualizada');
             
         } catch (error) {
@@ -555,11 +555,11 @@ class ConfiguracionManager {
         try {
             this.validateFirebaseReady('saveRecordatoriosConfiguration');
             
-            console.log('💾 Guardando configuración de recordatorios...');
+            // console.log removed
             await setDoc(doc(db, 'configuraciones', 'recordatorios'), data);
             this.recordatoriosConfig = data;
             this.renderRecordatoriosDisplay();
-            console.log('✅ Configuración de recordatorios guardada exitosamente');
+            // console.log removed
             this.showSuccess('Configuración de recordatorios guardada correctamente');
         } catch (error) {
             console.error('❌ Error al guardar configuración de recordatorios:', error);
@@ -1003,7 +1003,7 @@ class ConfiguracionManager {
             }
             
             const testUrl = `${url}?test=true&timestamp=${Date.now()}`;
-            console.log('🔗 Testing URL:', testUrl);
+            // console.log removed
             
             // Realizar petición de prueba
             const response = await fetch(testUrl, {
@@ -1024,7 +1024,7 @@ class ConfiguracionManager {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('📊 Datos de respuesta:', data);
+                // console.log removed
                 
                 if (data.status && data.status.includes('funcionando')) {
                     this.showSuccess(`✅ Apps Script funcionando correctamente<br>
@@ -1182,7 +1182,7 @@ class ConfiguracionManager {
         if (window.authManager && window.authManager.showMessage) {
             window.authManager.showMessage(message, 'success');
         } else {
-            console.log('SUCCESS:', message);
+            // console.log removed
             alert('✅ ' + message);
         }
     }
@@ -1200,7 +1200,7 @@ class ConfiguracionManager {
         if (window.authManager && window.authManager.showMessage) {
             window.authManager.showMessage(message, 'info');
         } else {
-            console.log('INFO:', message);
+            // console.log removed
             alert('ℹ️ ' + message);
         }
     }
@@ -1230,12 +1230,12 @@ class ConfiguracionManager {
         try {
             // Verificar permisos de admin antes de acceder a datos sensibles
             if (!window.authManager?.isCurrentUserAdmin()) {
-                console.log('👤 Usuario no-admin: omitiendo carga de plantillas email');
+                // console.log removed
                 this.plantillasEmail = [];
                 return;
             }
             
-            console.log('📧 Cargando plantillas de email...');
+            // console.log removed
             
             const plantillasRef = collection(db, 'plantillas_email');
             const snapshot = await getDocs(plantillasRef);
@@ -1248,7 +1248,7 @@ class ConfiguracionManager {
                 });
             });
 
-            console.log(`✅ ${this.plantillasEmail.length} plantillas cargadas`);
+            // console.log removed
             this.displayPlantillasTable();
             
         } catch (error) {

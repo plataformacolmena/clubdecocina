@@ -67,7 +67,7 @@ class RecetasManager {
                 }
             });
             
-            console.log(`📚 Cursos confirmados para usuario:`, cursosConfirmados);
+            // console.log removed
             return cursosConfirmados;
             
         } catch (error) {
@@ -113,7 +113,7 @@ class RecetasManager {
                 return cursosConfirmados.includes(receta.cursoNombre);
             });
             
-            console.log(`🍳 Recetas cargadas: ${this.recetas.length} de ${todasLasRecetas.length} total`);
+            // console.log removed
             
             await this.loadComentarios();
             this.renderRecetas();

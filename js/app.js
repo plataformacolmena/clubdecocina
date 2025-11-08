@@ -18,15 +18,15 @@ class App {
 
     async initializeApp() {
         // Los managers se inicializan automáticamente al importarse
-        console.log('🎉 Club de Cocina - Aplicación iniciada');
+        // console.log removed
         
         // Inicializar servicio de emails
         if (window.emailService) {
             try {
                 await window.emailService.initialize();
-                console.log('✅ Servicio de emails inicializado');
+                // console.log removed
             } catch (error) {
-                console.warn('⚠️ Error inicializando servicio de emails:', error.message);
+                // console.warn removed
             }
         }
         
