@@ -1100,9 +1100,9 @@ function configurarEncabezados(hoja, nombreHoja) {
   
   if (nombreHoja === 'Cursos') {
     encabezados = [
-      'ID', 'Nombre', 'Fecha', 'Horario', 'Precio', 'Cupos',
-      'Instructor', 'Sede', 'Estado', 'Descripción',
-      'Fecha Creación', 'Fecha Actualización'
+      'ID', 'Nombre', 'Fecha', 'Fecha y Hora', 'Precio', 'Cupos',
+      'Inscriptos', 'Estado Cupo', 'Ocupación', 'Instructor', 'Sede', 
+      'Estado', 'Descripción', 'Fecha Creación', 'Fecha Actualización'
     ];
   } else if (nombreHoja === 'Inscripciones') {
     encabezados = [
@@ -1159,6 +1159,9 @@ function sincronizarCursos(spreadsheetId, cursosData) {
       curso.horario,
       curso.precio,
       curso.cupos,
+      curso.inscriptos,
+      curso.estadoCupo,
+      curso.ocupacion,
       curso.instructor,
       curso.sede,
       curso.estado,

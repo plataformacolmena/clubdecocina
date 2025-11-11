@@ -994,24 +994,71 @@ class AdminManager {
 
     async obtenerCursosParaSheet() {
         try {
+            // Cargar cursos
             const cursosQuery = query(
                 collection(db, 'cursos'),
                 orderBy('fechaHora', 'desc')
             );
+            const cursosSnapshot = await getDocs(cursosQuery);
             
-            const snapshot = await getDocs(cursosQuery);
+            // Cargar inscripciones para calcular estadísticas
+            const inscripcionesQuery = query(collection(db, 'inscripciones'));
+            const inscripcionesSnapshot = await getDocs(inscripcionesQuery);
+            
+            // Procesar inscripciones
+            const inscripciones = [];
+            inscripcionesSnapshot.forEach(doc => {
+                inscripciones.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            // Procesar cursos con estadísticas
             const cursos = [];
-
-            snapshot.forEach(doc => {
+            cursosSnapshot.forEach(doc => {
                 const data = doc.data();
+                
+                // Calcular estadísticas del curso
+                const inscripcionesCurso = inscripciones.filter(i => i.cursoId === doc.id);
+                const inscriptosActuales = inscripcionesCurso.filter(i => 
+                    ['pendiente', 'pagado', 'confirmado'].includes(i.estado)
+                ).length || 0;
+                
+                const capacidadMaxima = data.capacidadMaxima || 999;
+                const porcentajeOcupacion = capacidadMaxima > 0 ? 
+                    ((inscriptosActuales / capacidadMaxima) * 100).toFixed(1) : '0.0';
+                
+                // Calcular estado del cupo
+                const fechaCurso = new Date(data.fechaHora.seconds * 1000);
+                const ahora = new Date();
+                
+                let estadoCupo = 'Disponible';
+                if (fechaCurso < ahora) {
+                    estadoCupo = 'Finalizado';
+                } else if (inscriptosActuales >= capacidadMaxima) {
+                    estadoCupo = 'Completo';
+                } else if (porcentajeOcupacion >= 80) {
+                    estadoCupo = 'Próximo a llenarse';
+                }
+                
                 cursos.push({
                     id: doc.id,
                     nombre: data.nombre || '',
                     fecha: data.fechaHora ? data.fechaHora.toDate().toISOString() : '',
-                    horario: data.horario || '',
+                    horario: data.fechaHora ? 
+                        data.fechaHora.toDate().toLocaleString('es-ES', {
+                            day: '2-digit',
+                            month: '2-digit', 
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) : '',
                     precio: data.costo || 0,
-                    cupos: data.capacidadMaxima || 0,
-                    inscriptos: data.inscriptos || 0,
+                    cupos: capacidadMaxima,
+                    inscriptos: inscriptosActuales,
+                    estadoCupo: estadoCupo,
+                    ocupacion: `${porcentajeOcupacion}%`,
                     instructor: data.instructor || '',
                     sede: data.ubicacion || '',
                     estado: data.estado || 'activo',
